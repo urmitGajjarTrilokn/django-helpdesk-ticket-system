@@ -35,9 +35,19 @@
     font-size: 11px; font-weight: 700;
     color: var(--slate-500); text-transform: uppercase; letter-spacing: .6px;
   }
-  .ticket-row.delete-mode,
-  .ticket-row-head.delete-mode {
-    grid-template-columns: 60px 1fr 120px 100px 110px 80px 100px 90px;
+  .ticket-row.admin-select,
+  .ticket-row-head.admin-select {
+    grid-template-columns: 34px 60px 1fr 120px 100px 110px 80px 100px;
+  }
+  .ticket-select-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ticket-select-checkbox {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
   }
 
   .ticket-id {
@@ -93,8 +103,6 @@
     .ticket-row, .ticket-row-head { grid-template-columns: 55px 1fr 100px 90px; }
     .ticket-row > :nth-child(n+5),
     .ticket-row-head > :nth-child(n+5) { display: none; }
-    .ticket-row.delete-mode > :last-child,
-    .ticket-row-head.delete-mode > :last-child { display: none; }
   }
   @media (max-width: 600px) {
     .ticket-row, .ticket-row-head { grid-template-columns: 1fr 90px; }
@@ -161,15 +169,6 @@
   {% endif %}
 </div>
 
-{% if is_admin and is_delete_mode %}
-<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;
-            background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--r-lg);
-            margin-bottom:16px;font-size:13px;color:#991B1B;">
-  <span><i class="fas fa-trash-alt me-2"></i><strong>Delete Mode:</strong> click ticket delete icon to permanently remove a ticket.</span>
-  <a href="{% url 'base' %}" class="btn btn-sm btn-outline-secondary">Exit Delete Mode</a>
-</div>
-{% endif %}
-
 {% if not is_admin_user and user_dashboard_departments|length > 0 %}
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
             padding:12px 16px;background:#ECFEFF;border:1px solid #99F6E4;border-radius:var(--r-lg);
@@ -219,11 +218,9 @@
   <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=Closed" class="qs-pill {% if request.GET.status == 'Closed' and not is_mine_only_filter %}active{% endif %}">
     <span class="qs-dot" style="background:#64748B;"></span>Closed
   </a>
-  {% if not is_admin %}
   <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}mine_only=1" class="qs-pill {% if is_mine_only_filter %}active{% endif %}">
     <i class="fas fa-user" style="font-size:10px;"></i>Mine Only
   </a>
-  {% endif %}
 </div>
 
 <div class="hd-card">
@@ -240,16 +237,9 @@
       {% endif %}
     </div>
     <div class="d-flex gap-2">
-      {% if is_admin %}
-      <a href="{% url 'base' %}?mode={% if is_delete_mode %}view{% else %}delete{% endif %}" class="btn btn-sm btn-outline-danger">
-        <i class="fas fa-trash-alt me-1"></i>{% if is_delete_mode %}Stop Delete{% else %}Delete Tickets{% endif %}
-      </a>
-      {% endif %}
-      {% if not is_admin %}
       <a href="{% url 'taskdetail' %}" class="btn btn-sm btn-primary">
         <i class="fas fa-plus me-1"></i>New Ticket
       </a>
-      {% endif %}
     </div>
   </div>
 
@@ -304,9 +294,30 @@
       <i class="fas fa-times me-1"></i>Clear
     </a>
     {% endif %}
+    {% if is_admin %}
+    <div id="bulkDeleteActions" style="margin-left:auto;display:none;align-items:center;gap:8px;">
+      <span id="bulkDeleteCount" style="font-size:12px;color:var(--slate-500);">0 selected</span>
+      <button type="button" id="bulkDeleteBtn" class="btn btn-outline-danger">
+        <i class="fas fa-trash-alt me-1"></i>Delete Tickets
+      </button>
+    </div>
+    {% endif %}
   </form>
 
-  <div class="ticket-row-head {% if is_admin and is_delete_mode %}delete-mode{% endif %}">
+  {% if is_admin %}
+  <form method="POST" action="{% url 'bulk_delete_tickets' %}" id="bulkDeleteForm" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="ticket_ids" id="bulkDeleteTicketIds">
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  </form>
+  {% endif %}
+
+  <div class="ticket-row-head {% if is_admin %}admin-select{% endif %}">
+    {% if is_admin %}
+    <div class="ticket-select-col">
+      <input type="checkbox" id="selectAllTickets" class="ticket-select-checkbox" title="Select all visible tickets">
+    </div>
+    {% endif %}
     <div>#</div>
     <div>Ticket</div>
     <div>Department</div>
@@ -314,12 +325,16 @@
     <div>Priority</div>
     <div>Due</div>
     <div>Assigned To</div>
-    {% if is_admin and is_delete_mode %}<div>Action</div>{% endif %}
   </div>
 
   {% if Taskdatas %}
     {% for task in Taskdatas %}
-    <div class="ticket-row {% if is_admin and is_delete_mode %}delete-mode{% endif %}">
+    <div class="ticket-row {% if is_admin %}admin-select{% endif %}">
+      {% if is_admin %}
+      <div class="ticket-select-col">
+        <input type="checkbox" class="ticket-select-checkbox ticket-select-item" value="{{ task.id }}" aria-label="Select ticket {{ task.id }}">
+      </div>
+      {% endif %}
 
       <div class="ticket-id">#{{ task.id }}</div>
 
@@ -333,6 +348,23 @@
             &nbsp;<span class="ai-badge" style="font-size:9.5px;padding:1px 6px;"><i class="fas fa-robot"></i> AI</span>
           {% endif %}
         </div>
+        {% if is_admin %}
+        <div class="ticket-sub" style="margin-top:4px;color:var(--slate-600);">
+          <i class="fas fa-user-check" style="font-size:10px;"></i>
+          Currently solving:
+          {% if task.assigned_to %}
+            {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+          {% else %}
+            Unassigned
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if is_admin and task.latest_reject_reason %}
+        <div class="ticket-sub" style="margin-top:4px;color:#B45309;">
+          <i class="fas fa-ban" style="font-size:10px;"></i>
+          Earlier rejection by {{ task.latest_rejected_by }}: {{ task.latest_reject_reason|truncatechars:95 }}
+        </div>
+        {% endif %}
       </div>
 
       <div>
@@ -393,16 +425,6 @@
         {% endif %}
       </div>
 
-      {% if is_admin and is_delete_mode %}
-      <div>
-        <a href="{% url 'deletetask' task.id %}"
-           class="btn btn-sm btn-outline-danger"
-           onclick="return confirm('Delete ticket #{{ task.id }} permanently?');">
-          <i class="fas fa-trash"></i>
-        </a>
-      </div>
-      {% endif %}
-
     </div>
     {% endfor %}
 
@@ -437,11 +459,9 @@
           No tickets have been submitted yet. Be the first!
         {% endif %}
       </div>
-      {% if not is_admin %}
       <a href="{% url 'taskdetail' %}" class="btn btn-sm btn-primary">
         <i class="fas fa-plus me-1"></i>Submit New Ticket
       </a>
-      {% endif %}
     </div>
   {% endif %}
 
@@ -458,5 +478,56 @@
       document.getElementById('filterForm').submit();
     }, 450);
   }
+
+  (function () {
+    const selectAll = document.getElementById('selectAllTickets');
+    const items = Array.from(document.querySelectorAll('.ticket-select-item'));
+    const actions = document.getElementById('bulkDeleteActions');
+    const countEl = document.getElementById('bulkDeleteCount');
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+    const form = document.getElementById('bulkDeleteForm');
+    const idsInput = document.getElementById('bulkDeleteTicketIds');
+
+    if (!selectAll || !items.length || !actions || !countEl || !deleteBtn || !form || !idsInput) {
+      return;
+    }
+
+    function selectedItems() {
+      return items.filter((item) => item.checked);
+    }
+
+    function refreshBulkDeleteState() {
+      const selected = selectedItems();
+      const count = selected.length;
+      actions.style.display = count > 0 ? 'flex' : 'none';
+      countEl.textContent = `${count} selected`;
+      selectAll.checked = count > 0 && count === items.length;
+      selectAll.indeterminate = count > 0 && count < items.length;
+    }
+
+    selectAll.addEventListener('change', function () {
+      items.forEach((item) => {
+        item.checked = selectAll.checked;
+      });
+      refreshBulkDeleteState();
+    });
+
+    items.forEach((item) => {
+      item.addEventListener('change', refreshBulkDeleteState);
+    });
+
+    deleteBtn.addEventListener('click', function () {
+      const selected = selectedItems();
+      if (!selected.length) return;
+
+      const ids = selected.map((item) => item.value);
+      if (!confirm(`Delete ${ids.length} selected ticket(s) permanently?`)) return;
+
+      idsInput.value = ids.join(',');
+      form.submit();
+    });
+
+    refreshBulkDeleteState();
+  })();
 </script>
 {% endblock %}

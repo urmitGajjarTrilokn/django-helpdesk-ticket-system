@@ -226,8 +226,8 @@
         </a>
         {% endif %}
 
-        {% if cart.task.id not in non_rejectable_task_ids %}
-        <a href="{% url 'removetask' cart.task.id %}" class="btn btn-xs btn-outline-danger" title="Reject this assignment" onclick="return confirm('Reject this assignment? The ticket will be reassigned.')">
+        {% if cart.task.id not in non_rejectable_task_ids and cart.task.TASK_STATUS != 'Reopen' %}
+        <a href="{% url 'removetask' cart.task.id %}" class="btn btn-xs btn-outline-danger" title="Reject this assignment">
           <i class="fas fa-times"></i>
         </a>
         {% endif %}

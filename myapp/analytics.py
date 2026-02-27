@@ -2,7 +2,7 @@ from django.db.models import Count, Avg, Q, F, Sum
 from django.utils import timezone
 from datetime import timedelta, datetime, date
 from collections import defaultdict
-from .models import TaskDetail, Department, DepartmentMember, ActivityLog
+from .models import TaskDetail, Department, DepartmentMember, ActivityLog, TaskHistory
 from django.contrib.auth.models import User
 import logging
 
@@ -195,31 +195,39 @@ def get_top_task_creators(limit=10, start_date=None, end_date=None):
 
 def get_top_task_resolvers(limit=10, start_date=None, end_date=None):
     try:
-        tasks = TaskDetail.objects.filter(
-            assigned_to__isnull=False,
-            TASK_STATUS__in=['Closed', 'Resolved'],
+        resolver_events = TaskHistory.objects.filter(
+            changed_by__isnull=False
+        ).filter(
+            Q(action_type='CLOSED') |
+            Q(action_type='STATUS_CHANGED', new_value='Resolved')
         )
         if start_date and end_date:
-            tasks = tasks.filter(TASK_CLOSED_ON__range=[start_date, end_date])
+            resolver_events = resolver_events.filter(changed_at__range=[start_date, end_date])
 
-        top = tasks.values('assigned_to__username', 'assigned_to__id').annotate(
+        top = resolver_events.values('changed_by__username', 'changed_by__id').annotate(
             count=Count('id')
         ).order_by('-count')[:limit]
 
         result = []
         for item in top:
             try:
-                user = User.objects.get(id=item['assigned_to__id'])
-                user_tasks  = tasks.filter(assigned_to=user, TASK_CLOSED_ON__isnull=False)
+                user = User.objects.get(id=item['changed_by__id'])
+                resolved_task_ids = resolver_events.filter(
+                    changed_by=user
+                ).values_list('task_id', flat=True).distinct()
+                user_tasks = TaskDetail.objects.filter(
+                    id__in=resolved_task_ids
+                )
                 total_days = count = 0
                 for t in user_tasks:
-                    if t.TASK_CLOSED_ON and t.TASK_CREATED_ON:
-                        total_days += (t.TASK_CLOSED_ON - t.TASK_CREATED_ON).days
+                    completed_on = t.resolved_at or t.TASK_CLOSED_ON
+                    if completed_on and t.TASK_CREATED_ON:
+                        total_days += (completed_on - t.TASK_CREATED_ON).days
                         count += 1
                 avg_hours = round(total_days / count * 24, 2) if count else 0
                 result.append({
                     'user':                user,
-                    'username':            item['assigned_to__username'],
+                    'username':            item['changed_by__username'],
                     'count':               item['count'],
                     'avg_resolution_hours':avg_hours,
                 })

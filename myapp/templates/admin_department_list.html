@@ -1,4 +1,5 @@
 {% extends "Base.html" %}
+{% load avatar_tags %}
 {% block title %}Department Management - HelpDesk{% endblock %}
 
 {% block breadcrumb %}
@@ -105,11 +106,13 @@
                 <td>
                   <div class="adm-user">
                     <div class="adm-avatar">
-                      {% if m.user.userprofile.Profile_Image %}
-                        <img src="{{ m.user.userprofile.Profile_Image.url }}" alt="{{ m.user.username }}">
-                      {% else %}
-                        {{ m.user.username|first|upper }}
-                      {% endif %}
+                      {% with avatar=m.user|avatar_url %}
+                        {% if avatar %}
+                          <img src="{{ avatar }}" alt="{{ m.user.username }}">
+                        {% else %}
+                          {{ m.user|avatar_initial }}
+                        {% endif %}
+                      {% endwith %}
                     </div>
                     <span>{{ m.user.username }}</span>
                   </div>

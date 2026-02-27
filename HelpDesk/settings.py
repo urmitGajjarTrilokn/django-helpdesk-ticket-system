@@ -136,6 +136,7 @@ _AdminSite.login_url = '/admin/login/'
 SESSION_COOKIE_AGE = 86400  
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+CSRF_FAILURE_VIEW = "myapp.csrf_handlers.csrf_failure"
 SESSION_SAVE_EVERY_REQUEST = False
 SESSION_COOKIE_HTTPONLY = True
 

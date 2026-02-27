@@ -21,6 +21,7 @@ urlpatterns = [
     path('ticket/<int:pk>/',       views.TaskInfo,            name='taskinfo'),
     path('ticket/<int:pk>/edit/',  views.updatetask,         name='updatetask'),
     path('ticket/<int:pk>/delete/',views.deletetask,         name='deletetask'),
+    path('tickets/bulk-delete/',   views.bulk_delete_tickets, name='bulk_delete_tickets'),
     path('ticket/<int:pk>/reject/',views.RemoveTask,         name='removetask'),
     path('ticket/<int:pk>/close/', views.CloseTask,          name='closetask'),
     path('ticket/<int:pk>/reopen/',views.reopentask,         name='reopentask'),

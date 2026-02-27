@@ -1,3 +1,4 @@
+{% load avatar_tags %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -596,9 +597,9 @@
       </a>
 
       {% if is_admin %}
-      <a href="{% url 'base' %}?mode=delete"
-         class="nav-item {% if request.GET.mode == 'delete' and request.resolver_match.url_name == 'base' %}active{% endif %}">
-        <i class="nav-icon fas fa-trash-alt"></i> Delete Tickets
+      <a href="{% url 'taskdetail' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'taskdetail' %}active{% endif %}">
+        <i class="nav-icon fas fa-plus-circle"></i> New Ticket
       </a>
       <a href="{% url 'analytics_dashboard' %}"
          class="nav-item {% if request.resolver_match.url_name == 'analytics_dashboard' %}active{% endif %}">
@@ -662,11 +663,13 @@
     <div class="hd-sidebar-footer">
       <a href="{% url 'profile' %}" class="hd-user-row">
         <div class="hd-avatar">
-          {% if request.user.userprofile.Profile_Image %}
-            <img src="{{ request.user.userprofile.Profile_Image.url }}" alt="">
-          {% else %}
-            {{ request.user.username|first|upper }}
-          {% endif %}
+          {% with avatar=request.user|avatar_url %}
+            {% if avatar %}
+              <img src="{{ avatar }}" alt="">
+            {% else %}
+              {{ request.user|avatar_initial }}
+            {% endif %}
+          {% endwith %}
         </div>
         <div style="flex:1;min-width:0;">
           <div class="hd-user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
@@ -694,11 +697,9 @@
   {% if request.user.is_authenticated %}
   <div class="topbar-actions">
 
-    {% if not is_admin %}
     <a href="{% url 'taskdetail' %}" class="topbar-btn" title="New Ticket">
       <i class="fas fa-plus"></i>
     </a>
-    {% endif %}
 
     {% if not is_admin %}
     <a href="{% url 'notifications_list' %}" class="topbar-btn {% if unread_notifications > 0 %}active{% endif %}"
@@ -710,11 +711,13 @@
 
     <div class="dropdown">
       <div class="hd-avatar" style="cursor:pointer;" data-bs-toggle="dropdown">
-        {% if request.user.userprofile.Profile_Image %}
-          <img src="{{ request.user.userprofile.Profile_Image.url }}" alt="">
-        {% else %}
-          {{ request.user.username|first|upper }}
-        {% endif %}
+        {% with avatar=request.user|avatar_url %}
+          {% if avatar %}
+            <img src="{{ avatar }}" alt="">
+          {% else %}
+            {{ request.user|avatar_initial }}
+          {% endif %}
+        {% endwith %}
       </div>
       <ul class="dropdown-menu dropdown-menu-end"
           style="min-width:200px;border-color:var(--slate-200);border-radius:var(--r-lg);

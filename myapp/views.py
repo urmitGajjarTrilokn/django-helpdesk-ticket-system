@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.db.models import Q, Avg, OuterRef, Subquery, Count
 from django.http import HttpResponse, FileResponse, JsonResponse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
 from django.urls import reverse
 from datetime import datetime, time
@@ -147,6 +148,37 @@ def _sync_mycart_for_user(user):
         ).exclude(task__assigned_to=user).delete()
 
 
+def _is_non_rejectable_assignment(user, task):
+    if task.TASK_STATUS == 'Reopen':
+        return True
+
+    if task.assigned_by_id and task.assigned_by.is_superuser:
+        return True
+
+    latest_assigned = (
+        TaskHistory.objects
+        .filter(task=task, action_type='ASSIGNED')
+        .order_by('-changed_at')
+        .first()
+    )
+    if (
+        latest_assigned
+        and latest_assigned.new_value == user.username
+        and latest_assigned.description
+        and 'Auto-assigned to' in latest_assigned.description
+    ):
+        latest_reopened = (
+            TaskHistory.objects
+            .filter(task=task, action_type='REOPENED')
+            .order_by('-changed_at')
+            .first()
+        )
+        if not latest_reopened or latest_reopened.changed_at <= latest_assigned.changed_at:
+            return True
+
+    return False
+
+
 def _auto_assign_on_department_rejection(task, rejected_by):
     """
     Auto-assign only when rejection leaves a single non-rejecting member,
@@ -190,10 +222,8 @@ def _auto_assign_on_department_rejection(task, rejected_by):
     remaining_count = remaining_memberships.count()
 
     assignee_membership = None
-    if remaining_count == 1:
+    if remaining_count >= 1:
         assignee_membership = remaining_memberships.first()
-    elif remaining_count == 0:
-        assignee_membership = preferred_memberships.first() or assignable_memberships.first()
 
     if not assignee_membership:
         return None
@@ -290,11 +320,8 @@ def Basepage(request, dept_id=None):
     elif dept_id is not None and not is_created_view:
         selected_department = get_object_or_404(Department, id=dept_id)
 
-    manage_mode = request.GET.get('mode', '').strip().lower()
-    is_delete_mode = is_admin_user and manage_mode == 'delete'
-
     Taskdatas = TaskDetail.objects.all()
-    if is_mine_only_filter and not is_admin_user:
+    if is_mine_only_filter:
         Taskdatas = Taskdatas.filter(TASK_CREATED=request.user)
     elif is_created_view and not is_admin_user:
         Taskdatas = Taskdatas.filter(TASK_CREATED=request.user)
@@ -312,6 +339,9 @@ def Basepage(request, dept_id=None):
             Q(assigned_department_id__in=department_ids) &
             ~Q(TASK_CREATED=request.user)
         ).distinct()
+
+    if is_admin_user and not is_mine_only_filter:
+        Taskdatas = Taskdatas.exclude(TASK_CREATED=request.user)
 
     visible_tasks = Taskdatas
     filter_form = TaskFilterForm(request.GET or None)
@@ -339,8 +369,40 @@ def Basepage(request, dept_id=None):
         if cd.get('my_tasks') or is_mine_only_filter:
             Taskdatas = Taskdatas.filter(TASK_CREATED=request.user)
 
-    paginator  = Paginator(Taskdatas.order_by('-TASK_CREATED_ON'), 20)
+    paginator  = Paginator(Taskdatas.order_by('-TASK_CREATED_ON', '-id'), 20)
     page_obj   = paginator.get_page(request.GET.get('page'))
+
+    if is_admin_user:
+        task_ids = [task.id for task in page_obj.object_list]
+        assignee_ids = {task.id: task.assigned_to_id for task in page_obj.object_list}
+        preferred_rejections = {}
+        fallback_rejections = {}
+        if task_ids:
+            rejected_histories = (
+                TaskHistory.objects
+                .filter(task_id__in=task_ids, action_type='REJECTED')
+                .select_related('changed_by')
+                .order_by('task_id', '-changed_at')
+            )
+            for history in rejected_histories:
+                reason_text = (history.description or '').strip()
+                if 'Reason:' in reason_text:
+                    reason_text = reason_text.split('Reason:', 1)[1].strip()
+                rejection_data = {
+                    'reason': reason_text,
+                    'rejected_by': history.changed_by.username if history.changed_by_id else 'Unknown',
+                }
+                current_assignee_id = assignee_ids.get(history.task_id)
+                if current_assignee_id and history.changed_by_id == current_assignee_id:
+                    if history.task_id not in fallback_rejections:
+                        fallback_rejections[history.task_id] = rejection_data
+                    continue
+                if history.task_id not in preferred_rejections:
+                    preferred_rejections[history.task_id] = rejection_data
+        for task in page_obj.object_list:
+            rejection_info = preferred_rejections.get(task.id) or fallback_rejections.get(task.id, {})
+            task.latest_reject_reason = rejection_info.get('reason', '')
+            task.latest_rejected_by = rejection_info.get('rejected_by', '')
 
     stats = {
         'total':       visible_tasks.count(),
@@ -373,7 +435,6 @@ def Basepage(request, dept_id=None):
         'department_dashboard_url': department_dashboard_url,
         'created_tickets_url': created_tickets_url,
         'pagination_query': pagination_query.urlencode(),
-        'is_delete_mode': is_delete_mode,
     })
 
 @login_required
@@ -457,9 +518,12 @@ def TaskInfo(request, pk):
     can_work_on_task = _can_work_on_task(request.user, taskinfos)
     can_edit_task = (
         taskinfos.TASK_STATUS == 'Open'
-        and taskinfos.TASK_CREATED_id == request.user.id
+        and (taskinfos.TASK_CREATED_id == request.user.id or is_admin)
     )
-    can_reject = MyCart.objects.filter(user=request.user, task=taskinfos).exists()
+    can_reject = (
+        MyCart.objects.filter(user=request.user, task=taskinfos).exists()
+        and not _is_non_rejectable_assignment(request.user, taskinfos)
+    )
     comments_qs = UserComment.objects.filter(task=taskinfos)
     if not is_admin:
         participant_ids = [taskinfos.TASK_CREATED_id]
@@ -480,10 +544,14 @@ def TaskInfo(request, pk):
         and taskinfos.TASK_CREATED_id == request.user.id
     )
     can_creator_decide_closed = (
-        taskinfos.TASK_CREATED_id == request.user.id
-        and taskinfos.TASK_STATUS == 'Closed'
-        and not _is_admin_user(request.user)
+        taskinfos.TASK_STATUS == 'Closed'
+        and (taskinfos.TASK_CREATED_id == request.user.id or is_admin)
     )
+    can_reopen_ticket = is_admin or not TaskHistory.objects.filter(
+        task=taskinfos,
+        action_type='REOPENED',
+        changed_by=request.user,
+    ).exists()
     can_rate_resolved_task = (
         taskinfos.TASK_CREATED_id == request.user.id
         and taskinfos.TASK_STATUS == 'Resolved'
@@ -512,6 +580,30 @@ def TaskInfo(request, pk):
         and not is_admin
         and taskinfos.TASK_STATUS not in ['Closed', 'Resolved', 'Expired']
     )
+    latest_rejection = (
+        TaskHistory.objects
+        .filter(task=taskinfos, action_type='REJECTED')
+        .exclude(changed_by=taskinfos.assigned_to)
+        .select_related('changed_by')
+        .order_by('-changed_at')
+        .first()
+    )
+    if not latest_rejection:
+        latest_rejection = (
+            TaskHistory.objects
+            .filter(task=taskinfos, action_type='REJECTED')
+            .select_related('changed_by')
+            .order_by('-changed_at')
+            .first()
+        )
+    latest_rejection_reason = ''
+    latest_rejection_by = ''
+    if latest_rejection:
+        reason_text = (latest_rejection.description or '').strip()
+        if 'Reason:' in reason_text:
+            reason_text = reason_text.split('Reason:', 1)[1].strip()
+        latest_rejection_reason = reason_text
+        latest_rejection_by = latest_rejection.changed_by.username if latest_rejection.changed_by_id else ''
 
     return render(request, 'TaskInfo.html', {
         'taskinfos':            taskinfos,
@@ -522,10 +614,13 @@ def TaskInfo(request, pk):
         'can_reject':           can_reject,
         'creator_edit_only_mode': creator_edit_only_mode,
         'can_creator_decide_closed': can_creator_decide_closed,
+        'can_reopen_ticket': can_reopen_ticket,
         'can_rate_resolved_task': can_rate_resolved_task,
         'is_department_member': is_department_member,
         'is_agent':             is_agent,
         'is_admin':             is_admin,
+        'latest_rejection_reason': latest_rejection_reason,
+        'latest_rejection_by': latest_rejection_by,
         'can_view_admin_note_thread': can_view_admin_note_thread,
         'overdue_note_thread': overdue_note_thread,
         'can_reply_admin_overdue_note': can_reply_admin_overdue_note,
@@ -535,19 +630,20 @@ def TaskInfo(request, pk):
 @login_required
 def updatetask(request, pk):
     task = get_object_or_404(TaskDetail, id=pk)
+    is_admin_user = _is_admin_user(request.user)
     can_edit_task = (
         task.TASK_STATUS == 'Open'
-        and task.TASK_CREATED_id == request.user.id
+        and (task.TASK_CREATED_id == request.user.id or is_admin_user)
     )
     if not can_edit_task:
-        messages.error(request, 'Only the ticket creator can edit an open ticket.')
+        messages.error(request, 'Only the ticket creator or admin can edit an open ticket.')
         return redirect('taskinfo', pk=pk)
 
-    if not _can_work_on_task(request.user, task):
+    if not is_admin_user and not _can_work_on_task(request.user, task):
         messages.error(request, 'You do not have permission to edit this task.')
         return redirect('taskinfo', pk=pk)
 
-    is_creator_edit = task.TASK_CREATED_id == request.user.id and not _is_admin_user(request.user)
+    is_creator_edit = task.TASK_CREATED_id == request.user.id and not is_admin_user
     if is_creator_edit:
         old_department = task.assigned_department
         form = TaskDetailForm(request.POST or None, request.FILES or None, instance=task)
@@ -637,9 +733,17 @@ def updatetask(request, pk):
                         notification_type='TASK_ASSIGNED',
                         message=f'Task "{updated_task.TASK_TITLE}" reassigned to {updated_task.assigned_department.name}',
                     )
+            if 'assigned_to' in changed_fields and updated_task.assigned_to:
+                updated_task.assignment_type = 'MANUAL'
+                updated_task.assigned_by = request.user
+                updated_task.assigned_at = timezone.now()
 
             updated_task.save()
             form.save_m2m()
+
+            if 'assigned_to' in changed_fields and updated_task.assigned_to:
+                MyCart.objects.get_or_create(user=updated_task.assigned_to, task=updated_task)
+                MyCart.objects.filter(task=updated_task).exclude(user=updated_task.assigned_to).delete()
 
             if 'assigned_department' in changed_fields:
                 if old_department and old_department != updated_task.assigned_department:
@@ -700,18 +804,83 @@ def deletetask(request, pk):
     messages.success(request, 'Task deleted successfully!')
     return redirect(_get_dashboard_redirect_url(request.user))
 
+
+@admin_required
+def bulk_delete_tickets(request):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('base')
+
+    raw_ids = request.POST.get('ticket_ids', '')
+    ticket_ids = []
+    for value in raw_ids.split(','):
+        value = value.strip()
+        if value.isdigit():
+            ticket_ids.append(int(value))
+
+    if not ticket_ids:
+        messages.error(request, 'No tickets selected for deletion.')
+        next_url = request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        ):
+            return redirect(next_url)
+        return redirect('base')
+
+    tasks = list(TaskDetail.objects.filter(id__in=ticket_ids))
+    if not tasks:
+        messages.error(request, 'Selected tickets were not found.')
+        next_url = request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        ):
+            return redirect(next_url)
+        return redirect('base')
+
+    for task in tasks:
+        TaskHistory.objects.create(
+            task=task,
+            changed_by=request.user,
+            action_type='DELETED',
+            description=f'Task deleted by {request.user.username} (bulk delete)',
+        )
+        log_activity(
+            request.user,
+            'DELETED',
+            f'Deleted ticket: {task.TASK_TITLE}'
+        )
+
+    TaskDetail.objects.filter(id__in=[t.id for t in tasks]).delete()
+    messages.success(request, f'Deleted {len(tasks)} ticket(s) successfully.')
+
+    next_url = request.POST.get('next')
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(next_url)
+    return redirect('base')
+
 @login_required
 def RemoveTask(request, pk):
     task = get_object_or_404(TaskDetail, id=pk)
     if not _can_view_task(request.user, task):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('taskinfo', pk=pk)
+    if _is_non_rejectable_assignment(request.user, task):
+        messages.error(request, "This assignment cannot be rejected.")
+        return redirect('taskinfo', pk=pk)
     if not MyCart.objects.filter(task=task, user=request.user).exists() and task.assigned_to_id != request.user.id:
         messages.error(request, "Only the current assignee can reject this ticket.")
         return redirect('taskinfo', pk=pk)
 
+    if request.method != 'POST':
+        return render(request, 'reject_ticket.html', {'task': task})
+
     rejected = MyCart.objects.filter(task=task, user=request.user).exists()
-    reason = request.POST.get('reject_reason', '').strip() if request.method == 'POST' else ''
+    reason = request.POST.get('reject_reason', '').strip()
+    if not reason:
+        messages.error(request, "Rejection reason is required.")
+        return redirect('taskinfo', pk=pk)
     MyCart.objects.filter(task=task, user=request.user).delete()
 
     auto_assignee = None
@@ -755,11 +924,18 @@ def RemoveTask(request, pk):
         )
     else:
         messages.success(request, "Ticket rejected and removed from your queue.")
-    return redirect(_get_dashboard_redirect_url(request.user))
+    return redirect('mycart')
 
 @login_required
 def CloseTask(request, pk):
     task = get_object_or_404(TaskDetail, id=pk)
+    if TaskHistory.objects.filter(
+        task=task,
+        action_type='REJECTED',
+        changed_by=request.user,
+    ).exists():
+        messages.error(request, "You have already rejected this ticket and cannot close it now.")
+        return redirect('taskinfo', pk=pk)
     if _is_admin_user(request.user):
         messages.error(request, "Admins cannot close tasks. You can delete the task if needed.")
         return redirect('taskinfo', pk=pk)
@@ -796,13 +972,21 @@ def CloseTask(request, pk):
 @login_required
 def reopentask(request, pk):
     task = get_object_or_404(TaskDetail, id=pk)
-    if _is_admin_user(request.user):
-        messages.error(request, "Admins cannot reopen tasks. You can delete the task if needed.")
+    is_admin = _is_admin_user(request.user)
+    if (
+        not is_admin
+        and TaskHistory.objects.filter(
+            task=task,
+            action_type='REOPENED',
+            changed_by=request.user,
+        ).exists()
+    ):
+        messages.error(request, "You can reopen a ticket only once. Please create a new ticket.")
         return redirect('taskinfo', pk=pk)
-    if task.TASK_CREATED_id != request.user.id:
+    if task.TASK_CREATED_id != request.user.id and not is_admin:
         messages.error(request, "Only the ticket creator can reopen this ticket.")
         return redirect('taskinfo', pk=pk)
-    if not _can_work_on_task(request.user, task):
+    if not is_admin and not _can_work_on_task(request.user, task):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('taskinfo', pk=pk)
     holder = task.TASK_CLOSED
@@ -851,13 +1035,11 @@ def reopentask(request, pk):
 @login_required
 def resolvedtask(request, pk):
     task = get_object_or_404(TaskDetail, id=pk)
-    if _is_admin_user(request.user):
-        messages.error(request, "Admins cannot resolve tasks. You can delete the task if needed.")
-        return redirect('taskinfo', pk=pk)
-    if task.TASK_STATUS == 'Closed' and task.TASK_CREATED_id != request.user.id:
+    is_admin = _is_admin_user(request.user)
+    if task.TASK_STATUS == 'Closed' and task.TASK_CREATED_id != request.user.id and not is_admin:
         messages.error(request, "Only the ticket creator can resolve a closed ticket.")
         return redirect('taskinfo', pk=pk)
-    if not _can_work_on_task(request.user, task):
+    if not is_admin and not _can_work_on_task(request.user, task):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('taskinfo', pk=pk)
     old_status = task.TASK_STATUS
@@ -1045,6 +1227,14 @@ def MyCarts(request):
     comments = UserComment.objects.filter(user=request.user)
     cart_task_ids = list(carts.values_list('task_id', flat=True))
     non_rejectable_task_ids = set()
+    reopened_task_ids = set(
+        carts.filter(task__TASK_STATUS='Reopen').values_list('task_id', flat=True)
+    )
+    non_rejectable_task_ids.update(reopened_task_ids)
+    admin_assigned_task_ids = set(
+        carts.filter(task__assigned_by__is_superuser=True).values_list('task_id', flat=True)
+    )
+    non_rejectable_task_ids.update(admin_assigned_task_ids)
     if cart_task_ids:
         latest_assigned_history = (
             TaskHistory.objects.filter(
@@ -1320,14 +1510,37 @@ def comment_view(request, pk, action):
     if action not in ['closing_comment', 'reopen_comment']:
         messages.error(request, "Only close note and reopen reason are allowed.")
         return redirect('taskinfo', pk=pk)
-    if _is_admin_user(request.user) and action in ['closing_comment', 'reopen_comment']:
-        messages.error(request, "Admins cannot perform close/reopen flow. You can delete the task if needed.")
+    is_admin = _is_admin_user(request.user)
+    if is_admin and action == 'closing_comment':
+        messages.error(request, "Admins cannot perform close flow. You can delete the task if needed.")
         return redirect('taskinfo', pk=pk)
-    if not _can_work_on_task(request.user, task):
+    if action == 'reopen_comment' and not (is_admin or task.TASK_CREATED_id == request.user.id):
+        messages.error(request, "Only the ticket creator or admin can add reopen comment.")
+        return redirect('taskinfo', pk=pk)
+    if (
+        action == 'closing_comment'
+        and TaskHistory.objects.filter(
+            task=task,
+            action_type='REJECTED',
+            changed_by=request.user,
+        ).exists()
+    ):
+        messages.error(request, "You have already rejected this ticket and cannot close it now.")
+        return redirect('taskinfo', pk=pk)
+    if (
+        action == 'reopen_comment'
+        and not is_admin
+        and TaskHistory.objects.filter(
+            task=task,
+            action_type='REOPENED',
+            changed_by=request.user,
+        ).exists()
+    ):
+        messages.error(request, "You can reopen a ticket only once. Please create a new ticket.")
+        return redirect('taskinfo', pk=pk)
+    if not is_admin and not _can_work_on_task(request.user, task):
         messages.error(request, "You do not have permission to comment on this ticket.")
         return redirect('taskinfo', pk=pk)
-
-    is_admin         = _is_admin_user(request.user)
 
     is_dept_member = is_senior_dept_member = False
     if task.assigned_department:
@@ -1651,7 +1864,7 @@ def admin_department_list(request):
     dept_data = []
     for dept in departments:
         members = DepartmentMember.objects.filter(
-            department=dept, is_active=True
+            department=dept, is_active=True, user__is_superuser=False
         ).select_related('user')
         tasks = TaskDetail.objects.filter(assigned_department=dept)
         dept_data.append({
@@ -1664,7 +1877,7 @@ def admin_department_list(request):
 
     return render(request, 'admin_department_list.html', {
         'dept_data':    dept_data,
-        'all_users':    User.objects.filter(is_active=True).order_by('username'),
+        'all_users':    User.objects.filter(is_active=True, is_superuser=False).order_by('username'),
         'departments':  departments,
     })
 
@@ -1678,6 +1891,9 @@ def admin_add_member(request, dept_id):
         role    = request.POST.get('role', 'MEMBER')
         try:
             user = User.objects.get(id=user_id)
+            if user.is_superuser:
+                messages.error(request, 'Admin users cannot be added to departments.')
+                return redirect('admin_department_list')
             membership, created = DepartmentMember.objects.get_or_create(
                 user=user, department=department,
                 defaults={
