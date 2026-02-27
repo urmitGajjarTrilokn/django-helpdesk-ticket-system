@@ -1,0 +1,462 @@
+{% extends "Base.html" %}
+{% block title %}Dashboard — HelpDesk{% endblock %}
+
+{% block breadcrumb %}
+  {% if selected_department %}
+  <strong>{{ selected_department.name }} Dashboard</strong>
+  {% else %}
+  <strong>Dashboard</strong>
+  {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  
+  .ticket-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 120px 100px 110px 80px 100px;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--slate-100);
+    transition: background .12s;
+    font-size: 13.5px;
+  }
+  .ticket-row:last-child { border-bottom: none; }
+  .ticket-row:hover { background: var(--slate-50); }
+
+  .ticket-row-head {
+    display: grid;
+    grid-template-columns: 60px 1fr 120px 100px 110px 80px 100px;
+    gap: 12px;
+    padding: 10px 20px;
+    background: var(--slate-50);
+    border-bottom: 1px solid var(--slate-200);
+    font-size: 11px; font-weight: 700;
+    color: var(--slate-500); text-transform: uppercase; letter-spacing: .6px;
+  }
+  .ticket-row.delete-mode,
+  .ticket-row-head.delete-mode {
+    grid-template-columns: 60px 1fr 120px 100px 110px 80px 100px 90px;
+  }
+
+  .ticket-id {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; color: var(--slate-400); font-weight: 500;
+  }
+  .ticket-title {
+    font-weight: 600; color: var(--slate-800);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ticket-title a { color: inherit; transition: color .12s; }
+  .ticket-title a:hover { color: var(--brand); }
+  .ticket-sub  { font-size: 12px; color: var(--slate-400); margin-top: 2px; }
+
+  .dept-label {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; font-weight: 600;
+    padding: 3px 9px; border-radius: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 110px;
+  }
+
+  .filter-bar {
+    padding: 14px 20px;
+    background: var(--slate-50);
+    border-bottom: 1px solid var(--slate-200);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .filter-bar .form-control,
+  .filter-bar .form-select {
+    font-size: 13px;
+    padding: 7px 11px;
+    height: 36px;
+    min-width: 0;
+  }
+  .filter-bar .form-control { width: 220px; }
+  .filter-bar .form-select  { width: 140px; }
+  .filter-bar .btn { height: 36px; font-size: 13px; padding: 0 14px; }
+
+  .qs-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .qs-pill {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 14px; border-radius: 20px;
+    font-size: 12.5px; font-weight: 600;
+    background: #fff; border: 1.5px solid var(--slate-200);
+    cursor: pointer; transition: all .15s; text-decoration: none; color: var(--slate-700);
+  }
+  .qs-pill:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+  .qs-pill.active { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+  .qs-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  @media (max-width: 900px) {
+    .ticket-row, .ticket-row-head { grid-template-columns: 55px 1fr 100px 90px; }
+    .ticket-row > :nth-child(n+5),
+    .ticket-row-head > :nth-child(n+5) { display: none; }
+    .ticket-row.delete-mode > :last-child,
+    .ticket-row-head.delete-mode > :last-child { display: none; }
+  }
+  @media (max-width: 600px) {
+    .ticket-row, .ticket-row-head { grid-template-columns: 1fr 90px; }
+    .ticket-row > :nth-child(n+3),
+    .ticket-row-head > :nth-child(n+3) { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-sm-4 col-lg">
+    <div class="stat-card">
+      <div class="stat-icon si-slate"><i class="fas fa-ticket-alt"></i></div>
+      <div>
+        <div class="stat-label">Total Tickets</div>
+        <div class="stat-value">{{ stats.total|default:0 }}</div>
+        <div class="stat-meta">{% if selected_department %}Department{% else %}All{% endif %}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg">
+    <div class="stat-card">
+      <div class="stat-icon si-green"><i class="fas fa-check-circle"></i></div>
+      <div>
+        <div class="stat-label">Resolved</div>
+        <div class="stat-value">{{ stats.resolved|default:0 }}</div>
+        <div class="stat-meta">Completed</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg">
+    <div class="stat-card">
+      <div class="stat-icon si-yellow"><i class="fas fa-spinner"></i></div>
+      <div>
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value">{{ stats.in_progress|default:0 }}</div>
+        <div class="stat-meta">Active work</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg">
+    <div class="stat-card">
+      <div class="stat-icon si-blue"><i class="fas fa-lock"></i></div>
+      <div>
+        <div class="stat-label">Closed</div>
+        <div class="stat-value">{{ stats.closed|default:0 }}</div>
+        <div class="stat-meta">Closed tickets</div>
+      </div>
+    </div>
+  </div>
+  {% if not is_admin %}
+  <div class="col-6 col-sm-4 col-lg">
+    <div class="stat-card">
+      <div class="stat-icon si-green"><i class="fas fa-user"></i></div>
+      <div>
+        <div class="stat-label">My Tickets</div>
+        <div class="stat-value">{{ stats.my_tasks|default:0 }}</div>
+        <div class="stat-meta">Created by you</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if is_admin and is_delete_mode %}
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;
+            background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--r-lg);
+            margin-bottom:16px;font-size:13px;color:#991B1B;">
+  <span><i class="fas fa-trash-alt me-2"></i><strong>Delete Mode:</strong> click ticket delete icon to permanently remove a ticket.</span>
+  <a href="{% url 'base' %}" class="btn btn-sm btn-outline-secondary">Exit Delete Mode</a>
+</div>
+{% endif %}
+
+{% if not is_admin_user and user_dashboard_departments|length > 0 %}
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+            padding:12px 16px;background:#ECFEFF;border:1px solid #99F6E4;border-radius:var(--r-lg);
+            margin-bottom:18px;">
+  <div style="display:flex;align-items:center;gap:9px;">
+    <span class="ai-badge" style="background:{% if selected_department %}{{ selected_department.color|default:'#0F766E' }}{% else %}#0F766E{% endif %};">
+      <i class="{% if selected_department %}{{ selected_department.icon|default:'fas fa-building' }}{% else %}fas fa-layer-group{% endif %}"></i>
+      {% if selected_department %}
+        {{ selected_department.code }}
+      {% else %}
+        Departments
+      {% endif %}
+    </span>
+    <span style="font-size:13px;color:var(--slate-700);font-weight:600;">
+      {% if user_dashboard_departments|length > 1 %}
+      Showing tickets for <strong>{{ user_department_names }}</strong>
+      {% else %}
+      Showing tickets for <strong>{{ user_department_names }}</strong> only
+      {% endif %}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+<div style="display:flex;align-items:center;gap:10px;padding:11px 16px;
+            background:linear-gradient(90deg,#EEF2FF,#F5F3FF);
+            border:1px solid #C7D2FE;border-radius:var(--r-lg);
+            margin-bottom:20px;font-size:13px;color:var(--slate-700);">
+  <span class="ai-badge"><i class="fas fa-robot"></i> AI Engine</span>
+  <span>Tickets are automatically classified and routed to departments based on content.
+        Admins are assigned by <strong>workload balancing</strong>.</span>
+</div>
+
+<div class="qs-pills">
+  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=" class="qs-pill {% if not request.GET.status and not is_mine_only_filter %}active{% endif %}">
+    All Tickets
+  </a>
+  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=Open" class="qs-pill {% if request.GET.status == 'Open' and not is_mine_only_filter %}active{% endif %}">
+    <span class="qs-dot" style="background:#3B82F6;"></span>Open
+  </a>
+  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=In Progress" class="qs-pill {% if request.GET.status == 'In Progress' and not is_mine_only_filter %}active{% endif %}">
+    <span class="qs-dot" style="background:#D97706;"></span>In Progress
+  </a>
+  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=Resolved" class="qs-pill {% if request.GET.status == 'Resolved' and not is_mine_only_filter %}active{% endif %}">
+    <span class="qs-dot" style="background:#059669;"></span>Resolved
+  </a>
+  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=Closed" class="qs-pill {% if request.GET.status == 'Closed' and not is_mine_only_filter %}active{% endif %}">
+    <span class="qs-dot" style="background:#64748B;"></span>Closed
+  </a>
+  {% if not is_admin %}
+  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}mine_only=1" class="qs-pill {% if is_mine_only_filter %}active{% endif %}">
+    <i class="fas fa-user" style="font-size:10px;"></i>Mine Only
+  </a>
+  {% endif %}
+</div>
+
+<div class="hd-card">
+
+  <div class="hd-card-header">
+    <div class="hd-card-title">
+      <i class="fas fa-ticket-alt" style="color:var(--brand);"></i>
+      {% if is_created_view %}
+        Created Tickets
+      {% elif selected_department %}
+        {{ selected_department.name }} Tickets
+      {% else %}
+        All Tickets
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+      {% if is_admin %}
+      <a href="{% url 'base' %}?mode={% if is_delete_mode %}view{% else %}delete{% endif %}" class="btn btn-sm btn-outline-danger">
+        <i class="fas fa-trash-alt me-1"></i>{% if is_delete_mode %}Stop Delete{% else %}Delete Tickets{% endif %}
+      </a>
+      {% endif %}
+      {% if not is_admin %}
+      <a href="{% url 'taskdetail' %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-plus me-1"></i>New Ticket
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="GET" class="filter-bar" id="filterForm">
+    {% if is_created_view %}
+      <input type="hidden" name="view" value="created">
+    {% endif %}
+    {% if is_mine_only_filter %}
+      <input type="hidden" name="mine_only" value="1">
+    {% endif %}
+    {% if filter_form %}
+      {% if filter_form.search %}
+      <div style="position:relative;flex:1;min-width:200px;">
+        <i class="fas fa-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);
+           color:var(--slate-400);font-size:12px;pointer-events:none;"></i>
+        <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+               class="form-control" placeholder="Search tickets…"
+               style="padding-left:32px;"
+               oninput="debounceFilter()">
+      </div>
+      {% endif %}
+      {% if filter_form.status %}
+        <select name="status" class="form-select" onchange="this.form.submit()">
+          <option value="">All Statuses</option>
+          {% for val, label in filter_form.status.field.choices %}
+            {% if val %}<option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>{% endif %}
+          {% endfor %}
+        </select>
+      {% endif %}
+      {% if filter_form.priority %}
+        <select name="priority" class="form-select" onchange="this.form.submit()">
+          <option value="">All Priorities</option>
+          {% for val, label in filter_form.priority.field.choices %}
+            {% if val %}<option value="{{ val }}" {% if request.GET.priority == val %}selected{% endif %}>{{ label }}</option>{% endif %}
+          {% endfor %}
+        </select>
+      {% endif %}
+      {% if filter_form.department %}
+        <select name="department" class="form-select" onchange="this.form.submit()">
+          <option value="">All Departments</option>
+          {% for opt in filter_form.department.field.queryset %}
+            <option value="{{ opt.id }}" {% if request.GET.department == opt.id|stringformat:"s" %}selected{% endif %}>{{ opt.name }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+    {% endif %}
+    <button type="submit" class="btn btn-primary">
+      <i class="fas fa-filter me-1"></i>Filter
+    </button>
+    {% if request.GET %}
+    <a href="{% if is_created_view %}{{ created_tickets_url }}{% else %}{{ current_base_url }}{% endif %}" class="btn btn-outline-secondary">
+      <i class="fas fa-times me-1"></i>Clear
+    </a>
+    {% endif %}
+  </form>
+
+  <div class="ticket-row-head {% if is_admin and is_delete_mode %}delete-mode{% endif %}">
+    <div>#</div>
+    <div>Ticket</div>
+    <div>Department</div>
+    <div>Status</div>
+    <div>Priority</div>
+    <div>Due</div>
+    <div>Assigned To</div>
+    {% if is_admin and is_delete_mode %}<div>Action</div>{% endif %}
+  </div>
+
+  {% if Taskdatas %}
+    {% for task in Taskdatas %}
+    <div class="ticket-row {% if is_admin and is_delete_mode %}delete-mode{% endif %}">
+
+      <div class="ticket-id">#{{ task.id }}</div>
+
+      <div>
+        <div class="ticket-title">
+          <a href="{% url 'taskinfo' task.id %}{% if is_mine_only_filter %}?mine_only=1{% endif %}">{{ task.TASK_TITLE }}</a>
+        </div>
+        <div class="ticket-sub">
+          by {{ task.TASK_CREATED.username }}
+          {% if task.assignment_type == 'AUTO_AI' or task.assignment_type == 'AUTO_ML' %}
+            &nbsp;<span class="ai-badge" style="font-size:9.5px;padding:1px 6px;"><i class="fas fa-robot"></i> AI</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        {% if task.assigned_department %}
+        <div class="dept-label"
+             style="background:{{ task.assigned_department.color|default:'#4F46E5' }}18;
+                    color:{{ task.assigned_department.color|default:'#4F46E5' }};">
+          <i class="{{ task.assigned_department.icon|default:'fas fa-building' }}" style="font-size:10px;"></i>
+          {{ task.assigned_department.name }}
+        </div>
+        {% else %}
+        <span style="font-size:12px;color:var(--slate-400);">Unassigned</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <span class="status-badge
+          {% if task.TASK_STATUS == 'Open'         %}sb-open
+          {% elif task.TASK_STATUS == 'In Progress'%}sb-progress
+          {% elif task.TASK_STATUS == 'Closed'     %}sb-closed
+          {% elif task.TASK_STATUS == 'Resolved'   %}sb-resolved
+          {% elif task.TASK_STATUS == 'Reopen'     %}sb-reopen
+          {% else %}sb-expired{% endif %}">
+          {{ task.TASK_STATUS }}
+        </span>
+      </div>
+
+      <div>
+        {% if task.priority %}
+        <span class="priority-badge
+          {% if task.priority == 'LOW' %}pb-low
+          {% elif task.priority == 'MEDIUM' %}pb-medium
+          {% elif task.priority == 'HIGH' %}pb-high
+          {% else %}pb-urgent{% endif %}">
+          {{ task.get_priority_display }}
+        </span>
+        {% else %}
+        <span style="color:var(--slate-400);font-size:12px;">—</span>
+        {% endif %}
+      </div>
+
+      <div style="font-size:12.5px;
+                  {% if task.is_overdue %}color:var(--danger);font-weight:700;{% else %}color:var(--slate-500);{% endif %}">
+        {{ task.TASK_DUE_DATE|date:"M d" }}
+        {% if task.is_overdue %}<i class="fas fa-exclamation-circle ms-1" style="font-size:10px;"></i>{% endif %}
+      </div>
+
+      <div style="font-size:12.5px;color:var(--slate-600);">
+        {% if task.assigned_to %}
+          <div class="d-flex align-items-center gap-6px">
+            <div class="hd-avatar" style="width:22px;height:22px;font-size:10px;flex-shrink:0;">
+              {{ task.assigned_to.username|first|upper }}
+            </div>
+            {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+          </div>
+        {% else %}
+          <span style="color:var(--slate-300);">—</span>
+        {% endif %}
+      </div>
+
+      {% if is_admin and is_delete_mode %}
+      <div>
+        <a href="{% url 'deletetask' task.id %}"
+           class="btn btn-sm btn-outline-danger"
+           onclick="return confirm('Delete ticket #{{ task.id }} permanently?');">
+          <i class="fas fa-trash"></i>
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+
+    {% if Taskdatas.has_other_pages %}
+    <div class="hd-card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <span style="font-size:12.5px;color:var(--slate-500);">
+        Page {{ Taskdatas.number }} of {{ Taskdatas.paginator.num_pages }}
+        &nbsp;·&nbsp; {{ Taskdatas.paginator.count }} ticket{{ Taskdatas.paginator.count|pluralize }}
+      </span>
+      <nav class="hd-pager">
+        {% if Taskdatas.has_previous %}
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page=1" class="hd-page"><i class="fas fa-angle-double-left" style="font-size:11px;"></i></a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Taskdatas.previous_page_number }}" class="hd-page"><i class="fas fa-angle-left" style="font-size:11px;"></i></a>
+        {% endif %}
+        <span class="hd-page active">{{ Taskdatas.number }}</span>
+        {% if Taskdatas.has_next %}
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Taskdatas.next_page_number }}" class="hd-page"><i class="fas fa-angle-right" style="font-size:11px;"></i></a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Taskdatas.paginator.num_pages }}" class="hd-page"><i class="fas fa-angle-double-right" style="font-size:11px;"></i></a>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon"><i class="fas fa-ticket-alt"></i></div>
+      <div class="empty-title">No tickets found</div>
+      <div class="empty-text">
+        {% if request.GET %}
+          Try adjusting your filters, or <a href="{% if is_created_view %}{{ created_tickets_url }}{% else %}{{ current_base_url }}{% endif %}" style="color:var(--brand);">clear all filters</a>.
+        {% else %}
+          No tickets have been submitted yet. Be the first!
+        {% endif %}
+      </div>
+      {% if not is_admin %}
+      <a href="{% url 'taskdetail' %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-plus me-1"></i>Submit New Ticket
+      </a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let searchTimer;
+  function debounceFilter() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      document.getElementById('filterForm').submit();
+    }, 450);
+  }
+</script>
+{% endblock %}

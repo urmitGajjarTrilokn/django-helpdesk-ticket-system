@@ -1,0 +1,195 @@
+{% extends "Base.html" %}
+{% block title %}Department Management - HelpDesk{% endblock %}
+
+{% block breadcrumb %}
+  <strong>Department Management</strong>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .adm-hero {
+    position: relative;
+    min-height: 110px;
+    border-bottom: 1px solid var(--slate-200);
+    background: linear-gradient(135deg, rgba(15,23,42,.56) 0%, rgba(30,41,100,.42) 100%);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+  }
+  .adm-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(15,23,42,.55) 0%, rgba(30,41,100,.35) 100%);
+    pointer-events: none;
+  }
+  .adm-hero-title {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+  }
+
+  .adm-user {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .adm-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #E2E8F0; color: #334155;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; overflow: hidden; flex-shrink: 0;
+    border: 1px solid #CBD5E1;
+  }
+  .adm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  {% for item in dept_data %}
+  <div class="col-12 col-xl-6">
+    <div class="hd-card h-100 adm-dept-card"
+         data-dept-name="{{ item.department.name|lower|escapejs }}"
+         data-dept-code="{{ item.department.code|lower|escapejs }}">
+      <div class="adm-hero">
+        <div class="adm-hero-title">
+          <i class="{{ item.department.icon }}" style="color:{{ item.department.color }};"></i>
+          {{ item.department.name }}
+        </div>
+      </div>
+      <div class="hd-card-body">
+        <div class="row g-2 mb-3">
+          <div class="col-4"><div class="stat-card"><div><div class="stat-label">Total</div><div class="stat-value">{{ item.total }}</div></div></div></div>
+          <div class="col-4"><div class="stat-card"><div><div class="stat-label">Open</div><div class="stat-value">{{ item.open }}</div></div></div></div>
+          <div class="col-4"><div class="stat-card"><div><div class="stat-label">Resolved</div><div class="stat-value">{{ item.resolved }}</div></div></div></div>
+        </div>
+
+        <form method="post" action="{% url 'admin_add_member' item.department.id %}" class="row g-2 mb-3 js-admin-member-form" novalidate>
+          {% csrf_token %}
+          <div class="col-12 col-md-6">
+            <select name="user_id" class="form-select" required>
+              <option value="">Select User</option>
+              {% for u in all_users %}
+              <option value="{{ u.id }}">{{ u.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-8 col-md-4">
+            <select name="role" class="form-select">
+              <option value="MEMBER">Member</option>
+              <option value="LEAD">Lead</option>
+              <option value="MANAGER">Manager</option>
+              <option value="HEAD">Head</option>
+            </select>
+          </div>
+          <div class="col-4 col-md-2">
+            <button class="btn btn-primary w-100" type="submit">Add</button>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="hd-table">
+            <thead>
+              <tr><th>User</th><th>Role</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for m in item.members %}
+              <tr>
+                <td>
+                  <div class="adm-user">
+                    <div class="adm-avatar">
+                      {% if m.user.userprofile.Profile_Image %}
+                        <img src="{{ m.user.userprofile.Profile_Image.url }}" alt="{{ m.user.username }}">
+                      {% else %}
+                        {{ m.user.username|first|upper }}
+                      {% endif %}
+                    </div>
+                    <span>{{ m.user.username }}</span>
+                  </div>
+                </td>
+                <td>{{ m.get_role_display }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-danger" href="{% url 'admin_remove_member' item.department.id m.user.id %}">Remove</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-muted py-3">No members.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const deptBackgrounds = {
+      hr: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80',
+      'human resources': 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80',
+      it: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1400&q=80',
+      'information technology': 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1400&q=80',
+      finance: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1400&q=80',
+      accounting: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1400&q=80',
+      operations: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1400&q=80',
+      support: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1400&q=80',
+      'customer support': 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1400&q=80',
+      management: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80',
+      manager: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80',
+    };
+    const fallbackBg = 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1400&q=80';
+
+    document.querySelectorAll('.adm-dept-card').forEach(card => {
+      const hero = card.querySelector('.adm-hero');
+      if (!hero) return;
+
+      const deptName = (card.getAttribute('data-dept-name') || '').trim();
+      const deptCode = (card.getAttribute('data-dept-code') || '').trim();
+
+      let bg = deptBackgrounds[deptName] || deptBackgrounds[deptCode] || '';
+      if (!bg) {
+        for (const key of Object.keys(deptBackgrounds)) {
+          if (deptName.includes(key) || key.includes(deptName)) {
+            bg = deptBackgrounds[key];
+            break;
+          }
+        }
+      }
+      hero.style.backgroundImage =
+        `linear-gradient(135deg, rgba(15,23,42,.56) 0%, rgba(30,41,100,.42) 100%), url('${bg || fallbackBg}')`;
+    });
+
+    document.querySelectorAll('.js-admin-member-form').forEach(form => {
+      const userSelect = form.querySelector('select[name="user_id"]');
+      if (!userSelect) return;
+
+      form.addEventListener('submit', function (e) {
+        const existing = form.querySelector('.js-invalid-feedback');
+        if (existing) existing.remove();
+        userSelect.classList.remove('is-invalid');
+
+        if (!userSelect.value) {
+          e.preventDefault();
+          userSelect.classList.add('is-invalid');
+          const err = document.createElement('div');
+          err.className = 'js-invalid-feedback';
+          err.textContent = 'Please select a user to add.';
+          userSelect.insertAdjacentElement('afterend', err);
+          userSelect.focus();
+        }
+      });
+    });
+  })();
+</script>
+{% endblock %}

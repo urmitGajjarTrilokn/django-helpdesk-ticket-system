@@ -1,0 +1,70 @@
+{% extends "Base.html" %}
+{% block title %}Status Charts - HelpDesk{% endblock %}
+
+{% block breadcrumb %}
+  <strong>Status Charts</strong>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .charts-wrap {
+    width: 100%;
+  }
+  .chart-shell {
+    border: 1px solid var(--slate-100);
+    border-radius: 12px;
+    padding: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    min-height: 430px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .chart-shell img {
+    width: 100%;
+    max-width: 1250px;
+    height: auto;
+    border-radius: 8px;
+  }
+  .chart-caption {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--slate-500);
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% now "U" as chart_ts %}
+<div class="charts-wrap">
+  <div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="hd-card">
+      <div class="hd-card-header">
+        <div class="hd-card-title"><i class="fas fa-chart-pie" style="color:var(--brand);"></i> Status Distribution</div>
+      </div>
+      <div class="hd-card-body text-center">
+        <div class="chart-shell">
+          <img src="{% url 'dashboard_pie' %}?v={{ chart_ts }}" alt="Task status pie chart">
+        </div>
+        <div class="chart-caption">Quick share of current task statuses.</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-6">
+    <div class="hd-card">
+      <div class="hd-card-header">
+        <div class="hd-card-title"><i class="fas fa-chart-bar" style="color:var(--brand);"></i> Status Count</div>
+      </div>
+      <div class="hd-card-body text-center">
+        <div class="chart-shell">
+          <img src="{% url 'bar_chart' %}?v={{ chart_ts }}" alt="Task status bar chart">
+        </div>
+        <div class="chart-caption">Status counts for quick comparison.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
