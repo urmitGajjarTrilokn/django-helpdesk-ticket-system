@@ -1053,15 +1053,34 @@ def MyCarts(request):
             )
             .order_by('task_id', '-changed_at')
         )
-        latest_by_task = {}
+        latest_reopened_history = (
+            TaskHistory.objects.filter(
+                task_id__in=cart_task_ids,
+                action_type='REOPENED',
+            )
+            .order_by('task_id', '-changed_at')
+        )
+
+        latest_assigned_by_task = {}
         for row in latest_assigned_history:
-            if row.task_id not in latest_by_task:
-                latest_by_task[row.task_id] = row
-        for task_id, row in latest_by_task.items():
+            if row.task_id not in latest_assigned_by_task:
+                latest_assigned_by_task[row.task_id] = row
+
+        latest_reopened_by_task = {}
+        for row in latest_reopened_history:
+            if row.task_id not in latest_reopened_by_task:
+                latest_reopened_by_task[row.task_id] = row
+
+        for task_id, assigned_row in latest_assigned_by_task.items():
+            reopened_row = latest_reopened_by_task.get(task_id)
+            was_reopened_after_assignment = (
+                reopened_row is not None and reopened_row.changed_at > assigned_row.changed_at
+            )
             if (
-                row.new_value == request.user.username
-                and row.description
-                and 'Auto-assigned to' in row.description
+                assigned_row.new_value == request.user.username
+                and assigned_row.description
+                and 'Auto-assigned to' in assigned_row.description
+                and not was_reopened_after_assignment
             ):
                 non_rejectable_task_ids.add(task_id)
 
