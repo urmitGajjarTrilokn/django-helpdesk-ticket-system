@@ -160,7 +160,7 @@
           <a href="{% url 'updatetask' taskinfos.id %}?mine_only=1" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-edit me-1"></i>Edit
           </a>
-          {% elif can_edit_task and not request.GET.from_assigned %}
+          {% elif can_edit_task and not request.GET.from_assigned and not is_admin %}
           <a href="{% url 'updatetask' taskinfos.id %}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-edit me-1"></i>Edit
           </a>
