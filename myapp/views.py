@@ -47,7 +47,7 @@ from .notifications import (
     notify_task_commented,
     notify_task_rated,
 )
-from .ai_priority import predict_ticket_priority_with_meta
+from .ai_priority import predict_ticket_priority_with_meta, heuristic_priority_from_text
 from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TaskDetailForm,
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
@@ -521,10 +521,18 @@ def TaskDetails(request):
                         task.priority = predicted_priority
                         task.ai_suggested_priority = predicted_priority
                 else:
+                    prediction = heuristic_priority_from_text(
+                        title=task.TASK_TITLE,
+                        description=task.TASK_DESCRIPTION,
+                    )
                     messages.info(
                         request,
-                        "AI priority limit reached for today (1/day). Please choose priority manually.",
+                        "Daily AI API limit reached; using smart fallback priority prediction.",
                     )
+                predicted_priority = (prediction or {}).get("priority")
+                if predicted_priority:
+                    task.priority = predicted_priority
+                    task.ai_suggested_priority = predicted_priority
             if not task.priority:
                 task.priority = 'MEDIUM'
             if task.assigned_department:

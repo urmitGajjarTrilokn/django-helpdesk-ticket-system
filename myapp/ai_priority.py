@@ -11,6 +11,19 @@ logger = logging.getLogger(__name__)
 
 ALLOWED_PRIORITIES = {"LOW", "MEDIUM", "HIGH", "URGENT"}
 
+URGENT_KEYWORDS = {
+    "outage", "down", "breach", "security incident", "data loss", "critical",
+    "production down", "all users", "cannot login", "payment failed", "payroll blocked",
+}
+HIGH_KEYWORDS = {
+    "blocked", "cannot access", "failed", "error", "urgent", "invoice", "payroll",
+    "database", "latency", "timeout", "customer impact", "major",
+}
+LOW_KEYWORDS = {
+    "typo", "ui issue", "alignment", "cosmetic", "enhancement", "suggestion",
+    "minor", "small", "formatting",
+}
+
 
 def _extract_priority(raw_text: str) -> str | None:
     if not raw_text:
@@ -50,6 +63,35 @@ def _safe_trim(value: str, limit: int) -> str:
     return value[:limit]
 
 
+def heuristic_priority_from_text(title: str, description: str) -> dict:
+    text = f"{title or ''} {description or ''}".lower()
+
+    urgent_hits = sum(1 for kw in URGENT_KEYWORDS if kw in text)
+    high_hits = sum(1 for kw in HIGH_KEYWORDS if kw in text)
+    low_hits = sum(1 for kw in LOW_KEYWORDS if kw in text)
+
+    if urgent_hits >= 1:
+        priority = "URGENT"
+        reason = "Rule-based fallback detected outage/security/business-critical terms."
+    elif high_hits >= 2:
+        priority = "HIGH"
+        reason = "Rule-based fallback detected significant impact/blocking signals."
+    elif low_hits >= 1 and high_hits == 0:
+        priority = "LOW"
+        reason = "Rule-based fallback detected cosmetic/minor request terms."
+    else:
+        priority = "MEDIUM"
+        reason = "Rule-based fallback defaulted to medium impact."
+
+    return {
+        "priority": priority,
+        "reason": reason,
+        "raw_text": "",
+        "model": "heuristic-fallback",
+        "error": "",
+    }
+
+
 def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
     api_key = getattr(settings, "GEMINI_API_KEY", "")
     model = getattr(settings, "GEMINI_MODEL", "gemini-2.0-flash")
@@ -57,13 +99,9 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
     retries = int(getattr(settings, "GEMINI_MAX_RETRIES", 1))
 
     if not api_key:
-        return {
-            "priority": None,
-            "reason": "",
-            "raw_text": "",
-            "model": model,
-            "error": "missing_api_key",
-        }
+        fallback = heuristic_priority_from_text(title, description)
+        fallback["error"] = "missing_api_key"
+        return fallback
 
     title = _safe_trim(title, 200)
     description = _safe_trim(description, 2500)
@@ -86,7 +124,6 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.1,
-            "response_mime_type": "application/json",
         },
     }
 
@@ -112,25 +149,17 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
 
     if result is None:
         logger.warning("Gemini priority prediction failed after retries: %s", last_error)
-        return {
-            "priority": None,
-            "reason": "",
-            "raw_text": "",
-            "model": model,
-            "error": last_error or "prediction_failed",
-        }
+        fallback = heuristic_priority_from_text(title, description)
+        fallback["error"] = last_error or "prediction_failed"
+        return fallback
 
     try:
         text = result["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError, TypeError) as exc:
         logger.warning("Gemini response format unexpected for priority prediction: %s", exc)
-        return {
-            "priority": None,
-            "reason": "",
-            "raw_text": "",
-            "model": model,
-            "error": "invalid_response_format",
-        }
+        fallback = heuristic_priority_from_text(title, description)
+        fallback["error"] = "invalid_response_format"
+        return fallback
 
     return {
         "priority": _extract_priority(text),
