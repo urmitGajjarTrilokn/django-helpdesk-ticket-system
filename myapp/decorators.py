@@ -5,6 +5,29 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import DepartmentMember, Department, TaskDetail
 
+ROLE_PERMISSION_MATRIX = {
+    'MEMBER': {
+        'can_assign_tickets': False,
+        'can_close_tickets': False,
+        'can_delete_tickets': False,
+    },
+    'LEAD': {
+        'can_assign_tickets': True,
+        'can_close_tickets': True,
+        'can_delete_tickets': False,
+    },
+    'MANAGER': {
+        'can_assign_tickets': True,
+        'can_close_tickets': True,
+        'can_delete_tickets': True,
+    },
+    'HEAD': {
+        'can_assign_tickets': True,
+        'can_close_tickets': True,
+        'can_delete_tickets': True,
+    },
+}
+
 
 def is_admin_user(user):
     if not user or not user.is_authenticated:
@@ -33,7 +56,8 @@ def user_has_department_permission(user, department, permission_type):
         member = DepartmentMember.objects.get(
             user=user, department=department, is_active=True
         )
-        return getattr(member, permission_type, False)
+        role_permissions = ROLE_PERMISSION_MATRIX.get(member.role, {})
+        return role_permissions.get(permission_type, False)
     except DepartmentMember.DoesNotExist:
         return False
 

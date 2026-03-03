@@ -1,10 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator
 from django.utils import timezone
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
-from datetime import timedelta
 
 class Department(models.Model):
     name        = models.CharField(max_length=100, unique=True)
@@ -124,32 +122,6 @@ class Category(models.Model):
         return self.name
 
 
-class SLAPolicy(models.Model):
-    name            = models.CharField(max_length=100, unique=True)
-    description     = models.TextField(blank=True)
-    response_time   = models.IntegerField(help_text="Time to first response (hours)",
-                                          validators=[MinValueValidator(1)])
-    resolution_time = models.IntegerField(help_text="Time to resolve (hours)",
-                                          validators=[MinValueValidator(1)])
-    priority = models.CharField(
-        max_length=10,
-        choices=[('LOW','Low'),('MEDIUM','Medium'),('HIGH','High'),('URGENT','Urgent')],
-        null=True, blank=True
-    )
-    department  = models.ForeignKey('Department', on_delete=models.CASCADE,
-                                    null=True, blank=True)
-    is_active   = models.BooleanField(default=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['priority', 'response_time']
-        verbose_name = "SLA Policy"
-        verbose_name_plural = "SLA Policies"
-
-    def __str__(self):
-        return f"{self.name} - Response: {self.response_time}h, Resolution: {self.resolution_time}h"
-
 class TaskDetail(models.Model):
     TASK_TITLE       = models.CharField(max_length=100)
     TASK_CREATED     = models.ForeignKey(User, related_name='CREATED_BY',
@@ -228,20 +200,6 @@ class TaskDetail(models.Model):
                                              null=True, blank=True)
     views_count          = models.IntegerField(default=0)
 
-    sla_policy               = models.ForeignKey(SLAPolicy, on_delete=models.SET_NULL,
-                                                  null=True, blank=True, related_name='tasks')
-    sla_response_deadline    = models.DateTimeField(null=True, blank=True)
-    sla_resolution_deadline  = models.DateTimeField(null=True, blank=True)
-    sla_response_breached    = models.BooleanField(default=False)
-    sla_resolution_breached  = models.BooleanField(default=False)
-    first_response_at        = models.DateTimeField(null=True, blank=True)
-
-    escalation_level   = models.IntegerField(default=0)
-    last_escalated_at  = models.DateTimeField(null=True, blank=True)
-    escalated_to       = models.ForeignKey(User, on_delete=models.SET_NULL,
-                                           null=True, blank=True,
-                                           related_name='escalated_tasks')
-
     class Meta:
         ordering = ['-TASK_CREATED_ON']
         verbose_name = "Task"
@@ -249,66 +207,6 @@ class TaskDetail(models.Model):
 
     def __str__(self):
         return f"#{self.id} - {self.TASK_TITLE}"
-
-    def calculate_sla_deadlines(self):
-        if not self.sla_policy:
-            self.sla_policy = SLAPolicy.objects.filter(
-                priority=self.priority, department=self.assigned_department, is_active=True
-            ).first() or SLAPolicy.objects.filter(
-                priority=self.priority, department__isnull=True, is_active=True
-            ).first() or SLAPolicy.objects.filter(
-                priority__isnull=True, department__isnull=True, is_active=True
-            ).first()
-
-        if self.sla_policy and self.TASK_CREATED_ON:
-            if isinstance(self.TASK_CREATED_ON, timezone.datetime):
-                created = self.TASK_CREATED_ON
-            else:
-                created = timezone.make_aware(
-                    timezone.datetime.combine(self.TASK_CREATED_ON, timezone.datetime.min.time())
-                )
-            self.sla_response_deadline   = created + timedelta(hours=self.sla_policy.response_time)
-            self.sla_resolution_deadline = created + timedelta(hours=self.sla_policy.resolution_time)
-            self.save(update_fields=['sla_policy', 'sla_response_deadline', 'sla_resolution_deadline'])
-
-    def check_sla_breach(self):
-        now = timezone.now()
-        if not self.first_response_at and self.sla_response_deadline:
-            if now > self.sla_response_deadline:
-                self.sla_response_breached = True
-        if self.TASK_STATUS in ['Open', 'In Progress', 'Reopen'] and self.sla_resolution_deadline:
-            if now > self.sla_resolution_deadline:
-                self.sla_resolution_breached = True
-        if self.sla_response_breached or self.sla_resolution_breached:
-            self.save(update_fields=['sla_response_breached', 'sla_resolution_breached'])
-            return True
-        return False
-
-    @property
-    def sla_status(self):
-        if not self.sla_resolution_deadline:
-            return 'No SLA'
-        if self.sla_resolution_breached:
-            return 'Breached'
-        now = timezone.now()
-        hours_remaining = (self.sla_resolution_deadline - now).total_seconds() / 3600
-        if hours_remaining < 0:   return 'Breached'
-        if hours_remaining < 2:   return 'Critical'
-        if hours_remaining < 4:   return 'Warning'
-        return 'On Track'
-
-    @property
-    def sla_time_remaining(self):
-        if not self.sla_resolution_deadline:
-            return None
-        delta = self.sla_resolution_deadline - timezone.now()
-        if delta.total_seconds() < 0:
-            return "Overdue"
-        hours   = int(delta.total_seconds() / 3600)
-        minutes = int((delta.total_seconds() % 3600) / 60)
-        if hours > 24:
-            return f"{hours // 24}d {hours % 24}h"
-        return f"{hours}h {minutes}m"
 
     @property
     def is_overdue(self):
@@ -359,8 +257,8 @@ class ActivityLog(models.Model):
         ('CREATED',    'Ticket Created'),
         ('ASSIGNED',   'Ticket Assigned'),
         ('RESOLVED',   'Ticket Resolved'),
+        ('DELETED',    'Ticket Deleted'),
         ('COMMENTED',  'Comment Added'),
-        ('ESCALATED',  'Ticket Escalated'),
         ('REOPENED',   'Ticket Reopened'),
         ('CLOSED',     'Ticket Closed'),
         ('UPDATED',    'Ticket Updated'),
@@ -401,8 +299,8 @@ class ActivityLog(models.Model):
             'CREATED':   'fas fa-plus-circle',
             'ASSIGNED':  'fas fa-user-check',
             'RESOLVED':  'fas fa-check-circle',
+            'DELETED':   'fas fa-trash-alt',
             'COMMENTED': 'fas fa-comment',
-            'ESCALATED': 'fas fa-arrow-up',
             'REOPENED':  'fas fa-redo',
             'CLOSED':    'fas fa-times-circle',
             'UPDATED':   'fas fa-edit',
@@ -417,8 +315,8 @@ class ActivityLog(models.Model):
             'CREATED':   '#4F46E5',
             'ASSIGNED':  '#0EA5E9',
             'RESOLVED':  '#10B981',
+            'DELETED':   '#EF4444',
             'COMMENTED': '#6366F1',
-            'ESCALATED': '#EF4444',
             'REOPENED':  '#F59E0B',
             'CLOSED':    '#64748B',
             'UPDATED':   '#8B5CF6',
@@ -586,60 +484,6 @@ class AIMLLog(models.Model):
     def __str__(self):
         return f"{self.log_type} - Task #{self.task.id}"
 
-class EscalationRule(models.Model):
-    name         = models.CharField(max_length=100)
-    description  = models.TextField(blank=True)
-    trigger_type = models.CharField(max_length=20, choices=[
-        ('SLA_BREACH',    'SLA Breach'),
-        ('TIME_BASED',    'Time Based'),
-        ('STATUS_BASED',  'Status Based'),
-        ('PRIORITY_BASED','Priority Based'),
-    ], default='SLA_BREACH')
-    hours_threshold  = models.IntegerField(null=True, blank=True)
-    priority         = models.CharField(max_length=10, choices=[
-        ('LOW','Low'),('MEDIUM','Medium'),('HIGH','High'),('URGENT','Urgent'),
-    ], null=True, blank=True)
-    department       = models.ForeignKey('Department', on_delete=models.CASCADE,
-                                         null=True, blank=True)
-    escalate_to_role = models.CharField(max_length=20, choices=[
-        ('LEAD','Team Lead'),('MANAGER','Manager'),('HEAD','Department Head'),
-    ], default='LEAD')
-    send_notification = models.BooleanField(default=True)
-    is_active         = models.BooleanField(default=True)
-    created_at        = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['priority', '-hours_threshold']
-        verbose_name = "Escalation Rule"
-        verbose_name_plural = "Escalation Rules"
-
-    def __str__(self):
-        return f"{self.name} - {self.get_trigger_type_display()}"
-
-
-class TaskEscalation(models.Model):
-    task             = models.ForeignKey('TaskDetail', on_delete=models.CASCADE,
-                                         related_name='escalations')
-    escalation_level = models.IntegerField()
-    escalated_from   = models.ForeignKey(User, on_delete=models.SET_NULL,
-                                         null=True, related_name='escalations_from')
-    escalated_to     = models.ForeignKey(User, on_delete=models.SET_NULL,
-                                         null=True, related_name='escalations_to')
-    reason           = models.CharField(max_length=200)
-    escalation_rule  = models.ForeignKey(EscalationRule, on_delete=models.SET_NULL,
-                                         null=True, blank=True)
-    is_auto_escalated = models.BooleanField(default=True)
-    escalated_at      = models.DateTimeField(auto_now_add=True)
-    notes             = models.TextField(blank=True)
-
-    class Meta:
-        ordering = ['-escalated_at']
-        verbose_name = "Task Escalation"
-        verbose_name_plural = "Task Escalations"
-
-    def __str__(self):
-        return f"Task #{self.task.id} - Level {self.escalation_level}"
-
 class TaskHistory(models.Model):
     task       = models.ForeignKey('TaskDetail', on_delete=models.CASCADE,
                                    related_name='history')
@@ -651,8 +495,8 @@ class TaskHistory(models.Model):
         ('STATUS_CHANGED',   'Status Changed'),
         ('PRIORITY_CHANGED', 'Priority Changed'),
         ('COMMENTED',        'Commented'),
-        ('ESCALATED',        'Escalated'),
-        ('SLA_BREACHED',     'SLA Breached'),
+        ('REJECTED',         'Rejected'),
+        ('DELETED',          'Deleted'),
         ('CLOSED',           'Closed'),
         ('REOPENED',         'Reopened'),
     ])
@@ -744,7 +588,7 @@ def create_default_departments(sender, **kwargs):
          'description':'Handles employee relations, payroll and HR policies',
          'email':'hr@helpdesk.com'},
         {'name':'Manager',          'code':'MGR', 'color':'#6366f1','icon':'fas fa-user-tie',
-         'description':'Handles management-level approvals and escalations',
+         'description':'Handles management-level approvals and oversight',
          'email':'manager@helpdesk.com'},
         {'name':'Customer Support', 'code':'CS',  'color':'#06b6d4','icon':'fas fa-headset',
          'description':'Handles customer queries, complaints and general support',

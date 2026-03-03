@@ -6,4 +6,5 @@ class MyappConfig(AppConfig):
     verbose_name       = "Helpdesk Management System"
 
     def ready(self):
-        import myapp.models  
+        import myapp.models
+        import myapp.checks

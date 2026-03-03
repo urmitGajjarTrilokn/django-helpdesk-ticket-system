@@ -12,6 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
 from django.urls import reverse
 from datetime import datetime, time
+import json
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -21,13 +22,15 @@ import io
 from .models import (
     UserProfile, TaskDetail, MyCart, ActivityLog,
     UserComment, Category, Notification, Department, DepartmentMember,
-    TaskHistory, TaskRating,
+    TaskHistory, TaskRating, AIMLLog,
     CannedResponse,
 )
 from .decorators import (
     department_member_required,
     admin_required,
     LoginRoleAuthorization,
+    ROLE_PERMISSION_MATRIX,
+    user_has_department_permission,
 )
 from .analytics import (
     get_date_range, get_task_statistics, get_tasks_over_time,
@@ -43,6 +46,7 @@ from .notifications import (
     notify_task_commented,
     notify_task_rated,
 )
+from .ai_priority import predict_ticket_priority_with_meta
 from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TaskDetailForm,
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
@@ -56,6 +60,52 @@ def log_activity(user, action, title, description='', task=None, old_value='', n
         title=title, description=description,
         old_value=old_value, new_value=new_value,
     )
+
+
+def _log_priority_prediction(task, prediction: dict):
+    priority = (prediction or {}).get("priority")
+    if not priority:
+        return
+
+    AIMLLog.objects.create(
+        task=task,
+        log_type='PRIORITY',
+        input_data=json.dumps({
+            "title": task.TASK_TITLE,
+            "description": task.TASK_DESCRIPTION,
+        }),
+        output_data=json.dumps({
+            "priority": priority,
+            "reason": (prediction or {}).get("reason", ""),
+            "model": (prediction or {}).get("model", ""),
+            "error": (prediction or {}).get("error", ""),
+        }),
+        confidence=None,
+        was_correct=None,
+    )
+
+
+def _record_priority_feedback(task, selected_priority, user):
+    suggested = (task.ai_suggested_priority or '').strip().upper()
+    selected = (selected_priority or '').strip().upper()
+    if not suggested or not selected:
+        return
+
+    latest_log = AIMLLog.objects.filter(task=task, log_type='PRIORITY').order_by('-created_at').first()
+    if not latest_log:
+        return
+
+    try:
+        output_payload = json.loads(latest_log.output_data or "{}")
+    except json.JSONDecodeError:
+        output_payload = {}
+
+    output_payload["user_selected_priority"] = selected
+    output_payload["suggested_priority"] = suggested
+    output_payload["feedback_by"] = getattr(user, "username", "")
+    latest_log.output_data = json.dumps(output_payload)
+    latest_log.was_correct = (selected == suggested)
+    latest_log.save(update_fields=['output_data', 'was_correct'])
 
 def _is_admin_user(user):
     """Superuser is the only admin. No role field needed."""
@@ -444,12 +494,24 @@ def TaskDetails(request):
         if form.is_valid():
             task = form.save(commit=False)
             task.TASK_CREATED = request.user
+            prediction = {}
+            if not task.priority:
+                prediction = predict_ticket_priority_with_meta(
+                    title=task.TASK_TITLE,
+                    description=task.TASK_DESCRIPTION,
+                )
+                predicted_priority = (prediction or {}).get("priority")
+                if predicted_priority:
+                    task.priority = predicted_priority
+                    task.ai_suggested_priority = predicted_priority
             if task.assigned_department:
                 task.assignment_type = 'MANUAL'
                 task.assigned_by     = request.user
                 task.assigned_at     = timezone.now()
             task.save()
             form.save_m2m()
+            if not form.cleaned_data.get('priority'):
+                _log_priority_prediction(task, prediction)
 
             TaskHistory.objects.create(
                 task=task, changed_by=request.user,
@@ -671,6 +733,8 @@ def updatetask(request, pk):
 
             updated_task.save()
             form.save_m2m()
+            if 'priority' in changed_fields:
+                _record_priority_feedback(updated_task, form.cleaned_data.get('priority'), request.user)
 
             if 'assigned_department' in changed_fields and old_department and old_department != updated_task.assigned_department:
                 old_member_ids = DepartmentMember.objects.filter(
@@ -740,6 +804,8 @@ def updatetask(request, pk):
 
             updated_task.save()
             form.save_m2m()
+            if 'priority' in changed_fields:
+                _record_priority_feedback(updated_task, form.cleaned_data.get('priority'), request.user)
 
             if 'assigned_to' in changed_fields and updated_task.assigned_to:
                 MyCart.objects.get_or_create(user=updated_task.assigned_to, task=updated_task)
@@ -783,7 +849,10 @@ def updatetask(request, pk):
 @login_required
 def deletetask(request, pk):
     task = get_object_or_404(TaskDetail, id=pk)
-    if task.TASK_CREATED != request.user and not request.user.is_superuser:
+    can_delete_by_role = user_has_department_permission(
+        request.user, task.assigned_department, 'can_delete_tickets'
+    )
+    if task.TASK_CREATED != request.user and not request.user.is_superuser and not can_delete_by_role:
         messages.error(request, 'You do not have permission to delete this task.')
         return redirect('base')
 
@@ -942,8 +1011,12 @@ def CloseTask(request, pk):
     if not _can_work_on_task(request.user, task):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('taskinfo', pk=pk)
-    if not MyCart.objects.filter(task=task, user=request.user).exists() and task.assigned_to_id != request.user.id:
-        messages.error(request, "Only the assigned department handler can close this ticket.")
+    can_close_by_role = user_has_department_permission(
+        request.user, task.assigned_department, 'can_close_tickets'
+    )
+    is_assigned_handler = task.assigned_to_id == request.user.id
+    if not is_assigned_handler and not can_close_by_role:
+        messages.error(request, "Your role cannot close this ticket.")
         return redirect('taskinfo', pk=pk)
     task.assigned_to = request.user
     task.TASK_STATUS   = 'Closed'
@@ -1889,19 +1962,22 @@ def admin_add_member(request, dept_id):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         role    = request.POST.get('role', 'MEMBER')
+        if role not in ROLE_PERMISSION_MATRIX:
+            role = 'MEMBER'
         try:
             user = User.objects.get(id=user_id)
             if user.is_superuser:
                 messages.error(request, 'Admin users cannot be added to departments.')
                 return redirect('admin_department_list')
+            role_permissions = ROLE_PERMISSION_MATRIX.get(role, ROLE_PERMISSION_MATRIX['MEMBER'])
             membership, created = DepartmentMember.objects.get_or_create(
                 user=user, department=department,
                 defaults={
                     'role':               role,
                     'added_by':           request.user,
-                    'can_close_tickets':  True,
-                    'can_assign_tickets': role in ['LEAD', 'MANAGER', 'HEAD'],
-                    'can_delete_tickets': role in ['MANAGER', 'HEAD'],
+                    'can_close_tickets':  role_permissions['can_close_tickets'],
+                    'can_assign_tickets': role_permissions['can_assign_tickets'],
+                    'can_delete_tickets': role_permissions['can_delete_tickets'],
                 }
             )
             status_message = ''
@@ -1911,7 +1987,13 @@ def admin_add_member(request, dept_id):
                 role_changed = membership.role != role
                 membership.role = role
                 membership.is_active = True
-                membership.save(update_fields=['role', 'is_active'])
+                membership.can_close_tickets = role_permissions['can_close_tickets']
+                membership.can_assign_tickets = role_permissions['can_assign_tickets']
+                membership.can_delete_tickets = role_permissions['can_delete_tickets']
+                membership.save(update_fields=[
+                    'role', 'is_active',
+                    'can_close_tickets', 'can_assign_tickets', 'can_delete_tickets',
+                ])
                 if was_active and not role_changed:
                     status_message = f'{user.username} is already in {department.name}.'
                     already_active_unchanged = True

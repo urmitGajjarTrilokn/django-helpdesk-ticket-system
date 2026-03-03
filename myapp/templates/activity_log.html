@@ -128,7 +128,6 @@
              {% if act.action == 'CREATED'          %}var(--brand)
              {% elif act.action == 'RESOLVED'        %}var(--success)
              {% elif act.action == 'CLOSED'          %}var(--slate-500)
-             {% elif act.action == 'ESCALATED'       %}var(--danger)
              {% elif act.action == 'COMMENTED'       %}var(--brand)
              {% elif act.action == 'ASSIGNED'        %}#7C3AED
              {% elif act.action == 'REOPENED'        %}var(--warning)
@@ -137,7 +136,6 @@
           {% if act.action == 'CREATED'          %}fa-plus
           {% elif act.action == 'RESOLVED'        %}fa-check
           {% elif act.action == 'CLOSED'          %}fa-times
-          {% elif act.action == 'ESCALATED'       %}fa-arrow-up
           {% elif act.action == 'COMMENTED'       %}fa-comment
           {% elif act.action == 'ASSIGNED'        %}fa-user-check
           {% elif act.action == 'REOPENED'        %}fa-redo
@@ -170,7 +168,6 @@
                     {% if act.action == 'CREATED'          %}var(--brand-light);color:var(--brand);border:1px solid var(--brand-muted)
                     {% elif act.action == 'RESOLVED'        %}var(--success-bg);color:var(--success);border:1px solid var(--success-border)
                     {% elif act.action == 'CLOSED'          %}var(--slate-100);color:var(--slate-500);border:1px solid var(--slate-200)
-                    {% elif act.action == 'ESCALATED'       %}var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)
                     {% elif act.action == 'COMMENTED'       %}var(--brand-light);color:var(--brand);border:1px solid var(--brand-muted)
                     {% elif act.action == 'REOPENED'        %}var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border)
                     {% else %}var(--slate-100);color:var(--slate-500);border:1px solid var(--slate-200){% endif %};">

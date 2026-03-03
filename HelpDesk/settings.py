@@ -6,12 +6,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-from pathlib import Path
-import os
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-default-key")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or "unsafe-default-key"
 
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
@@ -93,7 +88,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
 
@@ -189,8 +184,10 @@ LOGGING = {
     },
 }
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL = 'claude-sonnet-4-20250514'
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_TIMEOUT_SECONDS = int(os.getenv("GEMINI_TIMEOUT_SECONDS", 10))
+GEMINI_MAX_RETRIES = int(os.getenv("GEMINI_MAX_RETRIES", 1))
 
 ML_MODELS_PATH = BASE_DIR / 'myapp' / 'ml_models' / 'saved_models'
 ML_TRAINING_MIN_SAMPLES = 100 
@@ -202,5 +199,3 @@ ENABLE_DUPLICATE_DETECTION = False
 LOGS_DIR = BASE_DIR / 'logs'
 if not LOGS_DIR.exists():
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
-
-TIME_ZONE = "Asia/Kolkata"

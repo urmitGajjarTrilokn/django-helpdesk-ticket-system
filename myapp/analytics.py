@@ -274,37 +274,6 @@ def get_category_distribution(start_date=None, end_date=None):
         return []
 
 
-def get_sla_compliance(start_date=None, end_date=None):
-    try:
-        tasks = TaskDetail.objects.filter(
-            TASK_STATUS__in=['Closed', 'Resolved'],
-            TASK_DUE_DATE__isnull=False,
-            TASK_CLOSED_ON__isnull=False,
-        )
-        if start_date and end_date:
-            tasks = tasks.filter(TASK_CLOSED_ON__range=[start_date, end_date])
-
-        total = tasks.count()
-        if total == 0:
-            return {'total': 0, 'on_time': 0, 'overdue': 0, 'compliance_rate': 0}
-
-        on_time = overdue = 0
-        for task in tasks:
-            if task.TASK_CLOSED_ON <= task.TASK_DUE_DATE:
-                on_time += 1
-            else:
-                overdue += 1
-
-        return {
-            'total':           total,
-            'on_time':         on_time,
-            'overdue':         overdue,
-            'compliance_rate': round(on_time / total * 100, 2),
-        }
-    except Exception as e:
-        logger.error(f"get_sla_compliance error: {e}")
-        return {'total': 0, 'on_time': 0, 'overdue': 0, 'compliance_rate': 0}
-
 def get_top_active_users(limit=10, start_date=None, end_date=None):
     
     try:
@@ -340,7 +309,6 @@ def prepare_export_data(start_date, end_date, department=None):
             'category_distribution':get_category_distribution(start_date, end_date),
             'top_creators':         get_top_task_creators(10, start_date, end_date),
             'top_resolvers':        get_top_task_resolvers(10, start_date, end_date),
-            'sla_compliance':       get_sla_compliance(start_date, end_date),
         }
     except Exception as e:
         logger.error(f"prepare_export_data error: {e}")

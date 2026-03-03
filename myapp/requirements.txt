@@ -7,6 +7,9 @@
 Django>=4.2,<5.0
 django-crispy-forms>=2.0
 crispy-bootstrap5>=0.7
+django-auto-logout>=0.5.1
+django-import-export>=4.1.1
+python-dotenv>=1.0.1
 
 # ============================================================================
 # DATABASE
