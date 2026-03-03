@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
 from django.urls import reverse
+from django.conf import settings
 from datetime import datetime, time
 import json
 import matplotlib
@@ -106,6 +107,20 @@ def _record_priority_feedback(task, selected_priority, user):
     latest_log.output_data = json.dumps(output_payload)
     latest_log.was_correct = (selected == suggested)
     latest_log.save(update_fields=['output_data', 'was_correct'])
+
+
+def _can_use_ai_priority_today(user):
+    daily_limit = int(getattr(settings, "GEMINI_DAILY_LIMIT_PER_USER", 1))
+    if daily_limit <= 0:
+        return False
+
+    today = timezone.localdate()
+    used_count = AIMLLog.objects.filter(
+        log_type='PRIORITY',
+        task__TASK_CREATED=user,
+        created_at__date=today,
+    ).count()
+    return used_count < daily_limit
 
 def _is_admin_user(user):
     """Superuser is the only admin. No role field needed."""
@@ -496,14 +511,20 @@ def TaskDetails(request):
             task.TASK_CREATED = request.user
             prediction = {}
             if not task.priority:
-                prediction = predict_ticket_priority_with_meta(
-                    title=task.TASK_TITLE,
-                    description=task.TASK_DESCRIPTION,
-                )
-                predicted_priority = (prediction or {}).get("priority")
-                if predicted_priority:
-                    task.priority = predicted_priority
-                    task.ai_suggested_priority = predicted_priority
+                if _can_use_ai_priority_today(request.user):
+                    prediction = predict_ticket_priority_with_meta(
+                        title=task.TASK_TITLE,
+                        description=task.TASK_DESCRIPTION,
+                    )
+                    predicted_priority = (prediction or {}).get("priority")
+                    if predicted_priority:
+                        task.priority = predicted_priority
+                        task.ai_suggested_priority = predicted_priority
+                else:
+                    messages.info(
+                        request,
+                        "AI priority limit reached for today (1/day). Please choose priority manually.",
+                    )
             if task.assigned_department:
                 task.assignment_type = 'MANUAL'
                 task.assigned_by     = request.user

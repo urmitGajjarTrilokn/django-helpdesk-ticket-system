@@ -188,6 +188,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 GEMINI_TIMEOUT_SECONDS = int(os.getenv("GEMINI_TIMEOUT_SECONDS", 10))
 GEMINI_MAX_RETRIES = int(os.getenv("GEMINI_MAX_RETRIES", 1))
+GEMINI_DAILY_LIMIT_PER_USER = int(os.getenv("GEMINI_DAILY_LIMIT_PER_USER", 1))
 
 ML_MODELS_PATH = BASE_DIR / 'myapp' / 'ml_models' / 'saved_models'
 ML_TRAINING_MIN_SAMPLES = 100 
