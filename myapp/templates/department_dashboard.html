@@ -32,7 +32,7 @@
           <td>#{{ t.id }}</td>
           <td><a href="{% url 'taskinfo' t.id %}">{{ t.TASK_TITLE|truncatechars:60 }}</a></td>
           <td>{{ t.TASK_STATUS }}</td>
-          <td>{{ t.priority|default:"-" }}</td>
+          <td>{{ t.effective_priority_display }}</td>
           <td>{{ t.assigned_to.username|default:"Unassigned" }}</td>
           <td>{{ t.TASK_DUE_DATE|date:"M d, Y" }}</td>
         </tr>

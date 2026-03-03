@@ -155,7 +155,7 @@
 
 <div class="row g-3">
   {% for cart in Carts %}
-  <div class="col-12 col-md-6 col-xl-4" data-overdue="{{ cart.task.is_overdue|yesno:'true,false' }}" data-priority="{{ cart.task.priority|lower }}">
+  <div class="col-12 col-md-6 col-xl-4" data-overdue="{{ cart.task.is_overdue|yesno:'true,false' }}" data-priority="{{ cart.task.effective_priority|lower }}">
     <div class="ticket-card">
       <div class="tc-header">
         <div class="d-flex align-items-center gap-2">
@@ -168,13 +168,13 @@
             {{ cart.task.TASK_STATUS }}
           </span>
         </div>
-        {% if cart.task.priority %}
+        {% if cart.task.effective_priority %}
         <span class="priority-badge
-          {% if cart.task.priority == 'LOW' %}pb-low
-          {% elif cart.task.priority == 'MEDIUM' %}pb-medium
-          {% elif cart.task.priority == 'HIGH' %}pb-high
+          {% if cart.task.effective_priority == 'LOW' %}pb-low
+          {% elif cart.task.effective_priority == 'MEDIUM' %}pb-medium
+          {% elif cart.task.effective_priority == 'HIGH' %}pb-high
           {% else %}pb-urgent{% endif %}">
-          {{ cart.task.get_priority_display }}
+          {{ cart.task.effective_priority_display }}
         </span>
         {% endif %}
       </div>

@@ -128,14 +128,14 @@
             {{ taskinfos.TASK_STATUS }}
           </span>
 
-          {% if taskinfos.priority %}
+          {% if taskinfos.effective_priority %}
           <span class="priority-badge
-            {% if taskinfos.priority == 'LOW'     %}pb-low
-            {% elif taskinfos.priority == 'MEDIUM'%}pb-medium
-            {% elif taskinfos.priority == 'HIGH'  %}pb-high
+            {% if taskinfos.effective_priority == 'LOW'     %}pb-low
+            {% elif taskinfos.effective_priority == 'MEDIUM'%}pb-medium
+            {% elif taskinfos.effective_priority == 'HIGH'  %}pb-high
             {% else %}pb-urgent{% endif %}">
             <i class="fas fa-flag" style="font-size:9px;"></i>
-            {{ taskinfos.get_priority_display }}
+            {{ taskinfos.effective_priority_display }}
           </span>
           {% endif %}
 

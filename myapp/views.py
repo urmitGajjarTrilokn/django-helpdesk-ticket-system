@@ -525,6 +525,8 @@ def TaskDetails(request):
                         request,
                         "AI priority limit reached for today (1/day). Please choose priority manually.",
                     )
+            if not task.priority:
+                task.priority = 'MEDIUM'
             if task.assigned_department:
                 task.assignment_type = 'MANUAL'
                 task.assigned_by     = request.user

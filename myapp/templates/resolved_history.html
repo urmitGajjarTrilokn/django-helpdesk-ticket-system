@@ -151,13 +151,13 @@
 
           <span class="status-badge sb-resolved">Resolved</span>
 
-          {% if task.priority == 'URGENT' %}
+          {% if task.effective_priority == 'URGENT' %}
             <span class="priority-badge pb-urgent"><i class="fas fa-fire"></i> Urgent</span>
-          {% elif task.priority == 'HIGH' %}
+          {% elif task.effective_priority == 'HIGH' %}
             <span class="priority-badge pb-high">High</span>
-          {% elif task.priority == 'MEDIUM' %}
+          {% elif task.effective_priority == 'MEDIUM' %}
             <span class="priority-badge pb-medium">Medium</span>
-          {% elif task.priority == 'LOW' %}
+          {% elif task.effective_priority == 'LOW' %}
             <span class="priority-badge pb-low">Low</span>
           {% endif %}
 

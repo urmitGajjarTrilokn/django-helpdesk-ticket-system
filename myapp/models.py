@@ -209,6 +209,17 @@ class TaskDetail(models.Model):
         return f"#{self.id} - {self.TASK_TITLE}"
 
     @property
+    def effective_priority(self):
+        value = (self.ai_suggested_priority or self.priority or 'MEDIUM').strip().upper()
+        valid_values = {key for key, _label in self.PRIORITY_CHOICES}
+        return value if value in valid_values else 'MEDIUM'
+
+    @property
+    def effective_priority_display(self):
+        labels = dict(self.PRIORITY_CHOICES)
+        return labels.get(self.effective_priority, 'Medium')
+
+    @property
     def is_overdue(self):
         if self.TASK_STATUS in ['Closed', 'Resolved']:
             return False

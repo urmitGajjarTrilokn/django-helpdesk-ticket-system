@@ -393,13 +393,13 @@
       </div>
 
       <div>
-        {% if task.priority %}
+        {% if task.effective_priority %}
         <span class="priority-badge
-          {% if task.priority == 'LOW' %}pb-low
-          {% elif task.priority == 'MEDIUM' %}pb-medium
-          {% elif task.priority == 'HIGH' %}pb-high
+          {% if task.effective_priority == 'LOW' %}pb-low
+          {% elif task.effective_priority == 'MEDIUM' %}pb-medium
+          {% elif task.effective_priority == 'HIGH' %}pb-high
           {% else %}pb-urgent{% endif %}">
-          {{ task.get_priority_display }}
+          {{ task.effective_priority_display }}
         </span>
         {% else %}
         <span style="color:var(--slate-400);font-size:12px;">—</span>
