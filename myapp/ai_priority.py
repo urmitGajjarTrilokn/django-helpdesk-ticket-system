@@ -157,9 +157,27 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         return fallback
 
     try:
-        text = result["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError, TypeError) as exc:
-        logger.warning("Gemini response format unexpected for priority prediction: %s", exc)
+        candidate = result.get("candidates", [])[0]
+        content = candidate.get("content", {})
+
+        if "parts" in content:
+            text = content["parts"][0].get("text", "")
+
+        elif "text" in content:
+            text = content.get("text", "")
+
+        else:
+            text = ""
+
+        if not text:
+            raise ValueError("Empty response text")
+
+    except Exception as exc:
+        logger.warning(
+            "Gemini response format unexpected for priority prediction: %s | Full response: %s",
+            exc,
+            result,
+        )
         fallback = heuristic_priority_from_text(title, description)
         fallback["error"] = "invalid_response_format"
         return fallback
