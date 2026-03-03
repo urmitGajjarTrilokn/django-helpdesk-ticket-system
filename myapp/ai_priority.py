@@ -124,7 +124,8 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.1,
-        },
+            "maxOutputTokens": 50
+        }
     }
 
     req = request.Request(
@@ -142,10 +143,20 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
             with request.urlopen(req, timeout=timeout) as response:
                 result = json.loads(response.read().decode("utf-8"))
             break
-        except (error.URLError, error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
+
+        except error.HTTPError as exc:
+            last_error = f"HTTP {exc.code}: {exc.reason}"
+
+            if exc.code == 429:
+                sleep_time = 2 ** attempt
+                logger.warning("Rate limited. Sleeping %s seconds...", sleep_time)
+                time.sleep(sleep_time)
+            else:
+                break
+
+        except (error.URLError, TimeoutError, json.JSONDecodeError) as exc:
             last_error = str(exc)
-            if attempt < max_attempts - 1:
-                time.sleep(0.2 * (attempt + 1))
+            time.sleep(1)
 
     if result is None:
         logger.warning("Gemini priority prediction failed after retries: %s", last_error)
