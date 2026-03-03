@@ -119,6 +119,7 @@
   (function () {
     const form = document.getElementById('newTicketForm');
     if (!form) return;
+    const submitBtn = form.querySelector('button[type="submit"]');
 
     const title = document.getElementById('id_TASK_TITLE');
     const description = document.getElementById('id_TASK_DESCRIPTION');
@@ -143,6 +144,12 @@
     setMinDueDate();
     normalizeInput(title);
     normalizeInput(description);
+
+    form.addEventListener('submit', () => {
+      if (!submitBtn) return;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    });
   })();
 </script>
 {% endblock %}

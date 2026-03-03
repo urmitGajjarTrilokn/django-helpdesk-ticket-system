@@ -109,18 +109,20 @@ def _record_priority_feedback(task, selected_priority, user):
     latest_log.save(update_fields=['output_data', 'was_correct'])
 
 
-def _can_use_ai_priority_today(user):
-    daily_limit = int(getattr(settings, "GEMINI_DAILY_LIMIT_PER_USER", 1))
-    if daily_limit <= 0:
+def _can_call_ai_priority_now(request, user):
+    min_interval = int(getattr(settings, "GEMINI_MIN_INTERVAL_SECONDS", 8))
+    if min_interval <= 0:
+        return True
+
+    now_ts = timezone.now().timestamp()
+    session_key = f"ai_priority_last_call_ts_{user.id}"
+    last_call_ts = float(request.session.get(session_key, 0) or 0)
+    if (now_ts - last_call_ts) < min_interval:
         return False
 
-    today = timezone.localdate()
-    used_count = AIMLLog.objects.filter(
-        log_type='PRIORITY',
-        task__TASK_CREATED=user,
-        created_at__date=today,
-    ).count()
-    return used_count < daily_limit
+    request.session[session_key] = now_ts
+    request.session.modified = True
+    return True
 
 def _is_admin_user(user):
     """Superuser is the only admin. No role field needed."""
@@ -511,7 +513,7 @@ def TaskDetails(request):
             task.TASK_CREATED = request.user
             prediction = {}
             if not task.priority:
-                if _can_use_ai_priority_today(request.user):
+                if _can_call_ai_priority_now(request, request.user):
                     prediction = predict_ticket_priority_with_meta(
                         title=task.TASK_TITLE,
                         description=task.TASK_DESCRIPTION,
@@ -527,7 +529,7 @@ def TaskDetails(request):
                     )
                     messages.info(
                         request,
-                        "Daily AI API limit reached; using smart fallback priority prediction.",
+                        "AI prediction is cooling down briefly to avoid rate limits; using smart fallback priority prediction.",
                     )
                 predicted_priority = (prediction or {}).get("priority")
                 if predicted_priority:

@@ -93,7 +93,7 @@ def heuristic_priority_from_text(title: str, description: str) -> dict:
 
 def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
     api_key = getattr(settings, "GEMINI_API_KEY", "")
-    model = getattr(settings, "GEMINI_MODEL", "gemini-2.0-flash")
+    model = getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash")
     timeout = int(getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10))
 
     if not api_key:
@@ -122,8 +122,9 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.1,
-            "maxOutputTokens": 50
-        }
+            "maxOutputTokens": 50,
+            "responseMimeType": "application/json",
+        },
     }
 
     req = request.Request(
@@ -137,7 +138,13 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         with request.urlopen(req, timeout=timeout) as response:
             result = json.loads(response.read().decode("utf-8"))
     except error.HTTPError as exc:
+        try:
+            error_body = exc.read().decode("utf-8", errors="ignore")
+        except Exception:
+            error_body = ""
         last_error = f"HTTP {exc.code}: {exc.reason}"
+        if error_body:
+            last_error = f"{last_error} | {error_body[:500]}"
         logger.warning("Gemini priority prediction failed: %s", last_error)
         fallback = heuristic_priority_from_text(title, description)
         fallback["error"] = last_error
