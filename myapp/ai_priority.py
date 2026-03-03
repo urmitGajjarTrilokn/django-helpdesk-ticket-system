@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import time
 from urllib import error, request
 
 from django.conf import settings
@@ -96,7 +95,6 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
     api_key = getattr(settings, "GEMINI_API_KEY", "")
     model = getattr(settings, "GEMINI_MODEL", "gemini-2.0-flash")
     timeout = int(getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10))
-    retries = int(getattr(settings, "GEMINI_MAX_RETRIES", 1))
 
     if not api_key:
         fallback = heuristic_priority_from_text(title, description)
@@ -135,31 +133,18 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         method="POST",
     )
 
-    max_attempts = max(1, retries + 1)
-    result = None
-    last_error = None
-    for attempt in range(max_attempts):
-        try:
-            with request.urlopen(req, timeout=timeout) as response:
-                result = json.loads(response.read().decode("utf-8"))
-            break
-
-        except error.HTTPError as exc:
-            last_error = f"HTTP {exc.code}: {exc.reason}"
-
-            if exc.code == 429:
-                sleep_time = 2 ** attempt
-                logger.warning("Rate limited. Sleeping %s seconds...", sleep_time)
-                time.sleep(sleep_time)
-            else:
-                break
-
-        except (error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            last_error = str(exc)
-            time.sleep(1)
-
-    if result is None:
-        logger.warning("Gemini priority prediction failed after retries: %s", last_error)
+    try:
+        with request.urlopen(req, timeout=timeout) as response:
+            result = json.loads(response.read().decode("utf-8"))
+    except error.HTTPError as exc:
+        last_error = f"HTTP {exc.code}: {exc.reason}"
+        logger.warning("Gemini priority prediction failed: %s", last_error)
+        fallback = heuristic_priority_from_text(title, description)
+        fallback["error"] = last_error
+        return fallback
+    except (error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        last_error = str(exc)
+        logger.warning("Gemini priority prediction failed: %s", last_error)
         fallback = heuristic_priority_from_text(title, description)
         fallback["error"] = last_error or "prediction_failed"
         return fallback
