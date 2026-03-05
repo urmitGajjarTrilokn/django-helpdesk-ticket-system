@@ -32,7 +32,7 @@ class TicketPriorityFlowTests(TestCase):
         mock_predict.return_value = {
             "priority": "HIGH",
             "reason": "Production workflow blocked",
-            "model": "llama-3.1-8b-instant",
+            "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
             "error": "",
         }
         response = self.client.post(reverse("taskdetail"), data=self._ticket_payload())

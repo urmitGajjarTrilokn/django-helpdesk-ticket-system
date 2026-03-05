@@ -12,11 +12,12 @@ ALLOWED_PRIORITIES = {"LOW", "MEDIUM", "HIGH", "URGENT"}
 
 URGENT_KEYWORDS = {
     "outage", "down", "breach", "security incident", "data loss", "critical",
-    "production down", "all users", "cannot login", "payment failed", "payroll blocked",
+    "production down", "production server", "server down", "service down",
+    "all users", "cannot login", "payment failed", "payroll blocked",
 }
 HIGH_KEYWORDS = {
     "blocked", "cannot access", "failed", "error", "urgent", "invoice", "payroll",
-    "database", "latency", "timeout", "customer impact", "major",
+    "database", "latency", "timeout", "customer impact", "major", "production issue",
 }
 LOW_KEYWORDS = {
     "typo", "ui issue", "alignment", "cosmetic", "enhancement", "suggestion",
@@ -60,6 +61,11 @@ def _extract_reason(raw_text: str) -> str:
 def _safe_trim(value: str, limit: int) -> str:
     value = (value or "").strip()
     return value[:limit]
+
+
+def _priority_rank(value: str | None) -> int:
+    order = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "URGENT": 4}
+    return order.get((value or "").upper().strip(), 0)
 
 
 def heuristic_priority_from_text(title: str, description: str) -> dict:
@@ -119,7 +125,11 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         "LOW, MEDIUM, HIGH, URGENT.\n"
         "Return strict JSON only in this format: "
         '{"priority":"LOW|MEDIUM|HIGH|URGENT","reason":"short reason"}.\n'
-        "Use urgency, business impact, and service disruption severity.\n\n"
+        "Use this rubric strictly:\n"
+        "- URGENT: Production/service down, security breach, data loss, all users blocked.\n"
+        "- HIGH: Major business impact, key workflows blocked for many users.\n"
+        "- MEDIUM: Partial impact/workaround exists.\n"
+        "- LOW: Cosmetic/minor enhancement.\n\n"
         f"Title: {title}\n"
         f"Description: {description}"
     )
@@ -191,8 +201,17 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         fallback["error"] = "invalid_response_format"
         return fallback
 
+    model_priority = _extract_priority(text)
+    heuristic = heuristic_priority_from_text(title, description)
+    heuristic_priority = heuristic.get("priority")
+    final_priority = model_priority
+
+    # Conservative guardrail: if heuristic sees severe outage signals, never downgrade it.
+    if _priority_rank(heuristic_priority) >= 3 and _priority_rank(model_priority) < _priority_rank(heuristic_priority):
+        final_priority = heuristic_priority
+
     return {
-        "priority": _extract_priority(text),
+        "priority": final_priority,
         "reason": _extract_reason(text),
         "raw_text": _safe_trim(text, 2000),
         "model": model,
