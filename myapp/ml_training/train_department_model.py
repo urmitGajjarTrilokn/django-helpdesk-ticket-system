@@ -1,136 +1,54 @@
 import pandas as pd
-import re
-import joblib
+import pickle
 
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, classification_report
 
+# load dataset
+df = pd.read_csv("helpdesk_tickets_updated.csv")
 
-# =========================
-# Load Dataset
-# =========================
-
-df = pd.read_csv("helpdesk_tickets_cleaned.csv")
-
-
-# =========================
-# Text Cleaning Function
-# =========================
-
-def clean_text(text):
-
-    text = text.lower()
-
-    # remove ticket ids
-    text = re.sub(r'\[tkt-\d+\]', ' ', text)
-
-    # remove special characters
-    text = re.sub(r'[^a-z\s]', ' ', text)
-
-    text = re.sub(r'\s+', ' ', text)
-
-    return text.strip()
-
-
-df["title"] = df["title"].apply(clean_text)
-df["description"] = df["description"].apply(clean_text)
-
-
-# =========================
-# Combine title + description
-# =========================
-
+# combine text
 df["text"] = df["title"] + " " + df["description"]
 
 X = df["text"]
 y = df["department"]
 
-
-# =========================
-# Train / Test Split
-# =========================
-
+# split
 X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
+    X, y,
     test_size=0.2,
-    stratify=y,
-    random_state=42
+    random_state=42,
+    stratify=y
 )
 
-
-# =========================
-# Optimized Pipeline
-# =========================
-
+# pipeline
 model = Pipeline([
-
-    (
-        "tfidf",
-
-        TfidfVectorizer(
-
-            stop_words="english",
-
-            # capture phrases like "invoice issue"
-            ngram_range=(1,2),
-
-            # ignore extremely common words
-            max_df=0.9,
-
-            # ignore rare words
-            min_df=3,
-
-            # improves weighting
-            sublinear_tf=True
-        )
-    ),
-
-    (
-        "clf",
-
-        LogisticRegression(
-
-            solver="lbfgs",
-
-            max_iter=2000,
-
-            class_weight="balanced",
-
-            # regularization strength
-            C=3
-        )
-    )
+    ("tfidf", TfidfVectorizer(
+        stop_words="english",
+        ngram_range=(1,2),
+        max_features=10000
+    )),
+    ("clf", LogisticRegression(
+        max_iter=1000,
+        class_weight="balanced"
+    ))
 ])
 
-
-# =========================
-# Train Model
-# =========================
-
+# train
 model.fit(X_train, y_train)
 
+# test
+preds = model.predict(X_test)
 
-# =========================
-# Evaluation
-# =========================
-
-predictions = model.predict(X_test)
-
-print("Accuracy:", accuracy_score(y_test, predictions))
-
+print("Accuracy:", accuracy_score(y_test, preds))
 print("\nClassification Report:\n")
+print(classification_report(y_test, preds))
 
-print(classification_report(y_test, predictions))
+# save model
+with open("department_classifier.pkl", "wb") as f:
+    pickle.dump(model, f)
 
-
-# =========================
-# Save Model
-# =========================
-
-joblib.dump(model, "department_classifier.pkl")
-
-print("\nModel saved as department_classifier.pkl")
+print("\nModel saved successfully")
