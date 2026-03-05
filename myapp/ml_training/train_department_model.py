@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, classification_report
 
 # load dataset
-df = pd.read_csv("helpdesk_tickets_updated.csv")
+df = pd.read_csv("helpdesk_tickets_cleaned.csv")
 
 # combine text
 df["text"] = df["title"] + " " + df["description"]
