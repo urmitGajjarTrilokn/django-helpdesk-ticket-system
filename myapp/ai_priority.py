@@ -95,6 +95,11 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
     api_key = getattr(settings, "GROQ_API_KEY", "") or getattr(settings, "GEMINI_API_KEY", "")
     model = getattr(settings, "GROQ_MODEL", "llama-3.1-8b-instant")
     timeout = int(getattr(settings, "GROQ_TIMEOUT_SECONDS", getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10)))
+    user_agent = getattr(
+        settings,
+        "GROQ_USER_AGENT",
+        "HelpDeskAI/1.0 (+https://localhost; django-helpdesk)",
+    )
 
     if not api_key:
         fallback = heuristic_priority_from_text(title, description)
@@ -135,6 +140,8 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         headers={
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}",
+            "Accept": "application/json",
+            "User-Agent": user_agent,
         },
         method="POST",
     )
