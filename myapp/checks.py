@@ -8,7 +8,7 @@ def ai_config_checks(app_configs, **kwargs):
 
     timeout = getattr(settings, "GROQ_TIMEOUT_SECONDS", getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10))
     retries = getattr(settings, "GROQ_MAX_RETRIES", getattr(settings, "GEMINI_MAX_RETRIES", 1))
-    api_key = getattr(settings, "GROQ_API_KEY", "") or getattr(settings, "GEMINI_API_KEY", "")
+    api_key = str(getattr(settings, "GROQ_API_KEY", "") or "").strip().strip('"').strip("'")
 
     if not isinstance(timeout, int) or timeout <= 0:
         issues.append(
@@ -39,6 +39,13 @@ def ai_config_checks(app_configs, **kwargs):
             Warning(
                 "GROQ_API_KEY is not set; AI priority prediction will be skipped.",
                 id="myapp.W002",
+            )
+        )
+    elif not api_key.startswith("gsk_"):
+        issues.append(
+            Warning(
+                "GROQ_API_KEY format looks invalid; expected it to start with 'gsk_'.",
+                id="myapp.W003",
             )
         )
 
