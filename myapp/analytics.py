@@ -1,8 +1,7 @@
-from django.db.models import Count, Avg, Q, F, Sum
+from django.db.models import Count, Q
 from django.utils import timezone
-from datetime import timedelta, datetime, date
-from collections import defaultdict
-from .models import TaskDetail, Department, DepartmentMember, ActivityLog, TaskHistory
+from datetime import timedelta, date
+from .models import TaskDetail, Department, ActivityLog, TaskHistory
 from django.contrib.auth.models import User
 import logging
 

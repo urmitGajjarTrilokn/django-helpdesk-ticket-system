@@ -29,7 +29,7 @@ def _extract_priority(raw_text: str) -> str | None:
     if not raw_text:
         return None
 
-    # First try JSON response.
+                              
     try:
         payload = json.loads(raw_text)
         value = str(payload.get("priority", "")).upper().strip()
@@ -38,7 +38,7 @@ def _extract_priority(raw_text: str) -> str | None:
     except (json.JSONDecodeError, TypeError, AttributeError):
         pass
 
-    # Fallback: find known labels in free text.
+                                               
     match = re.search(r"\b(LOW|MEDIUM|HIGH|URGENT)\b", raw_text.upper())
     if match:
         value = match.group(1)
@@ -206,7 +206,7 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
     heuristic_priority = heuristic.get("priority")
     final_priority = model_priority
 
-    # Conservative guardrail: if heuristic sees severe outage signals, never downgrade it.
+                                                                                          
     if _priority_rank(heuristic_priority) >= 3 and _priority_rank(model_priority) < _priority_rank(heuristic_priority):
         final_priority = heuristic_priority
 

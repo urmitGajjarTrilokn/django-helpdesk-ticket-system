@@ -189,9 +189,9 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "meta-llama/llama-4-maverick-17b-128e-instr
 GROQ_TIMEOUT_SECONDS = int(os.getenv("GROQ_TIMEOUT_SECONDS", os.getenv("GEMINI_TIMEOUT_SECONDS", 10)))
 GROQ_USER_AGENT = os.getenv("GROQ_USER_AGENT", "HelpDeskAI/1.0 (+https://localhost; django-helpdesk)")
 GROQ_MAX_RETRIES = int(os.getenv("GROQ_MAX_RETRIES", os.getenv("GEMINI_MAX_RETRIES", 1)))
-# AI priority policy:
-# - Unlimited API hits per user (no per-user daily cap / cooldown).
-# - Exactly one API call on each ticket submission when priority is left blank.
+                     
+                                                                   
+                                                                               
 GROQ_DAILY_LIMIT_PER_USER = 0
 GROQ_MIN_INTERVAL_SECONDS = 0
 

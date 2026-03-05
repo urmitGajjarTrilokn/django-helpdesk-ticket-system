@@ -11,14 +11,12 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
 from django.urls import reverse
-from django.conf import settings
 from datetime import datetime, time
 import json
 import logging
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns
 import io
 
 from .models import (
@@ -114,13 +112,11 @@ def _record_priority_feedback(task, selected_priority, user):
 
 
 def _is_admin_user(user):
-    """Superuser is the only admin. No role field needed."""
     if not user or not user.is_authenticated:
         return False
     return user.is_superuser
 
 def _ensure_userprofile_and_permissions(user):
-    """Just ensures a UserProfile exists. No role needed."""
     if not user or not user.is_authenticated:
         return None
     profile, _ = UserProfile.objects.get_or_create(user=user)
@@ -236,10 +232,6 @@ def _is_non_rejectable_assignment(user, task):
 
 
 def _auto_assign_on_department_rejection(task, rejected_by):
-    """
-    Auto-assign only when rejection leaves a single non-rejecting member,
-    or when everyone in the department has rejected (fallback to last member).
-    """
     if not task.assigned_department_id:
         return None
     if task.TASK_STATUS in ['Closed', 'Resolved', 'Expired']:
@@ -504,7 +496,6 @@ def TaskDetails(request):
             submitted_priority = (form.cleaned_data.get("priority") or "").strip().upper()
             used_ai_priority = (submitted_priority == "")
             if used_ai_priority:
-                # Unlimited per-user AI usage: we call the API once per ticket submit only.
                 logger.info("AI priority prediction started for new ticket submit.")
                 prediction = predict_ticket_priority_with_meta(
                     title=task.TASK_TITLE,

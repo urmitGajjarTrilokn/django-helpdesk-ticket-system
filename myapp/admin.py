@@ -10,7 +10,6 @@ from .models import (
     TaskHistory,
     CannedResponse, TaskRating,
 )
-from import_export.admin import ImportExportModelAdmin
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):

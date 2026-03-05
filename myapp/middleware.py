@@ -1,6 +1,4 @@
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.urls import reverse, resolve, NoReverseMatch
+from django.urls import resolve
 from .models import DepartmentMember
 
 
