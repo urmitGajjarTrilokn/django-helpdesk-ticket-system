@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.conf import settings
 from datetime import datetime, time
 import json
+import logging
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -53,6 +54,9 @@ from .forms import (
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
     AccountSettingsForm,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def log_activity(user, action, title, description='', task=None, old_value='', new_value=''):
@@ -497,8 +501,11 @@ def TaskDetails(request):
             task = form.save(commit=False)
             task.TASK_CREATED = request.user
             prediction = {}
-            if not task.priority:
+            submitted_priority = (form.cleaned_data.get("priority") or "").strip().upper()
+            used_ai_priority = (submitted_priority == "")
+            if used_ai_priority:
                 # Unlimited per-user AI usage: we call the API once per ticket submit only.
+                logger.info("AI priority prediction started for new ticket submit.")
                 prediction = predict_ticket_priority_with_meta(
                     title=task.TASK_TITLE,
                     description=task.TASK_DESCRIPTION,
@@ -507,7 +514,13 @@ def TaskDetails(request):
                 if predicted_priority:
                     task.priority = predicted_priority
                     task.ai_suggested_priority = predicted_priority
-            if not task.priority:
+                    logger.info("AI priority prediction applied: %s", predicted_priority)
+                else:
+                    logger.warning("AI priority prediction returned no valid priority; falling back to default.")
+            else:
+                logger.info("AI priority prediction skipped: manual priority provided (%s).", submitted_priority)
+
+            if not (task.priority or "").strip():
                 task.priority = 'MEDIUM'
             if task.assigned_department:
                 task.assignment_type = 'MANUAL'
@@ -515,7 +528,7 @@ def TaskDetails(request):
                 task.assigned_at     = timezone.now()
             task.save()
             form.save_m2m()
-            if not form.cleaned_data.get('priority'):
+            if used_ai_priority:
                 _log_priority_prediction(task, prediction)
 
             TaskHistory.objects.create(
