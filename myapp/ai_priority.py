@@ -92,9 +92,9 @@ def heuristic_priority_from_text(title: str, description: str) -> dict:
 
 
 def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
-    api_key = getattr(settings, "GEMINI_API_KEY", "")
-    model = getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash")
-    timeout = int(getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10))
+    api_key = getattr(settings, "GROQ_API_KEY", "") or getattr(settings, "GEMINI_API_KEY", "")
+    model = getattr(settings, "GROQ_MODEL", "llama-3.1-8b-instant")
+    timeout = int(getattr(settings, "GROQ_TIMEOUT_SECONDS", getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10)))
 
     if not api_key:
         fallback = heuristic_priority_from_text(title, description)
@@ -114,23 +114,28 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         f"Description: {description}"
     )
 
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{model}:generateContent?key={api_key}"
-    )
+    url = "https://api.groq.com/openai/v1/chat/completions"
     body = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.1,
-            "maxOutputTokens": 50,
-            "responseMimeType": "application/json",
-        },
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You classify helpdesk ticket priorities and return strict JSON only.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.1,
+        "max_tokens": 80,
+        "response_format": {"type": "json_object"},
     }
 
     req = request.Request(
         url,
         data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
         method="POST",
     )
 
@@ -145,36 +150,28 @@ def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
         last_error = f"HTTP {exc.code}: {exc.reason}"
         if error_body:
             last_error = f"{last_error} | {error_body[:500]}"
-        logger.warning("Gemini priority prediction failed: %s", last_error)
+        logger.warning("Groq priority prediction failed: %s", last_error)
         fallback = heuristic_priority_from_text(title, description)
         fallback["error"] = last_error
         return fallback
     except (error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         last_error = str(exc)
-        logger.warning("Gemini priority prediction failed: %s", last_error)
+        logger.warning("Groq priority prediction failed: %s", last_error)
         fallback = heuristic_priority_from_text(title, description)
         fallback["error"] = last_error or "prediction_failed"
         return fallback
 
     try:
-        candidate = result.get("candidates", [])[0]
-        content = candidate.get("content", {})
-
-        if "parts" in content:
-            text = content["parts"][0].get("text", "")
-
-        elif "text" in content:
-            text = content.get("text", "")
-
-        else:
-            text = ""
+        choice = result.get("choices", [])[0]
+        message = choice.get("message", {})
+        text = message.get("content", "")
 
         if not text:
             raise ValueError("Empty response text")
 
     except Exception as exc:
         logger.warning(
-            "Gemini response format unexpected for priority prediction: %s | Full response: %s",
+            "Groq response format unexpected for priority prediction: %s | Full response: %s",
             exc,
             result,
         )

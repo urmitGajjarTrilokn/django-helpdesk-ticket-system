@@ -13,13 +13,13 @@ class AIPriorityHelperTests(SimpleTestCase):
     def test_extract_priority_from_plain_text(self):
         self.assertEqual(_extract_priority("This looks urgent"), "URGENT")
 
-    @override_settings(GEMINI_API_KEY="")
-    def test_predict_returns_none_when_key_missing(self):
-        self.assertIsNone(predict_ticket_priority("title", "description"))
+    @override_settings(GROQ_API_KEY="")
+    def test_predict_returns_fallback_when_key_missing(self):
+        self.assertEqual(predict_ticket_priority("title", "description"), "MEDIUM")
 
-    @override_settings(GEMINI_API_KEY="dummy-key")
+    @override_settings(GROQ_API_KEY="dummy-key")
     @patch("myapp.ai_priority.request.urlopen", side_effect=error.URLError("timeout"))
     def test_predict_with_meta_handles_network_errors(self, _mock_urlopen):
         result = predict_ticket_priority_with_meta("Printer down", "Entire office cannot print.")
-        self.assertIsNone(result["priority"])
+        self.assertEqual(result["priority"], "URGENT")
         self.assertTrue(result["error"])

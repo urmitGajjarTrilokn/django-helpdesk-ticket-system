@@ -6,14 +6,14 @@ from django.core.checks import Error, Warning, register
 def ai_config_checks(app_configs, **kwargs):
     issues = []
 
-    timeout = getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10)
-    retries = getattr(settings, "GEMINI_MAX_RETRIES", 1)
-    api_key = getattr(settings, "GEMINI_API_KEY", "")
+    timeout = getattr(settings, "GROQ_TIMEOUT_SECONDS", getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10))
+    retries = getattr(settings, "GROQ_MAX_RETRIES", getattr(settings, "GEMINI_MAX_RETRIES", 1))
+    api_key = getattr(settings, "GROQ_API_KEY", "") or getattr(settings, "GEMINI_API_KEY", "")
 
     if not isinstance(timeout, int) or timeout <= 0:
         issues.append(
             Error(
-                "GEMINI_TIMEOUT_SECONDS must be a positive integer.",
+                "GROQ_TIMEOUT_SECONDS must be a positive integer.",
                 id="myapp.E001",
             )
         )
@@ -21,7 +21,7 @@ def ai_config_checks(app_configs, **kwargs):
     if not isinstance(retries, int) or retries < 0:
         issues.append(
             Error(
-                "GEMINI_MAX_RETRIES must be a non-negative integer.",
+                "GROQ_MAX_RETRIES must be a non-negative integer.",
                 id="myapp.E002",
             )
         )
@@ -29,7 +29,7 @@ def ai_config_checks(app_configs, **kwargs):
     if isinstance(retries, int) and retries > 5:
         issues.append(
             Warning(
-                "GEMINI_MAX_RETRIES is high; this may slow ticket creation noticeably.",
+                "GROQ_MAX_RETRIES is high; this may slow ticket creation noticeably.",
                 id="myapp.W001",
             )
         )
@@ -37,7 +37,7 @@ def ai_config_checks(app_configs, **kwargs):
     if not api_key:
         issues.append(
             Warning(
-                "GEMINI_API_KEY is not set; AI priority prediction will be skipped.",
+                "GROQ_API_KEY is not set; AI priority prediction will be skipped.",
                 id="myapp.W002",
             )
         )

@@ -184,12 +184,15 @@ LOGGING = {
     },
 }
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-GEMINI_TIMEOUT_SECONDS = int(os.getenv("GEMINI_TIMEOUT_SECONDS", 10))
-GEMINI_MAX_RETRIES = int(os.getenv("GEMINI_MAX_RETRIES", 1))
-GEMINI_DAILY_LIMIT_PER_USER = int(os.getenv("GEMINI_DAILY_LIMIT_PER_USER", 1))
-GEMINI_MIN_INTERVAL_SECONDS = int(os.getenv("GEMINI_MIN_INTERVAL_SECONDS", 8))
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", os.getenv("GEMINI_API_KEY", ""))
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_TIMEOUT_SECONDS = int(os.getenv("GROQ_TIMEOUT_SECONDS", os.getenv("GEMINI_TIMEOUT_SECONDS", 10)))
+GROQ_MAX_RETRIES = int(os.getenv("GROQ_MAX_RETRIES", os.getenv("GEMINI_MAX_RETRIES", 1)))
+# AI priority policy:
+# - Unlimited API hits per user (no per-user daily cap / cooldown).
+# - Exactly one API call on each ticket submission when priority is left blank.
+GROQ_DAILY_LIMIT_PER_USER = 0
+GROQ_MIN_INTERVAL_SECONDS = 0
 
 ML_MODELS_PATH = BASE_DIR / 'myapp' / 'ml_models' / 'saved_models'
 ML_TRAINING_MIN_SAMPLES = 100 

@@ -47,7 +47,7 @@ from .notifications import (
     notify_task_commented,
     notify_task_rated,
 )
-from .ai_priority import predict_ticket_priority_with_meta, heuristic_priority_from_text
+from .ai_priority import predict_ticket_priority_with_meta
 from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TaskDetailForm,
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
@@ -108,21 +108,6 @@ def _record_priority_feedback(task, selected_priority, user):
     latest_log.was_correct = (selected == suggested)
     latest_log.save(update_fields=['output_data', 'was_correct'])
 
-
-def _can_call_ai_priority_now(request, user):
-    min_interval = int(getattr(settings, "GEMINI_MIN_INTERVAL_SECONDS", 8))
-    if min_interval <= 0:
-        return True
-
-    now_ts = timezone.now().timestamp()
-    session_key = f"ai_priority_last_call_ts_{user.id}"
-    last_call_ts = float(request.session.get(session_key, 0) or 0)
-    if (now_ts - last_call_ts) < min_interval:
-        return False
-
-    request.session[session_key] = now_ts
-    request.session.modified = True
-    return True
 
 def _is_admin_user(user):
     """Superuser is the only admin. No role field needed."""
@@ -513,24 +498,11 @@ def TaskDetails(request):
             task.TASK_CREATED = request.user
             prediction = {}
             if not task.priority:
-                if _can_call_ai_priority_now(request, request.user):
-                    prediction = predict_ticket_priority_with_meta(
-                        title=task.TASK_TITLE,
-                        description=task.TASK_DESCRIPTION,
-                    )
-                    predicted_priority = (prediction or {}).get("priority")
-                    if predicted_priority:
-                        task.priority = predicted_priority
-                        task.ai_suggested_priority = predicted_priority
-                else:
-                    prediction = heuristic_priority_from_text(
-                        title=task.TASK_TITLE,
-                        description=task.TASK_DESCRIPTION,
-                    )
-                    messages.info(
-                        request,
-                        "AI prediction is cooling down briefly to avoid rate limits; using smart fallback priority prediction.",
-                    )
+                # Unlimited per-user AI usage: we call the API once per ticket submit only.
+                prediction = predict_ticket_priority_with_meta(
+                    title=task.TASK_TITLE,
+                    description=task.TASK_DESCRIPTION,
+                )
                 predicted_priority = (prediction or {}).get("priority")
                 if predicted_priority:
                     task.priority = predicted_priority

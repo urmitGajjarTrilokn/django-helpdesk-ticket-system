@@ -32,7 +32,7 @@ class TicketPriorityFlowTests(TestCase):
         mock_predict.return_value = {
             "priority": "HIGH",
             "reason": "Production workflow blocked",
-            "model": "gemini-2.0-flash",
+            "model": "llama-3.1-8b-instant",
             "error": "",
         }
         response = self.client.post(reverse("taskdetail"), data=self._ticket_payload())
