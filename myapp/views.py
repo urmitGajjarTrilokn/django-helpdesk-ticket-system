@@ -12,6 +12,8 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.core.paginator import Paginator
 from django.urls import reverse
 from datetime import datetime, time
+from myapp.ml_models.department_predictor import predict_department
+from myapp.models import Department
 import json
 import logging
 import matplotlib
@@ -46,7 +48,7 @@ from .notifications import (
     notify_task_commented,
     notify_task_rated,
 )
-from .ai_priority import predict_ticket_priority_with_meta
+from .ai.ai_priority import predict_ticket_priority_with_meta
 from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TaskDetailForm,
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
@@ -492,61 +494,111 @@ def TaskDetails(request):
         if form.is_valid():
             task = form.save(commit=False)
             task.TASK_CREATED = request.user
+
             prediction = {}
             submitted_priority = (form.cleaned_data.get("priority") or "").strip().upper()
             used_ai_priority = (submitted_priority == "")
+
             if used_ai_priority:
                 logger.info("AI priority prediction started for new ticket submit.")
+
                 prediction = predict_ticket_priority_with_meta(
                     title=task.TASK_TITLE,
                     description=task.TASK_DESCRIPTION,
                 )
+
                 predicted_priority = (prediction or {}).get("priority")
+
                 if predicted_priority:
                     task.priority = predicted_priority
                     task.ai_suggested_priority = predicted_priority
                     logger.info("AI priority prediction applied: %s", predicted_priority)
                 else:
-                    logger.warning("AI priority prediction returned no valid priority; falling back to default.")
+                    logger.warning(
+                        "AI priority prediction returned no valid priority; falling back to default."
+                    )
             else:
-                logger.info("AI priority prediction skipped: manual priority provided (%s).", submitted_priority)
+                logger.info(
+                    "AI priority prediction skipped: manual priority provided (%s).",
+                    submitted_priority,
+                )
 
             if not (task.priority or "").strip():
-                task.priority = 'MEDIUM'
+                task.priority = "MEDIUM"
+
+            if not task.assigned_department:
+                try:
+                    predicted_department_name = predict_department(
+                        title=task.TASK_TITLE,
+                        description=task.TASK_DESCRIPTION,
+                    )
+
+                    department = Department.objects.filter(
+                        name__iexact=predicted_department_name
+                    ).first()
+
+                    if department:
+                        task.assigned_department = department
+                        task.assignment_type = "AI"
+                        task.assigned_at = timezone.now()
+
+                        logger.info(
+                            "ML department prediction applied: %s",
+                            predicted_department_name,
+                        )
+
+                except Exception as e:
+                    logger.warning("Department prediction failed: %s", str(e))
+
             if task.assigned_department:
-                task.assignment_type = 'MANUAL'
-                task.assigned_by     = request.user
-                task.assigned_at     = timezone.now()
+                if not task.assignment_type:
+                    task.assignment_type = "MANUAL"
+                    task.assigned_by = request.user
+                    task.assigned_at = timezone.now()
+
             task.save()
             form.save_m2m()
+
             if used_ai_priority:
                 _log_priority_prediction(task, prediction)
 
             TaskHistory.objects.create(
-                task=task, changed_by=request.user,
-                action_type='CREATED',
-                description=f'Task created by {request.user.username}',
+                task=task,
+                changed_by=request.user,
+                action_type="CREATED",
+                description=f"Task created by {request.user.username}",
             )
-            log_activity(request.user, 'CREATED', f'Created ticket: {task.TASK_TITLE}', task=task)
+
+            log_activity(
+                request.user,
+                "CREATED",
+                f"Created ticket: {task.TASK_TITLE}",
+                task=task,
+            )
 
             if task.assigned_department:
                 notify_task_created(task)
+
                 for member in DepartmentMember.objects.filter(
-                    department=task.assigned_department, is_active=True
+                    department=task.assigned_department,
+                    is_active=True,
                 ):
                     MyCart.objects.get_or_create(user=member.user, task=task)
+
                     Notification.objects.create(
-                        user=member.user, task=task,
-                        notification_type='TASK_CREATED',
+                        user=member.user,
+                        task=task,
+                        notification_type="TASK_CREATED",
                         message=f'New task "{task.TASK_TITLE}" in {task.assigned_department.name}',
                     )
 
-            messages.success(request, 'Ticket created successfully!')
+            messages.success(request, "Ticket created successfully!")
             return redirect(_get_dashboard_redirect_url(request.user))
+
     else:
         form = TaskDetailForm()
-    return render(request, 'TaskDetail.html', {'form': form})
 
+    return render(request, "TaskDetail.html", {"form": form})
 
 @login_required
 def TaskInfo(request, pk):

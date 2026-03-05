@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
 
-from myapp.ai_priority import _extract_priority, predict_ticket_priority, predict_ticket_priority_with_meta
+from HelpDesk.myapp.ai.ai_priority import _extract_priority, predict_ticket_priority, predict_ticket_priority_with_meta
 
 
 class AIPriorityHelperTests(SimpleTestCase):
