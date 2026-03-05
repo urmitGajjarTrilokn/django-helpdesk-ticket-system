@@ -100,7 +100,7 @@ def heuristic_priority_from_text(title: str, description: str) -> dict:
 def predict_ticket_priority_with_meta(title: str, description: str) -> dict:
     api_key = str(getattr(settings, "GROQ_API_KEY", "") or "").strip().strip('"').strip("'")
     model = getattr(settings, "GROQ_MODEL", "llama-3.1-8b-instant")
-    timeout = int(getattr(settings, "GROQ_TIMEOUT_SECONDS", getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10)))
+    timeout = int(getattr(settings, "GROQ_TIMEOUT_SECONDS", 10))
     user_agent = getattr(
         settings,
         "GROQ_USER_AGENT",

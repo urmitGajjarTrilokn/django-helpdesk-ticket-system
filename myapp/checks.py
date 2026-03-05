@@ -6,8 +6,8 @@ from django.core.checks import Error, Warning, register
 def ai_config_checks(app_configs, **kwargs):
     issues = []
 
-    timeout = getattr(settings, "GROQ_TIMEOUT_SECONDS", getattr(settings, "GEMINI_TIMEOUT_SECONDS", 10))
-    retries = getattr(settings, "GROQ_MAX_RETRIES", getattr(settings, "GEMINI_MAX_RETRIES", 1))
+    timeout = getattr(settings, "GROQ_TIMEOUT_SECONDS", 10)
+    retries = getattr(settings, "GROQ_MAX_RETRIES", 1)
     api_key = str(getattr(settings, "GROQ_API_KEY", "") or "").strip().strip('"').strip("'")
 
     if not isinstance(timeout, int) or timeout <= 0:
