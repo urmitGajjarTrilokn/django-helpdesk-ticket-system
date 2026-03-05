@@ -5,11 +5,6 @@ from .decorators import get_user_department_context
 
 
 def task_count(request):
-    """
-    Global context injected into every template.
-    Provides: notification counts, task counts, role flags,
-    department list, primary department, sidebar nav URLs.
-    """
     if not request.user.is_authenticated:
         return {
             'task_count':              0,

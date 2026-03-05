@@ -7,16 +7,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, classification_report
 
-# load dataset
 df = pd.read_csv("helpdesk_tickets_cleaned.csv")
 
-# combine text
 df["text"] = df["title"] + " " + df["description"]
 
 X = df["text"]
 y = df["department"]
 
-# split
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.2,
@@ -24,7 +21,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-# pipeline
 model = Pipeline([
     ("tfidf", TfidfVectorizer(
         stop_words="english",
@@ -37,17 +33,14 @@ model = Pipeline([
     ))
 ])
 
-# train
 model.fit(X_train, y_train)
 
-# test
 preds = model.predict(X_test)
 
 print("Accuracy:", accuracy_score(y_test, preds))
 print("\nClassification Report:\n")
 print(classification_report(y_test, preds))
 
-# save model
 with open("department_classifier.pkl", "wb") as f:
     pickle.dump(model, f)
 

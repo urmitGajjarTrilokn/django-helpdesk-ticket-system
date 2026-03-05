@@ -135,7 +135,6 @@ def filter_tasks_by_department_access(queryset, user):
 
 
 def get_department_statistics(department):
-    """Per-department stats dict — used in department_dashboard view."""
     tasks = TaskDetail.objects.filter(assigned_department=department)
     return {
         'total':       tasks.count(),
@@ -315,11 +314,6 @@ class LoginRoleAuthorization:
 
     @classmethod
     def account_access_error(cls, mode, user):
-        """
-        USER login page  → block superusers (must use admin login page).
-        ADMIN login page → block non-superusers (must use user login page).
-        Returns an error string, or '' if access is allowed.
-        """
         mode = cls.normalize_mode(mode)
         if mode == cls.ADMIN:
             if not user.is_superuser:
@@ -331,8 +325,4 @@ class LoginRoleAuthorization:
 
     @classmethod
     def success_redirect(cls, mode, user, dashboard_url_fn):
-        """
-        Both USER and ADMIN pages redirect to our custom dashboard.
-        Django /admin/ panel is accessed directly, not through our login flow.
-        """
         return dashboard_url_fn(user)

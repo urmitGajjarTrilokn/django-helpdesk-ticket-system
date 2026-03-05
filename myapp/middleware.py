@@ -2,16 +2,7 @@ from django.urls import resolve
 from .models import DepartmentMember
 
 
-class DepartmentAccessMiddleware:
-    """
-    Middleware that:
-    1. Exempts public/auth URLs from authentication checks.
-    2. Ensures non-superuser authenticated users without a department
-       cannot access department-restricted pages.
-    3. Attaches user_departments to every request for convenience.
-    """
-
-                                                               
+class DepartmentAccessMiddleware:                                                          
     EXEMPT_URL_NAMES = {
         'landing',
         'login',
@@ -75,8 +66,6 @@ class DepartmentAccessMiddleware:
 
 
 class TaskAccessMiddleware:
-    """Placeholder for future per-task access enforcement at middleware level."""
-
     def __init__(self, get_response):
         self.get_response = get_response
 
