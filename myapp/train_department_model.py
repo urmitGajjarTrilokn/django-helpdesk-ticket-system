@@ -13,7 +13,7 @@ from sklearn.metrics import classification_report, accuracy_score
 # Load Dataset
 # =========================
 
-df = pd.read_csv("helpdesk_tickets_updated.csv")
+df = pd.read_csv("helpdesk_tickets_cleaned.csv")
 
 
 # =========================
