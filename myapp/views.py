@@ -45,6 +45,7 @@ from .analytics import (
 from .notifications import (
     create_notification,
     notify_ticket_created, notify_ticket_updated,
+    notify_ticket_due_date_extended,
     notify_ticket_closed, notify_ticket_resolved, notify_ticket_reopened,
     notify_ticket_commented,
     notify_ticket_rated,
@@ -886,12 +887,15 @@ def TicketInfo(request, pk):
 def updateticket(request, pk):
     ticket = get_object_or_404(TicketDetail, id=pk)
     is_admin_user = _is_admin_user(request.user)
-    can_edit_ticket = (
-        ticket.TICKET_STATUS == 'Open'
-        and (ticket.TICKET_CREATED_id == request.user.id or is_admin_user)
-    )
+    if is_admin_user:
+        can_edit_ticket = ticket.TICKET_STATUS not in ['Closed', 'Resolved']
+    else:
+        can_edit_ticket = (
+            ticket.TICKET_STATUS == 'Open'
+            and ticket.TICKET_CREATED_id == request.user.id
+        )
     if not can_edit_ticket:
-        messages.error(request, 'Only the ticket creator or admin can edit an open ticket.')
+        messages.error(request, 'Only the ticket creator can edit open tickets. Admin can edit unresolved tickets.')
         return redirect('ticketinfo', pk=pk)
 
     if not is_admin_user and not _can_work_on_ticket(request.user, ticket):
@@ -904,8 +908,13 @@ def updateticket(request, pk):
         if request.method == "POST":
             form = AdminTicketRoutingForm(request.POST, instance=ticket)
             if form.is_valid():
-                changed_fields = form.changed_data
+                changed_fields = [f for f in form.changed_data if f != 'extend_due_date']
                 updated_ticket = form.save(commit=False)
+                old_due_date = ticket.TICKET_DUE_DATE
+                extended_due_date = form.cleaned_data.get('extend_due_date')
+                if extended_due_date:
+                    updated_ticket.TICKET_DUE_DATE = extended_due_date
+                    changed_fields.append('TICKET_DUE_DATE')
                 selected_department_id = request.POST.get('assigned_department')
                 if (
                     selected_department_id
@@ -913,6 +922,7 @@ def updateticket(request, pk):
                     and str(old_department.id) == str(selected_department_id)
                     and 'assigned_department' not in changed_fields
                     and 'priority' not in changed_fields
+                    and 'TICKET_DUE_DATE' not in changed_fields
                 ):
                     messages.error(request, 'Selected department is already assigned to this ticket.')
                     return render(request, 'Updateticket.html', {'form': form, 'ticket': ticket})
@@ -983,17 +993,38 @@ def updateticket(request, pk):
 
                 for field in changed_fields:
                     action_type = 'PRIORITY_CHANGED' if field == 'priority' else 'UPDATED'
+                    old_value = form.initial.get(field, '')
+                    new_value = form.cleaned_data.get(field, '')
+                    description = f'{field} changed by {request.user.username}'
+                    if field == 'TICKET_DUE_DATE':
+                        old_value = old_due_date
+                        new_value = updated_ticket.TICKET_DUE_DATE
+                        description = f'Due date extended by {request.user.username}'
                     TicketHistory.objects.create(
                         ticket=updated_ticket, changed_by=request.user,
                         action_type=action_type, field_name=field,
-                        old_value=str(form.initial.get(field, '')),
-                        new_value=str(form.cleaned_data.get(field, '')),
-                        description=f'{field} changed by {request.user.username}',
+                        old_value=str(old_value),
+                        new_value=str(new_value),
+                        description=description,
                     )
 
-                notify_ticket_updated(updated_ticket, request.user, changes=changed_fields)
+                if 'TICKET_DUE_DATE' in changed_fields:
+                    notify_ticket_due_date_extended(
+                        updated_ticket,
+                        request.user,
+                        old_due_date,
+                        updated_ticket.TICKET_DUE_DATE,
+                    )
+                other_changes = [f for f in changed_fields if f != 'TICKET_DUE_DATE']
+                if other_changes:
+                    notify_ticket_updated(updated_ticket, request.user, changes=changed_fields)
                 log_activity(request.user, 'UPDATED', f'Updated ticket routing: {updated_ticket.TICKET_TITLE}', ticket=updated_ticket)
-                messages.success(request, 'Ticket priority/department updated successfully.')
+                if changed_fields == ['TICKET_DUE_DATE']:
+                    messages.success(request, 'Ticket due date extended successfully.')
+                elif 'TICKET_DUE_DATE' in changed_fields:
+                    messages.success(request, 'Ticket updated successfully, including due date extension.')
+                else:
+                    messages.success(request, 'Ticket priority/department updated successfully.')
                 return redirect('ticketinfo', pk=pk)
         else:
             form = AdminTicketRoutingForm(instance=ticket)

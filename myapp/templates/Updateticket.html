@@ -158,6 +158,23 @@
           </div>
           {% endif %}
 
+          {% if form.extend_due_date %}
+          <div class="col-sm-6">
+            <label class="form-label">Extend Due Date</label>
+            {{ form.extend_due_date }}
+            <div class="form-text">
+              Current due date: {{ ticket.TICKET_DUE_DATE|date:"M d, Y" }}. Select a later date.
+            </div>
+            {% if form.extend_due_date.help_text %}
+              <div class="form-text">{{ form.extend_due_date.help_text }}</div>
+            {% endif %}
+            {% if form.extend_due_date.errors %}
+              <div class="field-error">{{ form.extend_due_date.errors.0 }}</div>
+            {% endif %}
+            <div class="field-error" id="err_extend_due" style="display:none;">Extended due date must be later than current due date.</div>
+          </div>
+          {% endif %}
+
         </div>
       </div>
     </div>
@@ -173,7 +190,7 @@
             Changing <strong>priority</strong> or <strong>department</strong> will automatically
             update ticket urgency metadata.
             {% else %}
-            As admin, you can update only <strong>priority</strong> and <strong>department</strong>.
+            As admin, you can update <strong>priority</strong>, <strong>department</strong>, and <strong>extend due date</strong>.
             {% endif %}
           </div>
         </div>
@@ -213,6 +230,7 @@
     assigned_department: 'Department',
     assigned_to:       'Assigned To',
     TICKET_DUE_DATE:     'Due Date',
+    extend_due_date:   'Extend Due Date',
   };
 
   function updateChangeLog() {
@@ -278,6 +296,21 @@
         due.classList.add('is-invalid'); errDue.style.display = 'block'; valid = false;
       } else {
         due.classList.remove('is-invalid'); errDue.style.display = 'none';
+      }
+    }
+
+    const extendDue = document.getElementById('id_extend_due_date');
+    const errExtendDue = document.getElementById('err_extend_due');
+    if (extendDue && extendDue.value) {
+      const minDateRaw = extendDue.getAttribute('min');
+      if (minDateRaw) {
+        const minDate = new Date(minDateRaw);
+        const pickedDate = new Date(extendDue.value);
+        if (pickedDate < minDate) {
+          extendDue.classList.add('is-invalid'); errExtendDue.style.display = 'block'; valid = false;
+        } else {
+          extendDue.classList.remove('is-invalid'); errExtendDue.style.display = 'none';
+        }
       }
     }
 

@@ -1,4 +1,5 @@
 from django import forms
+from datetime import date, timedelta
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth import get_user_model
@@ -386,10 +387,45 @@ class AdminTicketRoutingForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-select"}),
         label="Assigned Department",
     )
+    extend_due_date = forms.DateField(
+        required=False,
+        label="Extend Due Date",
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        help_text="Available only when the ticket is due or overdue.",
+    )
 
     class Meta:
         model = TicketDetail
         fields = ('priority', 'assigned_department')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.can_extend_due_date = False
+        if not self.instance or not self.instance.pk:
+            self.fields.pop('extend_due_date', None)
+            return
+
+        if self.instance.TICKET_STATUS in ['Closed', 'Resolved']:
+            self.fields.pop('extend_due_date', None)
+            return
+
+        # Admin can extend due date at any time for unresolved tickets.
+        self.can_extend_due_date = True
+        self.fields['extend_due_date'].help_text = (
+            "Pick a date later than the current due date."
+        )
+        min_extend_date = self.instance.TICKET_DUE_DATE + timedelta(days=1)
+        self.fields['extend_due_date'].widget.attrs['min'] = min_extend_date.isoformat()
+
+    def clean_extend_due_date(self):
+        new_due_date = self.cleaned_data.get('extend_due_date')
+        if not new_due_date:
+            return None
+
+        if new_due_date <= self.instance.TICKET_DUE_DATE:
+            raise ValidationError("Extended due date must be later than the current due date.")
+
+        return new_due_date
 
 
 class TicketFilterForm(forms.Form):

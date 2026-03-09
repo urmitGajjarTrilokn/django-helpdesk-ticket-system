@@ -115,6 +115,45 @@ def notify_ticket_updated(ticket, updated_by, changes=None):
     )
 
 
+def notify_ticket_due_date_extended(ticket, updated_by, old_due_date, new_due_date):
+    recipients = set()
+    if ticket.TICKET_CREATED:
+        recipients.add(ticket.TICKET_CREATED)
+    if ticket.assigned_to:
+        recipients.add(ticket.assigned_to)
+    if ticket.assigned_department_id:
+        dept_members = DepartmentMember.objects.filter(
+            department=ticket.assigned_department,
+            is_active=True,
+        ).select_related('user')
+        for member in dept_members:
+            recipients.add(member.user)
+
+    notifications = []
+    for user in recipients:
+        if user == updated_by:
+            continue
+        notifications.append(
+            create_notification(
+                user=user,
+                notification_type='TICKET_UPDATED',
+                title='Ticket due date extended',
+                message=(
+                    f'{updated_by.username} extended due date for "{ticket.TICKET_TITLE}" '
+                    f'from {old_due_date} to {new_due_date}.'
+                ),
+                ticket=ticket,
+                extra_data={
+                    'updated_by': updated_by.username,
+                    'changes': ['TICKET_DUE_DATE'],
+                    'old_due_date': str(old_due_date),
+                    'new_due_date': str(new_due_date),
+                },
+            )
+        )
+    return notifications
+
+
 def notify_ticket_closed(ticket, closed_by):
     if ticket.TICKET_CREATED == closed_by:
         return None

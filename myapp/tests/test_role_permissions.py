@@ -264,6 +264,87 @@ class RolePermissionBehaviorTests(TestCase):
         self.assertTrue(MyCart.objects.filter(user=self.manager, ticket=ticket).exists())
         self.assertTrue(Notification.objects.filter(user=self.member, ticket=ticket, notification_type="TICKET_UPDATED").exists())
 
+    def test_admin_can_extend_due_date_for_overdue_unresolved_ticket(self):
+        ticket = self._create_open_ticket()
+        ticket.TICKET_STATUS = "In Progress"
+        ticket.assigned_to = self.member
+        old_due_date = timezone.now().date() - timedelta(days=1)
+        ticket.TICKET_DUE_DATE = old_due_date
+        ticket.save(update_fields=["TICKET_STATUS", "assigned_to", "TICKET_DUE_DATE"])
+        new_due_date = timezone.now().date() + timedelta(days=4)
+
+        self.client.login(username="admin1", password="pass12345")
+        get_response = self.client.get(reverse("updateticket", kwargs={"pk": ticket.id}))
+        self.assertEqual(get_response.status_code, 200)
+        self.assertContains(get_response, "Extend Due Date")
+
+        post_response = self.client.post(
+            reverse("updateticket", kwargs={"pk": ticket.id}),
+            data={
+                "priority": ticket.priority,
+                "assigned_department": str(self.department.id),
+                "extend_due_date": new_due_date.isoformat(),
+            },
+        )
+        self.assertEqual(post_response.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_DUE_DATE, new_due_date)
+        self.assertTrue(
+            TicketHistory.objects.filter(
+                ticket=ticket,
+                field_name="TICKET_DUE_DATE",
+                old_value=str(old_due_date),
+                new_value=str(new_due_date),
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.member,
+                ticket=ticket,
+                notification_type="TICKET_UPDATED",
+                title="Ticket due date extended",
+            ).exists()
+        )
+
+    def test_admin_due_date_extension_rejects_same_or_earlier_date(self):
+        ticket = self._create_open_ticket()
+        ticket.TICKET_STATUS = "Open"
+        old_due_date = timezone.now().date() - timedelta(days=1)
+        ticket.TICKET_DUE_DATE = old_due_date
+        ticket.save(update_fields=["TICKET_STATUS", "TICKET_DUE_DATE"])
+
+        self.client.login(username="admin1", password="pass12345")
+        response = self.client.post(
+            reverse("updateticket", kwargs={"pk": ticket.id}),
+            data={
+                "priority": ticket.priority,
+                "assigned_department": str(self.department.id),
+                "extend_due_date": ticket.TICKET_DUE_DATE.isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Extended due date must be later than the current due date.")
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_DUE_DATE, old_due_date)
+
+    def test_admin_can_extend_due_date_before_overdue(self):
+        ticket = self._create_open_ticket()
+        old_due_date = ticket.TICKET_DUE_DATE
+        new_due_date = old_due_date + timedelta(days=3)
+
+        self.client.login(username="admin1", password="pass12345")
+        response = self.client.post(
+            reverse("updateticket", kwargs={"pk": ticket.id}),
+            data={
+                "priority": ticket.priority,
+                "assigned_department": str(self.department.id),
+                "extend_due_date": new_due_date.isoformat(),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_DUE_DATE, new_due_date)
+
     @patch("myapp.views.predict_department")
     @patch("myapp.views.predict_ticket_priority_with_meta")
     def test_creator_cannot_submit_when_predicted_department_has_only_creator(self, mock_predict_priority, mock_predict_department):

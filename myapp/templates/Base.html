@@ -866,11 +866,34 @@
         field.type !== 'reset';
     }
 
+    function formatFieldLabel(raw) {
+      const text = (raw || '').toString().trim();
+      if (!text) return 'This field';
+      const normalized = text
+        .replace(/\*/g, ' ')
+        .replace(/[_-]+/g, ' ')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      return normalized.replace(/\b\w/g, ch => ch.toUpperCase());
+    }
+
+    function getFieldLabel(field) {
+      const explicit = field.getAttribute('data-label') || field.getAttribute('aria-label');
+      if (explicit) return formatFieldLabel(explicit);
+      if (field.id) {
+        const linkedLabel = field.form.querySelector('label[for="' + field.id + '"]');
+        if (linkedLabel) return formatFieldLabel(linkedLabel.textContent);
+      }
+      return formatFieldLabel(field.name || 'This field');
+    }
+
     function validateField(field) {
       if (!isSupportedField(field)) return true;
 
       const value = fieldValue(field);
-      const label = field.getAttribute('data-label') || field.getAttribute('aria-label') || field.name || 'This field';
+      const label = getFieldLabel(field);
 
       if (field.required && !value) {
         setError(field, label + ' is required.');
