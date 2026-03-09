@@ -1749,10 +1749,42 @@ def resolved_history(request):
     )
 
     q = request.GET.get('q', '').strip()
+    search_by = (request.GET.get('search_by_btn') or request.GET.get('search_by', 'all')).strip().lower()
+    if search_by not in {'all', 'id', 'title', 'description', 'name', 'department'}:
+        search_by = 'all'
     if q:
-        resolved = resolved.filter(
-            Q(TICKET_TITLE__icontains=q) | Q(TICKET_DESCRIPTION__icontains=q)
-        )
+        if search_by == 'id':
+            if q.isdigit():
+                resolved = resolved.filter(id=int(q))
+            else:
+                resolved = resolved.none()
+        elif search_by == 'title':
+            resolved = resolved.filter(TICKET_TITLE__icontains=q)
+        elif search_by == 'description':
+            resolved = resolved.filter(TICKET_DESCRIPTION__icontains=q)
+        elif search_by == 'name':
+            resolved = resolved.filter(
+                Q(TICKET_CREATED__username__icontains=q) |
+                Q(TICKET_CREATED__first_name__icontains=q) |
+                Q(TICKET_CREATED__last_name__icontains=q) |
+                Q(assigned_to__username__icontains=q) |
+                Q(assigned_to__first_name__icontains=q) |
+                Q(assigned_to__last_name__icontains=q)
+            )
+        elif search_by == 'department':
+            resolved = resolved.filter(assigned_department__name__icontains=q)
+        else:
+            resolved = resolved.filter(
+                Q(TICKET_TITLE__icontains=q) |
+                Q(TICKET_DESCRIPTION__icontains=q) |
+                Q(TICKET_CREATED__username__icontains=q) |
+                Q(TICKET_CREATED__first_name__icontains=q) |
+                Q(TICKET_CREATED__last_name__icontains=q) |
+                Q(assigned_to__username__icontains=q) |
+                Q(assigned_to__first_name__icontains=q) |
+                Q(assigned_to__last_name__icontains=q) |
+                Q(assigned_department__name__icontains=q)
+            )
 
     resolved = resolved.select_related(
         'category', 'assigned_to', 'TICKET_CREATED', 'assigned_department'
@@ -1773,7 +1805,8 @@ def resolved_history(request):
 
     return render(request, 'resolved_history.html', {
         'resolved_tickets': page_obj,
-        'stats':          stats,
+        'stats': stats,
+        'search_by': search_by,
     })
 
 @admin_required

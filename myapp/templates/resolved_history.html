@@ -117,13 +117,24 @@
 <div class="hd-card mb-4">
   <div class="hd-card-body">
     <form method="get" class="d-flex align-items-center flex-wrap gap-3">
+      <div style="min-width:180px;">
+        <select name="search_by" class="form-select form-select-sm">
+          <option value="all" {% if search_by == 'all' %}selected{% endif %}>All Fields</option>
+          <option value="id" {% if search_by == 'id' %}selected{% endif %}>Ticket ID</option>
+          <option value="title" {% if search_by == 'title' %}selected{% endif %}>Title</option>
+          <option value="description" {% if search_by == 'description' %}selected{% endif %}>Description</option>
+          <option value="name" {% if search_by == 'name' %}selected{% endif %}>User Name</option>
+          <option value="department" {% if search_by == 'department' %}selected{% endif %}>Department</option>
+        </select>
+      </div>
 
       <div class="search-wrap flex-grow-1">
         <i class="fas fa-search"></i>
         <input type="text" name="q" value="{{ request.GET.q }}"
                class="form-control form-control-sm"
-               placeholder="Search tickets...">
+               placeholder="Enter search text...">
       </div>
+      <button type="submit" class="btn btn-sm btn-outline-secondary">Search</button>
 
     </form>
   </div>
@@ -239,7 +250,7 @@
     </span>
     <nav class="hd-pager">
       {% if resolved_tickets.has_previous %}
-        <a href="?page={{ resolved_tickets.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}"
+        <a href="?page={{ resolved_tickets.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if search_by %}&search_by={{ search_by|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}"
            class="hd-page"><i class="fas fa-chevron-left"></i></a>
       {% else %}
         <span class="hd-page disabled"><i class="fas fa-chevron-left"></i></span>
@@ -249,13 +260,13 @@
         {% if resolved_tickets.number == num %}
           <span class="hd-page active">{{ num }}</span>
         {% elif num >= resolved_tickets.number|add:"-2" and num <= resolved_tickets.number|add:"2" %}
-          <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}"
+          <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if search_by %}&search_by={{ search_by|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}"
              class="hd-page">{{ num }}</a>
         {% endif %}
       {% endfor %}
 
       {% if resolved_tickets.has_next %}
-        <a href="?page={{ resolved_tickets.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}"
+        <a href="?page={{ resolved_tickets.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if search_by %}&search_by={{ search_by|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status|urlencode }}{% endif %}"
            class="hd-page"><i class="fas fa-chevron-right"></i></a>
       {% else %}
         <span class="hd-page disabled"><i class="fas fa-chevron-right"></i></span>
