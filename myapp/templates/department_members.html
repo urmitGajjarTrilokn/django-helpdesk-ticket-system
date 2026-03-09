@@ -1,4 +1,5 @@
-﻿{% extends "Base.html" %}
+{% extends "Base.html" %}
+{% load avatar_tags %}
 {% block title %}{{ department_display_name|default:department.name }} - HelpDesk{% endblock %}
 
 {% block breadcrumb %}
@@ -10,7 +11,7 @@
 {% block content %}
 <style>
   
-  @import url('https://fonts.googleapis.com/css2family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
   .dept-wrap * { font-family: 'Plus Jakarta Sans', sans-serif; }
 
@@ -680,7 +681,7 @@
                   {% if row.profile_image %}
                   <img src="{{ row.profile_image }}" alt="{{ row.membership.user.username }}">
                   {% else %}
-                  {{ row.membership.user.username|first|upper }}
+                  {{ row.membership.user|avatar_initial }}
                   {% endif %}
                 </div>
                 <div>
@@ -847,7 +848,7 @@
                 {% if row.profile_image %}
                 <img src="{{ row.profile_image }}" alt="{{ row.membership.user.username }}">
                 {% else %}
-                {{ row.membership.user.username|first|upper }}
+                {{ row.membership.user|avatar_initial }}
                 {% endif %}
               </div>
               <div>
@@ -1002,33 +1003,33 @@
 
   
   const depts = {
-    'hr':                   { bg: 'https://images.unsplash.com/photo-1522071820081-009f0129c71cw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3ew=120&q=80' },
-    'human resources':      { bg: 'https://images.unsplash.com/photo-1522071820081-009f0129c71cw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3ew=120&q=80' },
-    'it':                   { bg: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538dw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311aw=120&q=80' },
-    'information technology':{ bg: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538dw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311aw=120&q=80' },
-    'finance':              { bg: 'https://images.unsplash.com/photo-1554224155-6726b3ff858fw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1507679799987-c73779587ccfw=120&q=80' },
-    'accounts':             { bg: 'https://images.unsplash.com/photo-1554224155-6726b3ff858fw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1507679799987-c73779587ccfw=120&q=80' },
-    'accounting':           { bg: 'https://images.unsplash.com/photo-1554224155-6726b3ff858fw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1507679799987-c73779587ccfw=120&q=80' },
-    'marketing':            { bg: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330w=120&q=80' },
-    'sales':                { bg: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7w=120&q=80' },
-    'operations':           { bg: 'https://images.unsplash.com/photo-1553413077-190dd305871cw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4ew=120&q=80' },
-    'legal':                { bg: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95fw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5w=120&q=80' },
-    'support':              { bg: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44dw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1601935111741-ae98b2b230b0w=120&q=80' },
-    'customer support':     { bg: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44dw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1601935111741-ae98b2b230b0w=120&q=80' },
-    'customer service':     { bg: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44dw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1601935111741-ae98b2b230b0w=120&q=80' },
-    'engineering':          { bg: 'https://images.unsplash.com/photo-1555066931-4365d14bab8cw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5w=120&q=80' },
-    'development':          { bg: 'https://images.unsplash.com/photo-1555066931-4365d14bab8cw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5w=120&q=80' },
-    'admin':                { bg: 'https://images.unsplash.com/photo-1497366216548-37526070297cw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019418-b400bb3ab074w=120&q=80' },
-    'administration':       { bg: 'https://images.unsplash.com/photo-1497366216548-37526070297cw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019418-b400bb3ab074w=120&q=80' },
-    'procurement':          { bg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310dw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daebw=120&q=80' },
-    'supply chain':         { bg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310dw=1400&q=80', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daebw=120&q=80' },
-    'management':           { bg: 'https://images.unsplash.com/photo-1552664730-d307ca884978w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91w=120&q=80' },
-    'executive':            { bg: 'https://images.unsplash.com/photo-1552664730-d307ca884978w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91w=120&q=80' },
+    'hr':                   { bg: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&q=80' },
+    'human resources':      { bg: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=120&q=80' },
+    'it':                   { bg: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&q=80' },
+    'information technology':{ bg: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&q=80' },
+    'finance':              { bg: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=120&q=80' },
+    'accounts':             { bg: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=120&q=80' },
+    'accounting':           { bg: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=120&q=80' },
+    'marketing':            { bg: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&q=80' },
+    'sales':                { bg: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&q=80' },
+    'operations':           { bg: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&q=80' },
+    'legal':                { bg: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?w=120&q=80' },
+    'support':              { bg: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1601935111741-ae98b2b230b0?w=120&q=80' },
+    'customer support':     { bg: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1601935111741-ae98b2b230b0?w=120&q=80' },
+    'customer service':     { bg: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1601935111741-ae98b2b230b0?w=120&q=80' },
+    'engineering':          { bg: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=120&q=80' },
+    'development':          { bg: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=120&q=80' },
+    'admin':                { bg: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019418-b400bb3ab074?w=120&q=80' },
+    'administration':       { bg: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1573497019418-b400bb3ab074?w=120&q=80' },
+    'procurement':          { bg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80' },
+    'supply chain':         { bg: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80' },
+    'management':           { bg: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=120&q=80' },
+    'executive':            { bg: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80', avatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=120&q=80' },
   };
 
   const fallback = {
-    bg:     'https://images.unsplash.com/photo-1497366811353-6870744d04b2w=1400&q=80',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2w=120&q=80',
+    bg:     'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1400&q=80',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&q=80',
   };
 
   
@@ -1043,6 +1044,16 @@
     return fallback;
   }
 
+  function avatarFallbackDataUri(label) {
+    const txt = (label || '?').toString().trim().slice(0, 1).toUpperCase() || '?';
+    const svg =
+      `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'>` +
+      `<rect width='100%' height='100%' fill='#1e3a8a'/>` +
+      `<text x='50%' y='56%' text-anchor='middle' fill='white' font-family='Arial' font-size='56' font-weight='700'>${txt}</text>` +
+      `</svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  }
+
   
   const heroDeptName = "{{ department.name|lower|escapejs }}";
   const heroDeptCode = "{{ department.code|lower|escapejs }}";
@@ -1054,7 +1065,11 @@
       `linear-gradient(135deg, rgba(15,23,42,.52) 0%, rgba(30,41,100,.38) 100%), url('${heroMatch.bg}')`;
   }
   const heroAvatar = document.getElementById('dept-avatar-img');
-  if (heroAvatar) heroAvatar.src = heroMatch.avatar;
+  if (heroAvatar) {
+    const heroInitial = (heroDeptName || heroDeptCode || "?").trim().charAt(0);
+    heroAvatar.onerror = () => { heroAvatar.onerror = null; heroAvatar.src = avatarFallbackDataUri(heroInitial); };
+    heroAvatar.src = heroMatch.avatar;
+  }
 
   
   document.querySelectorAll('.multi-dept-card').forEach(card => {
@@ -1068,7 +1083,11 @@
 
     
     const img = card.querySelector('.md-avatar-img');
-    if (img) img.src = m.avatar;
+    if (img) {
+      const initial = (name || code || "?").trim().charAt(0);
+      img.onerror = () => { img.onerror = null; img.src = avatarFallbackDataUri(initial); };
+      img.src = m.avatar;
+    }
   });
 
 })();
