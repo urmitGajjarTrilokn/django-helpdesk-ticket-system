@@ -149,7 +149,9 @@
         <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
           <span class="ticket-id">#{{ ticket.id }}</span>
 
-          <span class="status-badge sb-resolved">Resolved</span>
+          <span class="status-badge {% if ticket.TICKET_STATUS == 'Closed' %}sb-closed{% else %}sb-resolved{% endif %}">
+            {{ ticket.TICKET_STATUS }}
+          </span>
 
           {% if ticket.effective_priority == 'URGENT' %}
             <span class="priority-badge pb-urgent"><i class="fas fa-fire"></i> Urgent</span>

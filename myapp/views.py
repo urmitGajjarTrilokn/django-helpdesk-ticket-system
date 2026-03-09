@@ -1745,7 +1745,7 @@ def activity_log(request):
 @login_required
 def resolved_history(request):
     resolved = TicketDetail.objects.filter(
-        TICKET_STATUS='Resolved',
+        TICKET_STATUS__in=['Resolved', 'Closed'],
     )
 
     q = request.GET.get('q', '').strip()
@@ -1758,16 +1758,17 @@ def resolved_history(request):
         'category', 'assigned_to', 'TICKET_CREATED', 'assigned_department'
     ).order_by('-TICKET_CLOSED_ON')
 
-    full_qs = TicketDetail.objects.filter(TICKET_STATUS='Resolved')
+    full_qs = TicketDetail.objects.filter(TICKET_STATUS__in=['Resolved', 'Closed'])
     stats = {
         'total_resolved': full_qs.count(),
         'resolved':       full_qs.filter(TICKET_STATUS='Resolved').count(),
+        'closed':         full_qs.filter(TICKET_STATUS='Closed').count(),
         'avg_rating':     TicketRating.objects.filter(
             ticket__in=full_qs
         ).aggregate(avg=Avg('rating'))['avg'],
     }
 
-    paginator = Paginator(resolved, 20)
+    paginator = Paginator(resolved, 10)
     page_obj  = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'resolved_history.html', {
