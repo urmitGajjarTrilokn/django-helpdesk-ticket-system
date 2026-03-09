@@ -416,7 +416,6 @@ class UsernameRequiredPasswordResetView(PasswordResetView):
     def dispatch(self, request, *args, **kwargs):
         requested_username = self._requested_username()
         if not requested_username:
-            messages.error(request, "Enter username first on login page, then use Forgot Password.")
             return redirect('login')
         if not User.objects.filter(username__iexact=requested_username, is_active=True).exists():
             messages.error(request, "Username not found. Enter a valid registered username.")

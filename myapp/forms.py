@@ -491,7 +491,7 @@ class UsernameEmailPasswordResetForm(PasswordResetForm):
     def clean_email(self):
         email = (self.cleaned_data.get('email') or '').strip()
         if not self.requested_username:
-            raise ValidationError("Enter your username on the login page before using Forgot Password.")
+            raise ValidationError("Invalid password reset request.")
 
         user_model = get_user_model()
         username_exists = user_model._default_manager.filter(
