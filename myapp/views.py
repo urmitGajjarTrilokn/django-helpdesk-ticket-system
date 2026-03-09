@@ -598,7 +598,7 @@ def Basepage(request, dept_id=None):
         del pagination_query['page']
 
     department_dashboard_url = reverse('base')
-    created_tickets_url = f"{reverse('base')}view=created"
+    created_tickets_url = f"{reverse('base')}?view=created"
 
     return render(request, 'dashboard.html', {
         'Ticketdatas':   page_obj,

@@ -87,11 +87,11 @@
       {% endfor %}
     </select>
 
-    <a href="{% url 'export_analytics_excel' %}range={{ range_type }}"
+    <a href="{% url 'export_analytics_excel' %}?range={{ range_type|urlencode }}"
        class="btn btn-sm btn-outline-secondary" title="Export to Excel">
       <i class="fas fa-file-excel" style="color:#16A34A;"></i> Excel
     </a>
-    <a href="{% url 'export_analytics_pdf' %}range={{ range_type }}"
+    <a href="{% url 'export_analytics_pdf' %}?range={{ range_type|urlencode }}"
        class="btn btn-sm btn-outline-secondary" title="Export to PDF">
       <i class="fas fa-file-pdf" style="color:var(--danger);"></i> PDF
     </a>
@@ -413,7 +413,7 @@ const lineCtx = document.getElementById('lineChart');
 if (lineCtx) {
   const range = '{{ range_type }}';
   const dept  = '{{ selected_department.id|default:"" }}';
-  let apiUrl  = `{% url 'api_tickets_over_time' %}range=${range}`;
+  let apiUrl  = `{% url 'api_tickets_over_time' %}?range=${encodeURIComponent(range)}`;
   if (dept) apiUrl += `&department=${dept}`;
 
   fetch(apiUrl)

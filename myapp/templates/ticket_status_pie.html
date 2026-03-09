@@ -46,7 +46,7 @@
       </div>
       <div class="hd-card-body text-center">
         <div class="chart-shell">
-          <img src="{% url 'dashboard_pie' %}v={{ chart_ts }}" alt="Ticket status pie chart">
+          <img src="{% url 'dashboard_pie' %}?v={{ chart_ts }}" alt="Ticket status pie chart">
         </div>
         <div class="chart-caption">Quick share of current ticket statuses.</div>
       </div>
@@ -59,7 +59,7 @@
       </div>
       <div class="hd-card-body text-center">
         <div class="chart-shell">
-          <img src="{% url 'bar_chart' %}v={{ chart_ts }}" alt="Ticket status bar chart">
+          <img src="{% url 'bar_chart' %}?v={{ chart_ts }}" alt="Ticket status bar chart">
         </div>
         <div class="chart-caption">Status counts for quick comparison.</div>
       </div>

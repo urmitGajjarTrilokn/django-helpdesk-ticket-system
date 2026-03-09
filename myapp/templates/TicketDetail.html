@@ -105,7 +105,7 @@
         </div>
 
         <div class="d-flex justify-content-end gap-2">
-          <a href="{% if edit_mode %}{% url 'ticketinfo' ticket.id %}{% if mine_only_mode %}mine_only=1{% endif %}{% else %}{% url 'base' %}{% endif %}" class="btn btn-sm btn-outline-secondary">
+          <a href="{% if edit_mode %}{% url 'ticketinfo' ticket.id %}{% if mine_only_mode %}?mine_only=1{% endif %}{% else %}{% url 'base' %}{% endif %}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-times"></i> Cancel
           </a>
           <button type="submit" class="btn btn-sm btn-primary">

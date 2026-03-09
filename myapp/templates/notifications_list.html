@@ -59,15 +59,15 @@
 </div>
 
 <div class="mb-3 d-flex gap-2 flex-wrap">
-  <a href="{% url 'notifications_list' %}filter=all"
+  <a href="{% url 'notifications_list' %}?filter=all"
      class="btn btn-sm {% if filter_type == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
     All
   </a>
-  <a href="{% url 'notifications_list' %}filter=unread"
+  <a href="{% url 'notifications_list' %}?filter=unread"
      class="btn btn-sm {% if filter_type == 'unread' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
     Unread
   </a>
-  <a href="{% url 'notifications_list' %}filter=read"
+  <a href="{% url 'notifications_list' %}?filter=read"
      class="btn btn-sm {% if filter_type == 'read' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
     Read
   </a>
@@ -127,10 +127,10 @@
     </span>
     <div class="d-flex gap-2">
       {% if notifications.has_previous %}
-      <a href="filter={{ filter_type }}&page={{ notifications.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Prev</a>
+      <a href="?filter={{ filter_type|urlencode }}&page={{ notifications.previous_page_number }}" class="btn btn-sm btn-outline-secondary">Prev</a>
       {% endif %}
       {% if notifications.has_next %}
-      <a href="filter={{ filter_type }}&page={{ notifications.next_page_number }}" class="btn btn-sm btn-outline-secondary">Next</a>
+      <a href="?filter={{ filter_type|urlencode }}&page={{ notifications.next_page_number }}" class="btn btn-sm btn-outline-secondary">Next</a>
       {% endif %}
     </div>
   </div>

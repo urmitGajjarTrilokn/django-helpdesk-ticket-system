@@ -134,10 +134,10 @@
 </div>
 
 <div class="my-filter-bar" id="filterPills">
-  <a href="sort={{ sort|default:'all' }}" class="mf-pill {% if not selected_department_filter %}active{% endif %}">All Departments</a>
+  <a href="?sort={{ sort|default:'all'|urlencode }}" class="mf-pill {% if not selected_department_filter %}active{% endif %}">All Departments</a>
   {% if user_departments|length > 1 %}
     {% for dept in user_departments %}
-    <a href="sort={{ sort|default:'all' }}&department={{ dept.id }}"
+    <a href="?sort={{ sort|default:'all'|urlencode }}&department={{ dept.id }}"
        class="mf-pill {% if selected_department_filter == dept.id|stringformat:'s' %}active{% endif %}">
       {{ dept.name }}
     </a>
@@ -160,7 +160,7 @@
       <option value="overdue" {% if sort == 'overdue' %}selected{% endif %}>Overdue</option>
     </select>
     <button type="submit" class="btn btn-sm btn-outline-secondary">Apply</button>
-    <a href="sort=all{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="btn btn-sm btn-light border">Reset</a>
+    <a href="?sort=all{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="btn btn-sm btn-light border">Reset</a>
   </form>
 </div>
 
@@ -225,7 +225,7 @@
       </div>
 
       <div class="tc-footer">
-        <a href="{% url 'ticketinfo' cart.ticket.id %}from_assigned=1" class="btn btn-xs btn-outline-secondary flex-fill text-center">
+        <a href="{% url 'ticketinfo' cart.ticket.id %}?from_assigned=1" class="btn btn-xs btn-outline-secondary flex-fill text-center">
           <i class="fas fa-eye"></i> View
         </a>
 
@@ -258,7 +258,7 @@
       <div class="empty-icon"><i class="fas fa-filter" style="color:var(--slate-300);"></i></div>
       <div class="empty-title">No tickets for this filter</div>
       <div class="empty-text">Try a different priority/status filter.</div>
-      <a href="sort=all{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="btn btn-sm btn-primary">
+      <a href="?sort=all{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="btn btn-sm btn-primary">
         <i class="fas fa-list me-1"></i>Show All Assigned Tickets
       </a>
     {% else %}

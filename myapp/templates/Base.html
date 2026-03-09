@@ -529,7 +529,7 @@
       {% for notif in recent_notifications %}
       <div class="nd-item {% if not notif.is_read %}unread{% endif %}"
            data-read="{{ notif.is_read|yesno:'true,false' }}"
-           onclick="window.location='{% if notif.ticket %}{% url 'ticketinfo' notif.ticket.id %}mark_read={{ notif.id }}{% else %}{% url 'notifications_list' %}{% endif %}'">
+           onclick="window.location='{% if notif.ticket %}{% url 'ticketinfo' notif.ticket.id %}?mark_read={{ notif.id }}{% else %}{% url 'notifications_list' %}{% endif %}'">
         <div class="nd-icon
           {% if notif.notification_type == 'TICKET_CREATED' %}si-indigo
           {% elif notif.notification_type == 'TICKET_ASSIGNED' %}si-blue
@@ -563,7 +563,7 @@
   </div>
   <div class="notif-drawer-footer">
     {% if unread_notifications > 0 %}
-    <a href="{% url 'mark_all_read' %}next=base"
+    <a href="{% url 'mark_all_read' %}?next=base"
        class="btn btn-sm btn-outline-secondary flex-fill text-center">
       <i class="fas fa-check-double"></i> Mark All Read
     </a>

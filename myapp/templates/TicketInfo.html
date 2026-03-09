@@ -157,7 +157,7 @@
 
         <div class="d-flex flex-wrap gap-2">
           {% if creator_edit_only_mode and can_edit_ticket %}
-          <a href="{% url 'updateticket' ticketinfos.id %}mine_only=1" class="btn btn-sm btn-outline-secondary">
+          <a href="{% url 'updateticket' ticketinfos.id %}?mine_only=1" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-edit me-1"></i>Edit
           </a>
           {% elif can_edit_ticket and not request.GET.from_assigned %}
