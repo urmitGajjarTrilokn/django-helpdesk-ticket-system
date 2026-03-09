@@ -153,6 +153,47 @@ def _can_work_on_task(user, task):
     return MyCart.objects.filter(user=user, task=task).exists()
 
 
+def _is_close_locked_by_rejection(user, task):
+    latest_rejection = (
+        TaskHistory.objects
+        .filter(task=task, action_type='REJECTED', changed_by=user)
+        .order_by('-changed_at')
+        .first()
+    )
+    if not latest_rejection:
+        return False
+
+    auto_reassigned_after_rejection = TaskHistory.objects.filter(
+        task=task,
+        action_type='ASSIGNED',
+        new_value=user.username,
+        description__icontains='Auto-assigned to',
+        changed_at__gt=latest_rejection.changed_at,
+    ).exists()
+    return not auto_reassigned_after_rejection
+
+
+def _can_user_close_task(user, task):
+    if _is_admin_user(user):
+        return False
+    if task.TASK_STATUS in ['Closed', 'Resolved', 'Expired']:
+        return False
+    if not _can_work_on_task(user, task):
+        return False
+    return not _is_close_locked_by_rejection(user, task)
+
+
+def _is_single_member_department_assignment(task):
+    if not task.assigned_department_id:
+        return False
+    active_member_count = DepartmentMember.objects.filter(
+        department=task.assigned_department,
+        is_active=True,
+        user__is_active=True,
+    ).count()
+    return active_member_count <= 1
+
+
 def _sync_mycart_for_user(user):
     if not user.is_authenticated or user.is_superuser:
         return
@@ -639,12 +680,14 @@ def TaskInfo(request, pk):
     is_agent  = is_admin or is_senior_dept_member
     _sync_mycart_for_user(request.user)
     can_work_on_task = _can_work_on_task(request.user, taskinfos)
+    can_close_task = _can_user_close_task(request.user, taskinfos)
     can_edit_task = (
         taskinfos.TASK_STATUS == 'Open'
         and (taskinfos.TASK_CREATED_id == request.user.id or is_admin)
     )
     can_reject = (
         MyCart.objects.filter(user=request.user, task=taskinfos).exists()
+        and not _is_single_member_department_assignment(taskinfos)
         and not _is_non_rejectable_assignment(request.user, taskinfos)
     )
     comments_qs = UserComment.objects.filter(task=taskinfos)
@@ -733,6 +776,7 @@ def TaskInfo(request, pk):
         'normalized_description': normalized_description,
         'comments':             comments,
         'can_work_on_task':     can_work_on_task,
+        'can_close_task':       can_close_task,
         'can_edit_task':        can_edit_task,
         'can_reject':           can_reject,
         'creator_edit_only_mode': creator_edit_only_mode,
@@ -996,6 +1040,9 @@ def RemoveTask(request, pk):
     if not _can_view_task(request.user, task):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('taskinfo', pk=pk)
+    if _is_single_member_department_assignment(task):
+        messages.error(request, "You cannot reject this ticket because you are the only active member in this department.")
+        return redirect('taskinfo', pk=pk)
     if _is_non_rejectable_assignment(request.user, task):
         messages.error(request, "This assignment cannot be rejected.")
         return redirect('taskinfo', pk=pk)
@@ -1059,25 +1106,14 @@ def RemoveTask(request, pk):
 @login_required
 def CloseTask(request, pk):
     task = get_object_or_404(TaskDetail, id=pk)
-    if TaskHistory.objects.filter(
-        task=task,
-        action_type='REJECTED',
-        changed_by=request.user,
-    ).exists():
+    if _is_close_locked_by_rejection(request.user, task):
         messages.error(request, "You have already rejected this ticket and cannot close it now.")
         return redirect('taskinfo', pk=pk)
     if _is_admin_user(request.user):
         messages.error(request, "Admins cannot close tasks. You can delete the task if needed.")
         return redirect('taskinfo', pk=pk)
-    if not _can_work_on_task(request.user, task):
+    if not _can_user_close_task(request.user, task):
         messages.error(request, "You do not have permission to perform this action.")
-        return redirect('taskinfo', pk=pk)
-    can_close_by_role = user_has_department_permission(
-        request.user, task.assigned_department, 'can_close_tickets'
-    )
-    is_assigned_handler = task.assigned_to_id == request.user.id
-    if not is_assigned_handler and not can_close_by_role:
-        messages.error(request, "Your role cannot close this ticket.")
         return redirect('taskinfo', pk=pk)
     task.assigned_to = request.user
     task.TASK_STATUS   = 'Closed'
@@ -1369,6 +1405,10 @@ def MyCarts(request):
         carts.filter(task__assigned_by__is_superuser=True).values_list('task_id', flat=True)
     )
     non_rejectable_task_ids.update(admin_assigned_task_ids)
+    single_member_department_task_ids = {
+        cart.task_id for cart in carts if _is_single_member_department_assignment(cart.task)
+    }
+    non_rejectable_task_ids.update(single_member_department_task_ids)
     if cart_task_ids:
         latest_assigned_history = (
             TaskHistory.objects.filter(
@@ -1415,6 +1455,11 @@ def MyCarts(request):
             task__TASK_STATUS__in=['Closed', 'Resolved', 'Expired']
         ).count(),
     }
+    closable_task_ids = {
+        cart.task_id
+        for cart in carts
+        if _can_user_close_task(request.user, cart.task)
+    }
     return render(request, 'Mycart.html', {
         'Carts': carts,
         'comments': comments,
@@ -1423,6 +1468,7 @@ def MyCarts(request):
         'user_departments': [m.department for m in user_memberships],
         'selected_department_filter': department_filter,
         'non_rejectable_task_ids': non_rejectable_task_ids,
+        'closable_task_ids': closable_task_ids,
     })
 
 @login_required
@@ -1653,11 +1699,7 @@ def comment_view(request, pk, action):
         return redirect('taskinfo', pk=pk)
     if (
         action == 'closing_comment'
-        and TaskHistory.objects.filter(
-            task=task,
-            action_type='REJECTED',
-            changed_by=request.user,
-        ).exists()
+        and _is_close_locked_by_rejection(request.user, task)
     ):
         messages.error(request, "You have already rejected this ticket and cannot close it now.")
         return redirect('taskinfo', pk=pk)
@@ -1672,7 +1714,10 @@ def comment_view(request, pk, action):
     ):
         messages.error(request, "You can reopen a ticket only once. Please create a new ticket.")
         return redirect('taskinfo', pk=pk)
-    if not is_admin and not _can_work_on_task(request.user, task):
+    if action == 'closing_comment' and not _can_user_close_task(request.user, task):
+        messages.error(request, "You do not have permission to close this ticket.")
+        return redirect('taskinfo', pk=pk)
+    if action == 'reopen_comment' and not is_admin and not _can_work_on_task(request.user, task):
         messages.error(request, "You do not have permission to comment on this ticket.")
         return redirect('taskinfo', pk=pk)
 

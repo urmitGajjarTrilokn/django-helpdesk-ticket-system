@@ -165,7 +165,7 @@
             <i class="fas fa-edit me-1"></i>Edit
           </a>
 
-          {% if taskinfos.TASK_STATUS not in 'Closed,Resolved,Expired' and can_work_on_task %}
+          {% if taskinfos.TASK_STATUS not in 'Closed,Resolved,Expired' and can_close_task %}
           <a href="{% url 'comment' pk=taskinfos.id action='closing_comment' %}"
              class="btn btn-sm btn-outline-success">
             <i class="fas fa-check-double me-1"></i>Close with Note
@@ -364,7 +364,7 @@
       {% if not creator_edit_only_mode %}
       <div class="hd-card-footer">
         <div class="d-flex gap-2 flex-wrap">
-          {% if taskinfos.TASK_STATUS not in 'Closed,Resolved,Expired' %}
+          {% if taskinfos.TASK_STATUS not in 'Closed,Resolved,Expired' and can_close_task %}
           <a href="{% url 'comment' pk=taskinfos.id action='closing_comment' %}"
              class="btn btn-xs btn-outline-success">
             <i class="fas fa-check me-1"></i>Close with Note
@@ -517,7 +517,7 @@
       {% endif %}
 
       {% if request.GET.from_assigned and taskinfos.TASK_STATUS == 'Reopen' %}
-        {% if can_work_on_task %}
+        {% if can_close_task %}
         <a href="{% url 'comment' pk=taskinfos.id action='closing_comment' %}" class="action-btn ab-outline">
           <i class="fas fa-times-circle"></i> Close with Note
         </a>
@@ -527,7 +527,7 @@
         <a href="{% url 'resolvedtask' taskinfos.id %}" class="action-btn ab-success">
           <i class="fas fa-check-circle"></i> Mark Resolved
         </a>
-        {% if not is_admin %}
+        {% if can_close_task %}
         <a href="{% url 'closetask' taskinfos.id %}" class="action-btn ab-outline">
           <i class="fas fa-times-circle"></i> Close Ticket
         </a>

@@ -221,9 +221,11 @@
         <a href="{% url 'resolvedtask' cart.task.id %}" class="btn btn-xs btn-success" title="Mark as Resolved">
           <i class="fas fa-check-circle"></i>
         </a>
+        {% if cart.task.id in closable_task_ids %}
         <a href="{% url 'comment' pk=cart.task.id action='closing_comment' %}" class="btn btn-xs btn-outline-success" title="Close with Note">
           <i class="fas fa-check"></i>
         </a>
+        {% endif %}
         {% endif %}
 
         {% if cart.task.id not in non_rejectable_task_ids and cart.task.TASK_STATUS != 'Reopen' %}
