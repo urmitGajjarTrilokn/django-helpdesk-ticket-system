@@ -44,9 +44,16 @@ urlpatterns = [
 
     path('change-password/', views.Change_Password, name='ChangePassword'),
 
-    path('password-reset/',
-         auth_views.PasswordResetView.as_view(template_name='password_reset_form.html'),
-         name='password_reset'),
+    path(
+        'password-reset/',
+        auth_views.PasswordResetView.as_view(
+            template_name='password_reset_form.html',
+            email_template_name='password_reset_email.txt',
+            subject_template_name='password_reset_subject.txt',
+            html_email_template_name='password_reset_email.html',
+        ),
+        name='password_reset'
+    ),
     path('password-reset/done/',
          auth_views.PasswordResetDoneView.as_view(template_name='password_reset_done.html'),
          name='password_reset_done'),
