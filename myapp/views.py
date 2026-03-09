@@ -234,6 +234,17 @@ def _auto_assign_single_member_department_task(task, changed_by=None):
     return assignee
 
 
+def _is_creator_only_member_of_department(user, department):
+    if not user or not department:
+        return False
+    active_memberships = DepartmentMember.objects.filter(
+        department=department,
+        is_active=True,
+        user__is_active=True,
+    )
+    return active_memberships.count() == 1 and active_memberships.filter(user=user).exists()
+
+
 def _sync_mycart_for_user(user):
     if not user.is_authenticated or user.is_superuser:
         return
@@ -665,6 +676,13 @@ def TaskDetails(request):
                     task.assignment_type = "MANUAL"
                     task.assigned_by = request.user
                     task.assigned_at = timezone.now()
+
+                if _is_creator_only_member_of_department(request.user, task.assigned_department):
+                    messages.error(
+                        request,
+                        "Ticket cannot be submitted because AI routed it to your own department where you are the only active member."
+                    )
+                    return render(request, "TaskDetail.html", {"form": form})
 
             task.save()
             form.save_m2m()

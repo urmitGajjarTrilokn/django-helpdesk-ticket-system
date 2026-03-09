@@ -188,3 +188,46 @@ class RolePermissionBehaviorTests(TestCase):
         task = TaskDetail.objects.latest("id")
         self.assertEqual(task.assigned_department_id, solo_department.id)
         self.assertEqual(task.assigned_to_id, self.member.id)
+
+    @patch("myapp.views.predict_department")
+    @patch("myapp.views.predict_ticket_priority_with_meta")
+    def test_creator_cannot_submit_when_predicted_department_has_only_creator(self, mock_predict_priority, mock_predict_department):
+        one_person_department = Department.objects.create(
+            name="Solo Creator Dept",
+            code="SCD",
+            description="Only creator is present",
+            color="#22c55e",
+            icon="fas fa-user",
+        )
+        DepartmentMember.objects.create(
+            user=self.creator,
+            department=one_person_department,
+            role="MEMBER",
+            is_active=True,
+        )
+        mock_predict_department.return_value = "Solo Creator Dept"
+        mock_predict_priority.return_value = {
+            "priority": "MEDIUM",
+            "reason": "Default",
+            "model": "test",
+            "error": "",
+        }
+
+        self.client.login(username="creator", password="pass12345")
+        before_count = TaskDetail.objects.count()
+        response = self.client.post(
+            reverse("taskdetail"),
+            data={
+                "TASK_TITLE": "Creator only predicted department ticket",
+                "TASK_DESCRIPTION": "This should be blocked because creator is sole member.",
+                "TASK_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
+                "category": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "Ticket cannot be submitted because AI routed it to your own department where you are the only active member."
+        )
+        self.assertEqual(TaskDetail.objects.count(), before_count)
