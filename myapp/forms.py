@@ -372,6 +372,26 @@ class TaskUpdateForm(forms.ModelForm):
             )
 
 
+class AdminTicketRoutingForm(forms.ModelForm):
+    priority = forms.ChoiceField(
+        choices=TaskDetail.PRIORITY_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Priority",
+    )
+    assigned_department = forms.ModelChoiceField(
+        queryset=Department.objects.filter(is_active=True),
+        required=False,
+        empty_label="Not Assigned",
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Assigned Department",
+    )
+
+    class Meta:
+        model = TaskDetail
+        fields = ('priority', 'assigned_department')
+
+
 class TaskFilterForm(forms.Form):
     search = forms.CharField(
         required=False,

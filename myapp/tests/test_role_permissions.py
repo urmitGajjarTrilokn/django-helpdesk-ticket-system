@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from myapp.models import Department, DepartmentMember, MyCart, TaskDetail, TaskHistory
+from myapp.models import Department, DepartmentMember, MyCart, TaskDetail, TaskHistory, Notification
 
 
 class RolePermissionBehaviorTests(TestCase):
@@ -22,6 +22,11 @@ class RolePermissionBehaviorTests(TestCase):
         self.member = User.objects.create_user(username="member1", password="pass12345")
         self.lead = User.objects.create_user(username="lead1", password="pass12345")
         self.manager = User.objects.create_user(username="manager1", password="pass12345")
+        self.admin = User.objects.create_superuser(
+            username="admin1",
+            email="admin1@example.com",
+            password="pass12345",
+        )
 
         DepartmentMember.objects.create(user=self.member, department=self.department, role="MEMBER", is_active=True)
         DepartmentMember.objects.create(user=self.lead, department=self.department, role="LEAD", is_active=True)
@@ -188,6 +193,76 @@ class RolePermissionBehaviorTests(TestCase):
         task = TaskDetail.objects.latest("id")
         self.assertEqual(task.assigned_department_id, solo_department.id)
         self.assertEqual(task.assigned_to_id, self.member.id)
+
+    def test_admin_can_change_priority_and_department_but_not_title(self):
+        other_department = Department.objects.create(
+            name="HR Ops",
+            code="HROPS",
+            description="HR department",
+            color="#8b5cf6",
+            icon="fas fa-users",
+        )
+        task = self._create_open_task()
+        original_title = task.TASK_TITLE
+
+        self.client.login(username="admin1", password="pass12345")
+        response = self.client.post(
+            reverse("updatetask", kwargs={"pk": task.id}),
+            data={
+                "TASK_TITLE": "Changed by admin should be ignored",
+                "priority": "URGENT",
+                "assigned_department": str(other_department.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        task.refresh_from_db()
+        self.assertEqual(task.TASK_TITLE, original_title)
+        self.assertEqual(task.priority, "URGENT")
+        self.assertEqual(task.assigned_department_id, other_department.id)
+
+    def test_admin_same_department_no_change_shows_error(self):
+        task = self._create_open_task()
+        self.client.login(username="admin1", password="pass12345")
+        response = self.client.post(
+            reverse("updatetask", kwargs={"pk": task.id}),
+            data={"assigned_department": str(self.department.id), "priority": task.priority},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Selected department is already assigned to this ticket.")
+
+    def test_admin_department_change_clears_old_assignee_and_moves_carts(self):
+        other_department = Department.objects.create(
+            name="Facilities",
+            code="FAC",
+            description="Facilities team",
+            color="#14b8a6",
+            icon="fas fa-building",
+        )
+        DepartmentMember.objects.create(user=self.lead, department=other_department, role="LEAD", is_active=True)
+        DepartmentMember.objects.create(user=self.manager, department=other_department, role="MANAGER", is_active=True)
+
+        task = self._create_open_task()
+        task.assigned_to = self.member
+        task.TASK_HOLDER = self.member.username
+        task.save(update_fields=["assigned_to", "TASK_HOLDER"])
+        MyCart.objects.get_or_create(user=self.member, task=task)
+
+        self.client.login(username="admin1", password="pass12345")
+        response = self.client.post(
+            reverse("updatetask", kwargs={"pk": task.id}),
+            data={"assigned_department": str(other_department.id), "priority": task.priority},
+        )
+        self.assertEqual(response.status_code, 302)
+
+        task.refresh_from_db()
+        self.assertEqual(task.assigned_department_id, other_department.id)
+        self.assertIsNone(task.assigned_to)
+        self.assertEqual(task.TASK_HOLDER, "")
+        self.assertFalse(MyCart.objects.filter(user=self.member, task=task).exists())
+        self.assertTrue(MyCart.objects.filter(user=self.lead, task=task).exists())
+        self.assertTrue(MyCart.objects.filter(user=self.manager, task=task).exists())
+        self.assertTrue(Notification.objects.filter(user=self.member, task=task, notification_type="TASK_UPDATED").exists())
 
     @patch("myapp.views.predict_department")
     @patch("myapp.views.predict_ticket_priority_with_meta")

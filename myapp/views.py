@@ -53,7 +53,7 @@ from .ai.ai_priority import predict_ticket_priority_with_meta
 from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TaskDetailForm, TaskCreateForm,
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
-    AccountSettingsForm, UsernameEmailPasswordResetForm,
+    AccountSettingsForm, UsernameEmailPasswordResetForm, AdminTicketRoutingForm,
 )
 
 
@@ -897,6 +897,108 @@ def updatetask(request, pk):
     if not is_admin_user and not _can_work_on_task(request.user, task):
         messages.error(request, 'You do not have permission to edit this task.')
         return redirect('taskinfo', pk=pk)
+
+    if is_admin_user:
+        old_department = task.assigned_department
+        old_assignee = task.assigned_to
+        if request.method == "POST":
+            form = AdminTicketRoutingForm(request.POST, instance=task)
+            if form.is_valid():
+                changed_fields = form.changed_data
+                updated_task = form.save(commit=False)
+                selected_department_id = request.POST.get('assigned_department')
+                if (
+                    selected_department_id
+                    and old_department
+                    and str(old_department.id) == str(selected_department_id)
+                    and 'assigned_department' not in changed_fields
+                    and 'priority' not in changed_fields
+                ):
+                    messages.error(request, 'Selected department is already assigned to this ticket.')
+                    return render(request, 'Updatetask.html', {'form': form, 'task': task})
+
+                if 'assigned_department' in changed_fields:
+                    updated_task.assigned_to = None
+                    updated_task.TASK_HOLDER = ''
+                if 'assigned_department' in changed_fields and updated_task.assigned_department:
+                    updated_task.assignment_type = 'MANUAL'
+                    updated_task.assigned_by = request.user
+                    updated_task.assigned_at = timezone.now()
+                    new_members = DepartmentMember.objects.filter(
+                        department=updated_task.assigned_department, is_active=True
+                    )
+                    for member in new_members:
+                        MyCart.objects.get_or_create(user=member.user, task=updated_task)
+                        Notification.objects.create(
+                            user=member.user, task=updated_task,
+                            notification_type='TASK_ASSIGNED',
+                            message=f'Task "{updated_task.TASK_TITLE}" reassigned to {updated_task.assigned_department.name}',
+                        )
+
+                updated_task.save()
+                if (
+                    'assigned_department' in changed_fields
+                    and old_assignee
+                ):
+                    TaskHistory.objects.create(
+                        task=updated_task,
+                        changed_by=request.user,
+                        action_type='ASSIGNED',
+                        field_name='assigned_to',
+                        old_value=old_assignee.username,
+                        new_value='Unassigned',
+                        description=(
+                            f'Assignment cleared by {request.user.username} due to department reassignment.'
+                        ),
+                    )
+                    create_notification(
+                        user=old_assignee,
+                        notification_type='TASK_UPDATED',
+                        title='Ticket reassigned to another department',
+                        message=f'Task "{updated_task.TASK_TITLE}" was moved to {updated_task.assigned_department.name if updated_task.assigned_department else "another department"} and unassigned from you.',
+                        task=updated_task,
+                        extra_data={
+                            'updated_by': request.user.username,
+                            'old_department': old_department.name if old_department else '',
+                            'new_department': updated_task.assigned_department.name if updated_task.assigned_department else '',
+                        },
+                    )
+                _auto_assign_single_member_department_task(updated_task, changed_by=request.user)
+                form.save_m2m()
+
+                if 'assigned_department' in changed_fields:
+                    if old_department and old_department != updated_task.assigned_department:
+                        old_member_ids = DepartmentMember.objects.filter(
+                            department=old_department, is_active=True
+                        ).values_list('user_id', flat=True)
+                        if updated_task.assigned_department:
+                            new_member_ids = DepartmentMember.objects.filter(
+                                department=updated_task.assigned_department, is_active=True
+                            ).values_list('user_id', flat=True)
+                            MyCart.objects.filter(
+                                task=updated_task, user_id__in=old_member_ids
+                            ).exclude(user_id__in=new_member_ids).delete()
+                        else:
+                            MyCart.objects.filter(task=updated_task, user_id__in=old_member_ids).delete()
+
+                for field in changed_fields:
+                    action_type = 'PRIORITY_CHANGED' if field == 'priority' else 'UPDATED'
+                    TaskHistory.objects.create(
+                        task=updated_task, changed_by=request.user,
+                        action_type=action_type, field_name=field,
+                        old_value=str(form.initial.get(field, '')),
+                        new_value=str(form.cleaned_data.get(field, '')),
+                        description=f'{field} changed by {request.user.username}',
+                    )
+
+                notify_task_updated(updated_task, request.user, changes=changed_fields)
+                log_activity(request.user, 'UPDATED', f'Updated ticket routing: {updated_task.TASK_TITLE}', task=updated_task)
+                messages.success(request, 'Ticket priority/department updated successfully.')
+                return redirect('taskinfo', pk=pk)
+        else:
+            form = AdminTicketRoutingForm(instance=task)
+
+        return render(request, 'Updatetask.html', {'form': form, 'task': task})
 
     is_creator_edit = task.TASK_CREATED_id == request.user.id and not is_admin_user
     if is_creator_edit:

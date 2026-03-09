@@ -84,6 +84,7 @@
       <div class="hd-card-body">
         <div class="row g-3">
 
+          {% if form.TASK_TITLE %}
           <div class="col-12">
             <label class="form-label">Title <span class="text-danger">*</span></label>
             {{ form.TASK_TITLE }}
@@ -92,7 +93,9 @@
             {% endif %}
             <div class="field-error" id="err_title" style="display:none;">Title is required.</div>
           </div>
+          {% endif %}
 
+          {% if form.TASK_DESCRIPTION %}
           <div class="col-12">
             <label class="form-label">Description <span class="text-danger">*</span></label>
             {{ form.TASK_DESCRIPTION }}
@@ -105,6 +108,7 @@
             {% endif %}
             <div class="field-error" id="err_desc" style="display:none;">Description must be at least 20 characters.</div>
           </div>
+          {% endif %}
 
           {% if form.category %}
           <div class="col-sm-6">
@@ -143,6 +147,7 @@
           </div>
           {% endif %}
 
+          {% if form.TASK_DUE_DATE %}
           <div class="col-sm-6">
             <label class="form-label">Due Date <span class="text-danger">*</span></label>
             {{ form.TASK_DUE_DATE }}
@@ -151,6 +156,7 @@
             {% endif %}
             <div class="field-error" id="err_due" style="display:none;">Due date must be today or later.</div>
           </div>
+          {% endif %}
 
         </div>
       </div>
@@ -163,8 +169,12 @@
           <i class="fas fa-exclamation-triangle mt-1" style="color:var(--warning);flex-shrink:0;"></i>
           <div>
             <strong style="color:var(--slate-800);">Heads up:</strong>
+            {% if form.TASK_TITLE %}
             Changing <strong>priority</strong> or <strong>department</strong> will automatically
             update task urgency metadata.
+            {% else %}
+            As admin, you can update only <strong>priority</strong> and <strong>department</strong>.
+            {% endif %}
           </div>
         </div>
 
