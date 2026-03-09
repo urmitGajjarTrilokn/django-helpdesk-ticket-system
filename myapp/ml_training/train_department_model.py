@@ -1,5 +1,6 @@
 import pandas as pd
 import pickle
+from pathlib import Path
 
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -7,7 +8,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, classification_report
 
-df = pd.read_csv("helpdesk_tickets_cleaned.csv")
+ROOT = Path(__file__).resolve().parent
+DATASET_PATH = ROOT / "helpdesk_tickets_cleaned.csv"
+MODEL_PATH = ROOT.parent / "ml_models" / "department_classifier.pkl"
+
+df = pd.read_csv(DATASET_PATH)
 
 df["text"] = df["title"] + " " + df["description"]
 
@@ -41,7 +46,8 @@ print("Accuracy:", accuracy_score(y_test, preds))
 print("\nClassification Report:\n")
 print(classification_report(y_test, preds))
 
-with open("department_classifier.pkl", "wb") as f:
+MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+with open(MODEL_PATH, "wb") as f:
     pickle.dump(model, f)
 
 print("\nModel saved successfully")
