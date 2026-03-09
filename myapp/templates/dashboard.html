@@ -203,22 +203,22 @@
 </div>
 
 <div class="qs-pills">
-  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=" class="qs-pill {% if not request.GET.status and not is_mine_only_filter %}active{% endif %}">
+  <a href="{{ current_base_url }}{% if is_created_view %}view=created&{% endif %}status=" class="qs-pill {% if not request.GET.status and not is_mine_only_filter %}active{% endif %}">
     All Tickets
   </a>
-  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=Open" class="qs-pill {% if request.GET.status == 'Open' and not is_mine_only_filter %}active{% endif %}">
+  <a href="{{ current_base_url }}{% if is_created_view %}view=created&{% endif %}status=Open" class="qs-pill {% if request.GET.status == 'Open' and not is_mine_only_filter %}active{% endif %}">
     <span class="qs-dot" style="background:#3B82F6;"></span>Open
   </a>
-  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=In Progress" class="qs-pill {% if request.GET.status == 'In Progress' and not is_mine_only_filter %}active{% endif %}">
+  <a href="{{ current_base_url }}{% if is_created_view %}view=created&{% endif %}status=In Progress" class="qs-pill {% if request.GET.status == 'In Progress' and not is_mine_only_filter %}active{% endif %}">
     <span class="qs-dot" style="background:#D97706;"></span>In Progress
   </a>
-  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=Resolved" class="qs-pill {% if request.GET.status == 'Resolved' and not is_mine_only_filter %}active{% endif %}">
+  <a href="{{ current_base_url }}{% if is_created_view %}view=created&{% endif %}status=Resolved" class="qs-pill {% if request.GET.status == 'Resolved' and not is_mine_only_filter %}active{% endif %}">
     <span class="qs-dot" style="background:#059669;"></span>Resolved
   </a>
-  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}status=Closed" class="qs-pill {% if request.GET.status == 'Closed' and not is_mine_only_filter %}active{% endif %}">
+  <a href="{{ current_base_url }}{% if is_created_view %}view=created&{% endif %}status=Closed" class="qs-pill {% if request.GET.status == 'Closed' and not is_mine_only_filter %}active{% endif %}">
     <span class="qs-dot" style="background:#64748B;"></span>Closed
   </a>
-  <a href="{{ current_base_url }}?{% if is_created_view %}view=created&{% endif %}mine_only=1" class="qs-pill {% if is_mine_only_filter %}active{% endif %}">
+  <a href="{{ current_base_url }}{% if is_created_view %}view=created&{% endif %}mine_only=1" class="qs-pill {% if is_mine_only_filter %}active{% endif %}">
     <i class="fas fa-user" style="font-size:10px;"></i>Mine Only
   </a>
 </div>
@@ -340,7 +340,7 @@
 
       <div>
         <div class="ticket-title">
-          <a href="{% url 'ticketinfo' ticket.id %}{% if is_mine_only_filter %}?mine_only=1{% endif %}">{{ ticket.TICKET_TITLE }}</a>
+          <a href="{% url 'ticketinfo' ticket.id %}{% if is_mine_only_filter %}mine_only=1{% endif %}">{{ ticket.TICKET_TITLE }}</a>
         </div>
         <div class="ticket-sub">
           by {{ ticket.TICKET_CREATED.username }}
@@ -436,13 +436,13 @@
       </span>
       <nav class="hd-pager">
         {% if Ticketdatas.has_previous %}
-          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page=1" class="hd-page"><i class="fas fa-angle-double-left" style="font-size:11px;"></i></a>
-          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.previous_page_number }}" class="hd-page"><i class="fas fa-angle-left" style="font-size:11px;"></i></a>
+          <a href="{% if pagination_query %}{{ pagination_query }}&{% endif %}page=1" class="hd-page"><i class="fas fa-angle-double-left" style="font-size:11px;"></i></a>
+          <a href="{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.previous_page_number }}" class="hd-page"><i class="fas fa-angle-left" style="font-size:11px;"></i></a>
         {% endif %}
         <span class="hd-page active">{{ Ticketdatas.number }}</span>
         {% if Ticketdatas.has_next %}
-          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.next_page_number }}" class="hd-page"><i class="fas fa-angle-right" style="font-size:11px;"></i></a>
-          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.paginator.num_pages }}" class="hd-page"><i class="fas fa-angle-double-right" style="font-size:11px;"></i></a>
+          <a href="{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.next_page_number }}" class="hd-page"><i class="fas fa-angle-right" style="font-size:11px;"></i></a>
+          <a href="{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.paginator.num_pages }}" class="hd-page"><i class="fas fa-angle-double-right" style="font-size:11px;"></i></a>
         {% endif %}
       </nav>
     </div>
@@ -499,7 +499,7 @@
     function refreshBulkDeleteState() {
       const selected = selectedItems();
       const count = selected.length;
-      actions.style.display = count > 0 ? 'flex' : 'none';
+      actions.style.display = count > 0  'flex' : 'none';
       countEl.textContent = `${count} selected`;
       selectAll.checked = count > 0 && count === items.length;
       selectAll.indeterminate = count > 0 && count < items.length;
@@ -521,7 +521,7 @@
       if (!selected.length) return;
 
       const ids = selected.map((item) => item.value);
-      if (!confirm(`Delete ${ids.length} selected ticket(s) permanently?`)) return;
+      if (!confirm(`Delete ${ids.length} selected ticket(s) permanently`)) return;
 
       idsInput.value = ids.join(',');
       form.submit();

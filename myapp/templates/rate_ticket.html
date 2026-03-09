@@ -249,7 +249,7 @@
     const box = document.getElementById(containerId);
     if (!box) return;
     const selected = box.querySelector(`input[name="${inputName}"]:checked`);
-    const selectedValue = selected ? parseInt(selected.value, 10) : 0;
+    const selectedValue = selected  parseInt(selected.value, 10) : 0;
     box.querySelectorAll('label[data-value]').forEach(label => {
       const starValue = parseInt(label.getAttribute('data-value'), 10);
       label.classList.toggle('is-active', starValue <= selectedValue);

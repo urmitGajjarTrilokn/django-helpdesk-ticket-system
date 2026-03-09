@@ -230,11 +230,11 @@
       const matchType   = currentType === 'all' || row.dataset.type.includes(currentType);
       const matchSearch = !q || row.dataset.search.includes(q);
       const show = matchType && matchSearch;
-      row.style.display = show ? '' : 'none';
+      row.style.display = show  '' : 'none';
       if (show) visible++;
     });
 
-    document.getElementById('actEmpty').style.display = visible === 0 ? 'block' : 'none';
+    document.getElementById('actEmpty').style.display = visible === 0  'block' : 'none';
   }
 
   function filterType(type, btn) {

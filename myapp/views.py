@@ -598,7 +598,7 @@ def Basepage(request, dept_id=None):
         del pagination_query['page']
 
     department_dashboard_url = reverse('base')
-    created_tickets_url = f"{reverse('base')}?view=created"
+    created_tickets_url = f"{reverse('base')}view=created"
 
     return render(request, 'dashboard.html', {
         'Ticketdatas':   page_obj,
@@ -1091,7 +1091,7 @@ def updateticket(request, pk):
             log_activity(request.user, 'UPDATED', f'Updated ticket: {updated_ticket.TICKET_TITLE}', ticket=updated_ticket)
             messages.success(request, 'Ticket updated successfully!')
             if request.GET.get('mine_only') in ['1', 'true', 'True', 'on']:
-                return redirect(f"{reverse('ticketinfo', kwargs={'pk': pk})}?mine_only=1")
+                return redirect(f"{reverse('ticketinfo', kwargs={'pk': pk})}mine_only=1")
             return redirect('ticketinfo', pk=pk)
 
         return render(request, 'TicketDetail.html', {
@@ -2209,7 +2209,9 @@ def department_members(request, dept_id=None):
             profile_image = ''
             try:
                 if getattr(m.user, 'userprofile', None) and m.user.userprofile.Profile_Image:
-                    profile_image = m.user.userprofile.Profile_Image.url
+                    image = m.user.userprofile.Profile_Image
+                    if image.name and image.storage.exists(image.name):
+                        profile_image = image.url
             except Exception:
                 profile_image = ''
 

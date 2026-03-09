@@ -203,7 +203,7 @@ class TicketDetailForm(forms.ModelForm):
     TICKET_DUE_DATE = forms.DateField(
         label='Ticket Due Date',
         widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-        help_text="When should this be completed?",
+        help_text="When should this be completed",
     )
     TICKET_DESCRIPTION = forms.CharField(
         label="Ticket Description",
@@ -267,7 +267,7 @@ class TicketCreateForm(forms.ModelForm):
     TICKET_DUE_DATE = forms.DateField(
         label='Ticket Due Date',
         widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-        help_text="When should this be completed?",
+        help_text="When should this be completed",
     )
     TICKET_DESCRIPTION = forms.CharField(
         label="Ticket Description",
@@ -568,9 +568,9 @@ class TicketRatingForm(forms.ModelForm):
         }
         labels = {
             'rating': 'Overall Satisfaction',
-            'resolution_quality': 'How well was your issue resolved?',
-            'response_time_rating': 'How satisfied are you with the response time?',
-            'agent_helpfulness': 'How helpful was the resolver?',
+            'resolution_quality': 'How well was your issue resolved',
+            'response_time_rating': 'How satisfied are you with the response time',
+            'agent_helpfulness': 'How helpful was the resolver',
             'feedback': 'Additional Comments',
         }
 

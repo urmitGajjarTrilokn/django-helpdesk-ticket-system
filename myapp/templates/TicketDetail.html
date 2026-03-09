@@ -41,7 +41,7 @@
           <div class="col-12">
             <label class="form-label">Description <span class="text-danger">*</span></label>
             {{ form.TICKET_DESCRIPTION }}
-            <div class="form-text">What's happening? What did you expect vs what you saw? Any error messages?</div>
+            <div class="form-text">What's happening What did you expect vs what you saw Any error messages</div>
             {% if form.TICKET_DESCRIPTION.errors %}
               <div class="field-error">{{ form.TICKET_DESCRIPTION.errors.0 }}</div>
             {% endif %}
@@ -70,7 +70,7 @@
           <div class="col-sm-6">
             <label class="form-label">Department</label>
             {{ form.assigned_department }}
-            <div class="form-text">Which team should handle this?</div>
+            <div class="form-text">Which team should handle this</div>
           </div>
           {% endif %}
 
@@ -105,7 +105,7 @@
         </div>
 
         <div class="d-flex justify-content-end gap-2">
-          <a href="{% if edit_mode %}{% url 'ticketinfo' ticket.id %}{% if mine_only_mode %}?mine_only=1{% endif %}{% else %}{% url 'base' %}{% endif %}" class="btn btn-sm btn-outline-secondary">
+          <a href="{% if edit_mode %}{% url 'ticketinfo' ticket.id %}{% if mine_only_mode %}mine_only=1{% endif %}{% else %}{% url 'base' %}{% endif %}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-times"></i> Cancel
           </a>
           <button type="submit" class="btn btn-sm btn-primary">

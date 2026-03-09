@@ -237,7 +237,7 @@
     </span>
     <nav class="hd-pager">
       {% if resolved_tickets.has_previous %}
-        <a href="?page={{ resolved_tickets.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+        <a href="page={{ resolved_tickets.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
            class="hd-page"><i class="fas fa-chevron-left"></i></a>
       {% else %}
         <span class="hd-page disabled"><i class="fas fa-chevron-left"></i></span>
@@ -247,13 +247,13 @@
         {% if resolved_tickets.number == num %}
           <span class="hd-page active">{{ num }}</span>
         {% elif num >= resolved_tickets.number|add:"-2" and num <= resolved_tickets.number|add:"2" %}
-          <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+          <a href="page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
              class="hd-page">{{ num }}</a>
         {% endif %}
       {% endfor %}
 
       {% if resolved_tickets.has_next %}
-        <a href="?page={{ resolved_tickets.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+        <a href="page={{ resolved_tickets.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
            class="hd-page"><i class="fas fa-chevron-right"></i></a>
       {% else %}
         <span class="hd-page disabled"><i class="fas fa-chevron-right"></i></span>

@@ -284,7 +284,7 @@
     const closingTA = document.querySelector('textarea[name="Closing_comment"]');
     const reopenTA  = document.querySelector('textarea[name="Reopen_comment"]');
     const target = (closingTA && closingTA.closest('.mb-4') && closingTA.closest('.mb-4').style.display !== 'none')
-                   ? closingTA
+                    closingTA
                    : reopenTA;
     if (target) { target.value = content; target.focus(); updateCounter(target); }
     if (cannedIdInput) cannedIdInput.value = id;

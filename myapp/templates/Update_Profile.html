@@ -1,4 +1,5 @@
 {% extends "Base.html" %}
+{% load avatar_tags %}
 {% block title %}Edit Profile — HelpDesk{% endblock %}
 
 {% block breadcrumb %}
@@ -88,11 +89,13 @@
 
     <div class="avatar-preview-wrap">
       <div class="avatar-circle" id="avatarPreview">
-        {% if form.instance.Profile_Image %}
-          <img src="{{ form.instance.Profile_Image.url }}" alt="Current photo" id="avatarImg">
+        {% with avatar=request.user|avatar_url %}
+        {% if avatar %}
+          <img src="{{ avatar }}" alt="Current photo" id="avatarImg">
         {% else %}
-          <span id="avatarInitial">{{ request.user.username|first|upper }}</span>
+          <span id="avatarInitial">{{ request.user|avatar_initial }}</span>
         {% endif %}
+        {% endwith %}
       </div>
       <div class="avatar-info">
         <div class="avatar-info-name">{{ request.user.get_full_name|default:request.user.username }}</div>
@@ -301,7 +304,7 @@
   const phoneInput  = document.getElementById('id_phone');
   const phoneStatus = document.getElementById('phoneStatus');
   const phoneErr    = document.getElementById('err_phone');
-  const phoneRe     = /^[+]?[\d\s\-\(\)]{7,20}$/;
+  const phoneRe     = /^[+][\d\s\-\(\)]{7,20}$/;
 
   if (phoneInput) {
     phoneInput.addEventListener('blur', validatePhone);
@@ -319,10 +322,10 @@
     const ok = phoneRe.test(phoneInput.value.trim());
     if (phoneStatus) {
       phoneStatus.innerHTML = ok
-        ? '<i class="fas fa-check-circle" style="color:var(--success);"></i>'
+         '<i class="fas fa-check-circle" style="color:var(--success);"></i>'
         : '<i class="fas fa-times-circle" style="color:var(--danger);"></i>';
     }
-    if (phoneErr)  phoneErr.style.display = ok ? 'none' : 'block';
+    if (phoneErr)  phoneErr.style.display = ok  'none' : 'block';
     phoneInput.classList.toggle('is-invalid', !ok);
     return ok;
   }

@@ -87,14 +87,14 @@
 
     function selectedAction(){
       const checked = document.querySelector('input[name="action"]:checked');
-      return checked ? checked.value : '';
+      return checked  checked.value : '';
     }
     function toggleFields(){
       const a = selectedAction();
       const fDept = document.getElementById('fieldDepartment');
       const fRole = document.getElementById('fieldRole');
-      fDept.style.display = (a === 'department') ? '' : 'none';
-      fRole.style.display = (a === 'role') ? '' : 'none';
+      fDept.style.display = (a === 'department')  '' : 'none';
+      fRole.style.display = (a === 'role')  '' : 'none';
     }
     document.querySelectorAll('input[name="action"]').forEach(el => {
       el.addEventListener('change', toggleFields);

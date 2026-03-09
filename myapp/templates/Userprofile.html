@@ -1,4 +1,5 @@
 {% extends "Base.html" %}
+{% load avatar_tags %}
 {% block title %}My Profile — HelpDesk{% endblock %}
 
 {% block breadcrumb %}
@@ -184,11 +185,13 @@
 
 <div class="p-identity">
   <div class="p-avatar">
-    {% if ProfileData.Profile_Image %}
-      <img src="{{ ProfileData.Profile_Image.url }}" alt="Profile">
+    {% with avatar=ProfileData.user|avatar_url %}
+    {% if avatar %}
+      <img src="{{ avatar }}" alt="Profile">
     {% else %}
-      {{ request.user.username|first|upper }}
+      {{ ProfileData.user|avatar_initial }}
     {% endif %}
+    {% endwith %}
   </div>
 
   <div class="p-id-body">
