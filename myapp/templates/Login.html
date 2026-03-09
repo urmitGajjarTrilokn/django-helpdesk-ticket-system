@@ -128,7 +128,9 @@
         <div class="mb-4">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <label class="fl" style="margin:0;">Password <span style="color:#DC2626">*</span></label>
-            <a href="{% url 'password_reset' %}" style="font-size:12px;color:var(--brand);font-weight:600;text-decoration:none;">Forgot?</a>
+            <a id="forgotLink" data-base-url="{% url 'password_reset' %}" href="#"
+               style="font-size:12px;color:var(--brand);font-weight:600;text-decoration:none;opacity:.55;pointer-events:none;"
+               title="Enter username first">Forgot?</a>
           </div>
           <div class="iw">
             <i class="fas fa-lock pi"></i>
@@ -212,6 +214,32 @@
     return ok;
   }
 
+  function updateForgotLink() {
+    const username = document.getElementById('id_username');
+    const forgot = document.getElementById('forgotLink');
+    if (!forgot) return;
+    const isUserLogin = document.body.classList.contains('r-user');
+    if (!isUserLogin) {
+      forgot.href = forgot.dataset.baseUrl;
+      forgot.style.opacity = '1';
+      forgot.style.pointerEvents = 'auto';
+      forgot.title = 'Forgot password';
+      return;
+    }
+    const value = username ? username.value.trim() : '';
+    if (value) {
+      forgot.href = forgot.dataset.baseUrl + '?username=' + encodeURIComponent(value);
+      forgot.style.opacity = '1';
+      forgot.style.pointerEvents = 'auto';
+      forgot.title = 'Reset password for this username';
+    } else {
+      forgot.href = '#';
+      forgot.style.opacity = '.55';
+      forgot.style.pointerEvents = 'none';
+      forgot.title = 'Enter username first';
+    }
+  }
+
   document.getElementById('loginForm').addEventListener('submit',function(e){
     if (!validateLoginForm()) {
       e.preventDefault();
@@ -230,6 +258,13 @@
       else this.style.borderColor='#E2E8F0';
     });
   });
+
+  const usernameInput = document.getElementById('id_username');
+  if (usernameInput) {
+    usernameInput.addEventListener('input', updateForgotLink);
+    usernameInput.addEventListener('blur', updateForgotLink);
+  }
+  updateForgotLink();
 </script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
@@ -478,3 +480,30 @@ def get_available_canned_responses(user, category=None, department=None):
     if department:
         qs = qs.filter(Q(department=department) | Q(department__isnull=True))
     return qs.order_by('-usage_count', 'title')
+
+
+class UsernameEmailPasswordResetForm(PasswordResetForm):
+    def __init__(self, *args, username=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.requested_username = (username or "").strip()
+        self._matched_users = []
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip()
+        if not self.requested_username:
+            raise ValidationError("Enter your username on the login page before using Forgot Password.")
+
+        user_model = get_user_model()
+        self._matched_users = list(
+            user_model._default_manager.filter(
+                username__iexact=self.requested_username,
+                email__iexact=email,
+                is_active=True,
+            )
+        )
+        if not self._matched_users:
+            raise ValidationError("Enter your own registered email for this username.")
+        return email
+
+    def get_users(self, email):
+        return iter(self._matched_users)

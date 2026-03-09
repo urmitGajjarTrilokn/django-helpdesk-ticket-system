@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.views import PasswordResetView
 from django.contrib import messages
 from django.db.models import Q, Avg, OuterRef, Subquery, Count
 from django.http import HttpResponse, FileResponse, JsonResponse
@@ -52,7 +53,7 @@ from .ai.ai_priority import predict_ticket_priority_with_meta
 from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TaskDetailForm,
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
-    AccountSettingsForm,
+    AccountSettingsForm, UsernameEmailPasswordResetForm,
 )
 
 
@@ -404,6 +405,29 @@ def _get_dashboard_redirect_url(user):
     if user.is_superuser:
         return reverse('base')
     return reverse('base')
+
+
+class UsernameRequiredPasswordResetView(PasswordResetView):
+    form_class = UsernameEmailPasswordResetForm
+
+    def _requested_username(self):
+        return (self.request.POST.get('username') or self.request.GET.get('username') or '').strip()
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self._requested_username():
+            messages.error(request, "Enter username first on login page, then use Forgot Password.")
+            return redirect('login')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['username'] = self._requested_username()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['requested_username'] = self._requested_username()
+        return context
 
 def _notifications_for_user(user):
     base_qs = Notification.objects.filter(user=user).select_related('task', 'task__assigned_department')

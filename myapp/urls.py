@@ -46,7 +46,7 @@ urlpatterns = [
 
     path(
         'password-reset/',
-        auth_views.PasswordResetView.as_view(
+        views.UsernameRequiredPasswordResetView.as_view(
             template_name='password_reset_form.html',
             email_template_name='password_reset_email.txt',
             subject_template_name='password_reset_subject.txt',
