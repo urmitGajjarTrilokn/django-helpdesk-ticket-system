@@ -123,6 +123,7 @@
             {{ form.username }}
           </div>
           {% if form.username.errors %}<div class="fe">{{ form.username.errors.0 }}</div>{% endif %}
+          <div id="forgotHint" class="fe" style="display:none;"></div>
         </div>
 
         <div class="mb-4">
@@ -214,6 +215,48 @@
     return ok;
   }
 
+  let forgotLookupToken = 0;
+  let forgotLookupTimer = null;
+
+  function setForgotHint(message, color) {
+    const hint = document.getElementById('forgotHint');
+    if (!hint) return;
+    if (!message) {
+      hint.style.display = 'none';
+      hint.textContent = '';
+      return;
+    }
+    hint.textContent = message;
+    hint.style.display = 'block';
+    hint.style.color = color || '#DC2626';
+  }
+
+  async function usernameExists(username) {
+    const res = await fetch('/api/username-exists/?username=' + encodeURIComponent(username), {
+      method: 'GET',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return !!data.exists;
+  }
+
+  function setForgotDisabled(forgot, message) {
+    forgot.href = '#';
+    forgot.style.opacity = '.55';
+    forgot.style.pointerEvents = 'none';
+    forgot.title = message || 'Enter username first';
+    setForgotHint(message || '', '#DC2626');
+  }
+
+  function setForgotEnabled(forgot, username) {
+    forgot.href = forgot.dataset.baseUrl + '?username=' + encodeURIComponent(username);
+    forgot.style.opacity = '1';
+    forgot.style.pointerEvents = 'auto';
+    forgot.title = 'Reset password for this username';
+    setForgotHint('Username found. You can continue with Forgot Password.', '#059669');
+  }
+
   function updateForgotLink() {
     const username = document.getElementById('id_username');
     const forgot = document.getElementById('forgotLink');
@@ -224,19 +267,23 @@
       forgot.style.opacity = '1';
       forgot.style.pointerEvents = 'auto';
       forgot.title = 'Forgot password';
+      setForgotHint('', '');
       return;
     }
     const value = username ? username.value.trim() : '';
     if (value) {
-      forgot.href = forgot.dataset.baseUrl + '?username=' + encodeURIComponent(value);
-      forgot.style.opacity = '1';
-      forgot.style.pointerEvents = 'auto';
-      forgot.title = 'Reset password for this username';
+      setForgotDisabled(forgot, 'Checking username...');
+      clearTimeout(forgotLookupTimer);
+      const token = ++forgotLookupToken;
+      forgotLookupTimer = setTimeout(async function () {
+        const exists = await usernameExists(value);
+        if (token !== forgotLookupToken) return;
+        if (exists) setForgotEnabled(forgot, value);
+        else setForgotDisabled(forgot, 'Username not found. Enter a valid registered username.');
+      }, 250);
     } else {
-      forgot.href = '#';
-      forgot.style.opacity = '.55';
-      forgot.style.pointerEvents = 'none';
-      forgot.title = 'Enter username first';
+      clearTimeout(forgotLookupTimer);
+      setForgotDisabled(forgot, 'Enter username first to use Forgot Password.');
     }
   }
 

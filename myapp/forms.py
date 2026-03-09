@@ -494,6 +494,13 @@ class UsernameEmailPasswordResetForm(PasswordResetForm):
             raise ValidationError("Enter your username on the login page before using Forgot Password.")
 
         user_model = get_user_model()
+        username_exists = user_model._default_manager.filter(
+            username__iexact=self.requested_username,
+            is_active=True,
+        ).exists()
+        if not username_exists:
+            raise ValidationError("Username not found. Enter a valid registered username.")
+
         self._matched_users = list(
             user_model._default_manager.filter(
                 username__iexact=self.requested_username,

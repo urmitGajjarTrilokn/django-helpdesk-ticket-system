@@ -414,8 +414,12 @@ class UsernameRequiredPasswordResetView(PasswordResetView):
         return (self.request.POST.get('username') or self.request.GET.get('username') or '').strip()
 
     def dispatch(self, request, *args, **kwargs):
-        if not self._requested_username():
+        requested_username = self._requested_username()
+        if not requested_username:
             messages.error(request, "Enter username first on login page, then use Forgot Password.")
+            return redirect('login')
+        if not User.objects.filter(username__iexact=requested_username, is_active=True).exists():
+            messages.error(request, "Username not found. Enter a valid registered username.")
             return redirect('login')
         return super().dispatch(request, *args, **kwargs)
 
@@ -428,6 +432,17 @@ class UsernameRequiredPasswordResetView(PasswordResetView):
         context = super().get_context_data(**kwargs)
         context['requested_username'] = self._requested_username()
         return context
+
+
+def username_exists_api(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    username = (request.GET.get('username') or '').strip()
+    exists = False
+    if username:
+        exists = User.objects.filter(username__iexact=username, is_active=True).exists()
+    return JsonResponse({'exists': exists})
 
 def _notifications_for_user(user):
     base_qs = Notification.objects.filter(user=user).select_related('task', 'task__assigned_department')

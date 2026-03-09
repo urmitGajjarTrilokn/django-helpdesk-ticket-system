@@ -144,6 +144,7 @@ urlpatterns = [
 
                                                                                
     path('api/notification-count/',     views.notification_count_api,     name='notification_count_api'),
+    path('api/username-exists/',        views.username_exists_api,        name='username_exists_api'),
     path('api/tasks-over-time/',        views.api_tasks_over_time,        name='api_tasks_over_time'),
     path('api/department-comparison/',  views.api_department_comparison,  name='api_department_comparison'),
     path('api/priority-distribution/',  views.api_priority_distribution,  name='api_priority_distribution'),
