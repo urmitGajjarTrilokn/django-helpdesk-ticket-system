@@ -147,3 +147,36 @@ class RolePermissionBehaviorTests(TestCase):
                 action_type="REJECTED",
             ).exists()
         )
+
+    def test_ticket_auto_assigned_when_department_has_one_member(self):
+        solo_department = Department.objects.create(
+            name="Lone Desk",
+            code="LONE",
+            description="One active member only",
+            color="#0ea5e9",
+            icon="fas fa-user-check",
+        )
+        DepartmentMember.objects.create(
+            user=self.member,
+            department=solo_department,
+            role="MEMBER",
+            is_active=True,
+        )
+
+        self.client.login(username="creator", password="pass12345")
+        response = self.client.post(
+            reverse("taskdetail"),
+            data={
+                "TASK_TITLE": "Single member assignment",
+                "TASK_DESCRIPTION": "Should auto assign to only department member.",
+                "TASK_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
+                "priority": "MEDIUM",
+                "category": "",
+                "assigned_department": str(solo_department.id),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        task = TaskDetail.objects.latest("id")
+        self.assertEqual(task.assigned_department_id, solo_department.id)
+        self.assertEqual(task.assigned_to_id, self.member.id)

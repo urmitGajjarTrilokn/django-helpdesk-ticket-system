@@ -194,6 +194,45 @@ def _is_single_member_department_assignment(task):
     return active_member_count <= 1
 
 
+def _auto_assign_single_member_department_task(task, changed_by=None):
+    if not task.assigned_department_id or task.assigned_to_id:
+        return None
+    memberships = (
+        DepartmentMember.objects
+        .filter(
+            department=task.assigned_department,
+            is_active=True,
+            user__is_active=True,
+        )
+        .select_related('user')
+    )
+    if memberships.count() != 1:
+        return None
+
+    assignee = memberships.first().user
+    task.assigned_to = assignee
+    task.TASK_HOLDER = assignee.username
+    if changed_by and not task.assigned_by_id:
+        task.assigned_by = changed_by
+    if not task.assigned_at:
+        task.assigned_at = timezone.now()
+    task.save(update_fields=['assigned_to', 'TASK_HOLDER', 'assigned_by', 'assigned_at'])
+
+    TaskHistory.objects.create(
+        task=task,
+        changed_by=changed_by,
+        action_type='ASSIGNED',
+        old_value='Unassigned',
+        new_value=assignee.username,
+        description=(
+            f'Auto-assigned to {assignee.username} because they are the only active member '
+            f'in {task.assigned_department.name}.'
+        ),
+    )
+    MyCart.objects.get_or_create(user=assignee, task=task)
+    return assignee
+
+
 def _sync_mycart_for_user(user):
     if not user.is_authenticated or user.is_superuser:
         return
@@ -599,6 +638,7 @@ def TaskDetails(request):
 
             task.save()
             form.save_m2m()
+            _auto_assign_single_member_department_task(task, changed_by=request.user)
 
             if used_ai_priority:
                 _log_priority_prediction(task, prediction)
@@ -837,6 +877,7 @@ def updatetask(request, pk):
                     )
 
             updated_task.save()
+            _auto_assign_single_member_department_task(updated_task, changed_by=request.user)
             form.save_m2m()
             if 'priority' in changed_fields:
                 _record_priority_feedback(updated_task, form.cleaned_data.get('priority'), request.user)
@@ -908,6 +949,7 @@ def updatetask(request, pk):
                 updated_task.assigned_at = timezone.now()
 
             updated_task.save()
+            _auto_assign_single_member_department_task(updated_task, changed_by=request.user)
             form.save_m2m()
             if 'priority' in changed_fields:
                 _record_priority_feedback(updated_task, form.cleaned_data.get('priority'), request.user)
