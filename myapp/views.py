@@ -1800,7 +1800,7 @@ def resolved_history(request):
         ).aggregate(avg=Avg('rating'))['avg'],
     }
 
-    paginator = Paginator(resolved, 10)
+    paginator = Paginator(resolved, 5)
     page_obj  = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'resolved_history.html', {
