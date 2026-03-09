@@ -3,7 +3,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import DepartmentMember, Department, TaskDetail
+from .models import DepartmentMember, Department, TicketDetail
 
 ROLE_PERMISSION_MATRIX = {
     'MEMBER': {
@@ -76,58 +76,58 @@ def is_department_lead_or_higher(user, department):
     role = user_department_role(user, department)
     return role in ['LEAD', 'MANAGER', 'HEAD']
 
-def can_user_accept_task(user, task):
+def can_user_accept_ticket(user, ticket):
     if user.is_superuser:
-        return False, 'Superuser cannot accept or reject tasks'
+        return False, 'Superuser cannot accept or reject tickets'
 
-    if task.TASK_STATUS != 'Open':
-        return False, 'Task is not open for acceptance'
+    if ticket.TICKET_STATUS != 'Open':
+        return False, 'Ticket is not open for acceptance'
 
-    if task.TASK_CREATED == user:
-        return False, 'You cannot accept your own task'
+    if ticket.TICKET_CREATED == user:
+        return False, 'You cannot accept your own ticket'
 
     from .models import MyCart
-    if MyCart.objects.filter(task=task, user=user).exists():
-        return False, 'Task already in your queue'
+    if MyCart.objects.filter(ticket=ticket, user=user).exists():
+        return False, 'Ticket already in your queue'
 
-    if task.assigned_department:
-        if not user_is_department_member(user, task.assigned_department):
-            return False, f'This task belongs to {task.assigned_department.name} department'
+    if ticket.assigned_department:
+        if not user_is_department_member(user, ticket.assigned_department):
+            return False, f'This ticket belongs to {ticket.assigned_department.name} department'
 
     return True, 'OK'
 
 
-def can_user_update_task(user, task):
+def can_user_update_ticket(user, ticket):
     if user.is_superuser:
         return True, 'OK'
-    if task.TASK_CREATED == user:
+    if ticket.TICKET_CREATED == user:
         return True, 'OK'
-    if task.assigned_to == user:
+    if ticket.assigned_to == user:
         return True, 'OK'
-    if task.assigned_department:
-        if user_has_department_permission(user, task.assigned_department, 'can_assign_tickets'):
+    if ticket.assigned_department:
+        if user_has_department_permission(user, ticket.assigned_department, 'can_assign_tickets'):
             return True, 'OK'
-    return False, 'You do not have permission to update this task'
+    return False, 'You do not have permission to update this ticket'
 
 
-def can_user_close_task(user, task):
+def can_user_close_ticket(user, ticket):
     if user.is_superuser:
         return True, 'OK'
-    if task.assigned_to == user:
+    if ticket.assigned_to == user:
         return True, 'OK'
-    if task.assigned_department:
-        if user_has_department_permission(user, task.assigned_department, 'can_close_tickets'):
+    if ticket.assigned_department:
+        if user_has_department_permission(user, ticket.assigned_department, 'can_close_tickets'):
             return True, 'OK'
-    return False, 'You do not have permission to close this task'
+    return False, 'You do not have permission to close this ticket'
 
 
-def filter_tasks_by_department_access(queryset, user):
+def filter_tickets_by_department_access(queryset, user):
     if user.is_superuser:
         return queryset
     from django.db.models import Q
     user_departments = get_user_departments(user)
     return queryset.filter(
-        Q(TASK_CREATED=user) |
+        Q(TICKET_CREATED=user) |
         Q(assigned_to=user) |
         Q(assigned_department__in=user_departments) |
         Q(assigned_department__isnull=True)
@@ -135,15 +135,15 @@ def filter_tasks_by_department_access(queryset, user):
 
 
 def get_department_statistics(department):
-    tasks = TaskDetail.objects.filter(assigned_department=department)
+    tickets = TicketDetail.objects.filter(assigned_department=department)
     return {
-        'total':       tasks.count(),
-        'open':        tasks.filter(TASK_STATUS='Open').count(),
-        'in_progress': tasks.filter(TASK_STATUS='In Progress').count(),
-        'closed':      tasks.filter(TASK_STATUS='Closed').count(),
-        'resolved':    tasks.filter(TASK_STATUS='Resolved').count(),
-        'overdue':     tasks.filter(
-            TASK_STATUS='Open', TASK_DUE_DATE__lt=timezone.now().date()
+        'total':       tickets.count(),
+        'open':        tickets.filter(TICKET_STATUS='Open').count(),
+        'in_progress': tickets.filter(TICKET_STATUS='In Progress').count(),
+        'closed':      tickets.filter(TICKET_STATUS='Closed').count(),
+        'resolved':    tickets.filter(TICKET_STATUS='Resolved').count(),
+        'overdue':     tickets.filter(
+            TICKET_STATUS='Open', TICKET_DUE_DATE__lt=timezone.now().date()
         ).count(),
     }
 
@@ -155,9 +155,9 @@ def get_user_department_context(user):
             'is_department_member':   False,
             'is_department_lead':     False,
             'is_department_manager':  False,
-            'department_open_tasks':  0,
+            'department_open_tickets':  0,
             'department_count':       0,
-            'department_tasks_count': 0,
+            'department_tickets_count': 0,
         }
 
     user_depts = get_user_departments(user)
@@ -170,11 +170,11 @@ def get_user_department_context(user):
         user=user, role__in=['MANAGER', 'HEAD'], is_active=True
     ).exists()
 
-    dept_open_tasks  = TaskDetail.objects.filter(
-        assigned_department__in=user_depts, TASK_STATUS='Open'
+    dept_open_tickets  = TicketDetail.objects.filter(
+        assigned_department__in=user_depts, TICKET_STATUS='Open'
     ).count()
 
-    dept_total_tasks = TaskDetail.objects.filter(
+    dept_total_tickets = TicketDetail.objects.filter(
         assigned_department__in=user_depts
     ).count()
 
@@ -184,9 +184,9 @@ def get_user_department_context(user):
         'is_department_member':   user_depts.exists(),
         'is_department_lead':     is_lead,
         'is_department_manager':  is_manager,
-        'department_open_tasks':  dept_open_tasks,
+        'department_open_tickets':  dept_open_tickets,
         'department_count':       user_depts.count(),
-        'department_tasks_count': dept_total_tasks,
+        'department_tickets_count': dept_total_tickets,
     }
 
 def department_member_required(view_func):
@@ -212,23 +212,23 @@ def department_member_required(view_func):
     return wrapper
 
 
-def task_department_access_required(view_func):
+def ticket_department_access_required(view_func):
     @wraps(view_func)
     @login_required
     def wrapper(request, pk, *args, **kwargs):
-        task = get_object_or_404(TaskDetail, id=pk)
+        ticket = get_object_or_404(TicketDetail, id=pk)
         if request.user.is_superuser:
             return view_func(request, pk, *args, **kwargs)
-        if task.TASK_CREATED == request.user:
+        if ticket.TICKET_CREATED == request.user:
             return view_func(request, pk, *args, **kwargs)
-        if task.assigned_to == request.user:
+        if ticket.assigned_to == request.user:
             return view_func(request, pk, *args, **kwargs)
-        if task.assigned_department:
-            if user_is_department_member(request.user, task.assigned_department):
+        if ticket.assigned_department:
+            if user_is_department_member(request.user, ticket.assigned_department):
                 return view_func(request, pk, *args, **kwargs)
             messages.error(
                 request,
-                f'Access denied. This task is assigned to {task.assigned_department.name} department.',
+                f'Access denied. This ticket is assigned to {ticket.assigned_department.name} department.',
             )
             return redirect('base')
         return view_func(request, pk, *args, **kwargs)
@@ -250,35 +250,35 @@ def department_lead_required(view_func):
     return wrapper
 
 
-def can_assign_tasks_required(view_func):
+def can_assign_tickets_required(view_func):
     @wraps(view_func)
     @login_required
     def wrapper(request, pk, *args, **kwargs):
-        task = get_object_or_404(TaskDetail, id=pk)
-        if request.user.is_superuser or task.TASK_CREATED == request.user:
+        ticket = get_object_or_404(TicketDetail, id=pk)
+        if request.user.is_superuser or ticket.TICKET_CREATED == request.user:
             return view_func(request, pk, *args, **kwargs)
-        if task.assigned_department and user_has_department_permission(
-            request.user, task.assigned_department, 'can_assign_tickets'
+        if ticket.assigned_department and user_has_department_permission(
+            request.user, ticket.assigned_department, 'can_assign_tickets'
         ):
             return view_func(request, pk, *args, **kwargs)
-        messages.error(request, 'Access denied. You cannot assign tasks in this department.')
-        return redirect('taskinfo', pk=pk)
+        messages.error(request, 'Access denied. You cannot assign tickets in this department.')
+        return redirect('ticketinfo', pk=pk)
     return wrapper
 
 
-def can_delete_tasks_required(view_func):
+def can_delete_tickets_required(view_func):
     @wraps(view_func)
     @login_required
     def wrapper(request, pk, *args, **kwargs):
-        task = get_object_or_404(TaskDetail, id=pk)
-        if request.user.is_superuser or task.TASK_CREATED == request.user:
+        ticket = get_object_or_404(TicketDetail, id=pk)
+        if request.user.is_superuser or ticket.TICKET_CREATED == request.user:
             return view_func(request, pk, *args, **kwargs)
-        if task.assigned_department and user_has_department_permission(
-            request.user, task.assigned_department, 'can_delete_tickets'
+        if ticket.assigned_department and user_has_department_permission(
+            request.user, ticket.assigned_department, 'can_delete_tickets'
         ):
             return view_func(request, pk, *args, **kwargs)
-        messages.error(request, 'Access denied. You cannot delete tasks in this department.')
-        return redirect('taskinfo', pk=pk)
+        messages.error(request, 'Access denied. You cannot delete tickets in this department.')
+        return redirect('ticketinfo', pk=pk)
     return wrapper
 
 

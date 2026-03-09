@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="taskhistory",
+            model_name="tickethistory",
             name="action_type",
             field=models.CharField(
                 choices=[

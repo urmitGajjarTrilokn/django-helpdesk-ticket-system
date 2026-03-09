@@ -1,6 +1,6 @@
 # Django HelpDesk Ticket Management System 🎫
 
-A full-stack **ticket management system** built using **Django**, designed to handle internal support tickets with role-based access, analytics, and background task processing.
+A full-stack **ticket management system** built using **Django**, designed to handle internal support tickets with role-based access, analytics, and background ticket processing.
 
 This project focuses on clean backend architecture, real-world workflows, and maintainable code practices.
 
@@ -13,7 +13,7 @@ This project focuses on clean backend architecture, real-world workflows, and ma
 - Ticket history and activity logs
 - Analytics dashboard (status distribution, trends)
 - Notification system
-- Background tasks using Celery
+- Background tickets using Celery
 - Clean UI using Django Templates (HTML + inline CSS)
 
 ---
@@ -23,7 +23,7 @@ This project focuses on clean backend architecture, real-world workflows, and ma
 - **Backend:** Django (Python)
 - **Frontend:** HTML, CSS (inline)
 - **Database:** SQLite (development)
-- **Async Tasks:** Celery
+- **Async Tickets:** Celery
 - **Version Control:** Git & GitHub
 
 ---

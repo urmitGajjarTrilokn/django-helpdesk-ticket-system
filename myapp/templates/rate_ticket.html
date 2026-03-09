@@ -1,10 +1,10 @@
 {% extends "Base.html" %}
-{% block title %}Rate Ticket #{{ task.id }} - HelpDesk{% endblock %}
+{% block title %}Rate Ticket #{{ ticket.id }} - HelpDesk{% endblock %}
 
 {% block breadcrumb %}
   <a href="{% url 'base' %}">Dashboard</a>
   <span class="bc-sep">/</span>
-  <a href="{% url 'taskinfo' task.id %}">Ticket #{{ task.id }}</a>
+  <a href="{% url 'ticketinfo' ticket.id %}">Ticket #{{ ticket.id }}</a>
   <span class="bc-sep">/</span>
   <strong>Rate</strong>
 {% endblock %}
@@ -94,7 +94,7 @@
       </div>
       <div>
         <div class="page-title">Rate Your Experience</div>
-        <div class="page-sub">Ticket #{{ task.id }} · {{ task.TASK_TITLE|truncatechars:60 }}</div>
+        <div class="page-sub">Ticket #{{ ticket.id }} · {{ ticket.TICKET_TITLE|truncatechars:60 }}</div>
       </div>
     </div>
   </div>
@@ -103,25 +103,25 @@
     <div class="rt-cell">
       <div class="rt-cell-label">Status</div>
       <span class="status-badge
-        {% if task.TASK_STATUS == 'Closed' %}sb-closed
-        {% elif task.TASK_STATUS == 'Resolved' %}sb-resolved
+        {% if ticket.TICKET_STATUS == 'Closed' %}sb-closed
+        {% elif ticket.TICKET_STATUS == 'Resolved' %}sb-resolved
         {% else %}sb-open{% endif %}">
-        {{ task.TASK_STATUS }}
+        {{ ticket.TICKET_STATUS }}
       </span>
     </div>
     <div class="rt-cell">
       <div class="rt-cell-label">Resolved By</div>
-      <div class="rt-cell-val">{{ task.assigned_to.get_full_name|default:task.assigned_to.username|default:"-" }}</div>
+      <div class="rt-cell-val">{{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username|default:"-" }}</div>
     </div>
     <div class="rt-cell">
       <div class="rt-cell-label">Department</div>
-      <div class="rt-cell-val" style="color:{{ task.assigned_department.color|default:'var(--brand)' }};">
-        {{ task.assigned_department.name|default:"-" }}
+      <div class="rt-cell-val" style="color:{{ ticket.assigned_department.color|default:'var(--brand)' }};">
+        {{ ticket.assigned_department.name|default:"-" }}
       </div>
     </div>
     <div class="rt-cell">
       <div class="rt-cell-label">Closed On</div>
-      <div class="rt-cell-val">{{ task.TASK_CLOSED_ON|date:"M d, Y"|default:"-" }}</div>
+      <div class="rt-cell-val">{{ ticket.TICKET_CLOSED_ON|date:"M d, Y"|default:"-" }}</div>
     </div>
   </div>
 
@@ -226,7 +226,7 @@
     </div>
 
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <a href="{% url 'taskinfo' task.id %}" class="btn btn-outline-secondary">
+      <a href="{% url 'ticketinfo' ticket.id %}" class="btn btn-outline-secondary">
         <i class="fas fa-times me-1"></i>Skip for Now
       </a>
       <button type="submit" class="btn px-5" id="submitBtn"

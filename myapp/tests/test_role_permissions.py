@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from myapp.models import Department, DepartmentMember, MyCart, TaskDetail, TaskHistory, Notification
+from myapp.models import Department, DepartmentMember, MyCart, TicketDetail, TicketHistory, Notification
 
 
 class RolePermissionBehaviorTests(TestCase):
@@ -32,47 +32,47 @@ class RolePermissionBehaviorTests(TestCase):
         DepartmentMember.objects.create(user=self.lead, department=self.department, role="LEAD", is_active=True)
         DepartmentMember.objects.create(user=self.manager, department=self.department, role="MANAGER", is_active=True)
 
-    def _create_open_task(self):
-        return TaskDetail.objects.create(
-            TASK_TITLE="Shared printer outage in finance wing",
-            TASK_CREATED=self.creator,
-            TASK_DUE_DATE=timezone.now().date() + timedelta(days=3),
-            TASK_DESCRIPTION="Multiple users report printer queue failures and no output.",
-            TASK_HOLDER="",
-            TASK_STATUS="Open",
+    def _create_open_ticket(self):
+        return TicketDetail.objects.create(
+            TICKET_TITLE="Shared printer outage in finance wing",
+            TICKET_CREATED=self.creator,
+            TICKET_DUE_DATE=timezone.now().date() + timedelta(days=3),
+            TICKET_DESCRIPTION="Multiple users report printer queue failures and no output.",
+            TICKET_HOLDER="",
+            TICKET_STATUS="Open",
             priority="MEDIUM",
             assigned_department=self.department,
         )
 
     def test_member_can_close_department_ticket_from_queue(self):
-        task = self._create_open_task()
-        MyCart.objects.create(user=self.member, task=task)
+        ticket = self._create_open_ticket()
+        MyCart.objects.create(user=self.member, ticket=ticket)
 
         self.client.login(username="member1", password="pass12345")
-        response = self.client.get(reverse("closetask", kwargs={"pk": task.id}))
+        response = self.client.get(reverse("closeticket", kwargs={"pk": ticket.id}))
 
         self.assertEqual(response.status_code, 302)
-        task.refresh_from_db()
-        self.assertEqual(task.TASK_STATUS, "Closed")
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_STATUS, "Closed")
 
     def test_rejected_member_cannot_close_until_auto_reassigned(self):
-        task = self._create_open_task()
-        MyCart.objects.create(user=self.member, task=task)
-        TaskHistory.objects.create(
-            task=task,
+        ticket = self._create_open_ticket()
+        MyCart.objects.create(user=self.member, ticket=ticket)
+        TicketHistory.objects.create(
+            ticket=ticket,
             changed_by=self.member,
             action_type="REJECTED",
-            description="Task rejected by member1. Reason: Not available.",
+            description="Ticket rejected by member1. Reason: Not available.",
         )
 
         self.client.login(username="member1", password="pass12345")
-        response = self.client.get(reverse("closetask", kwargs={"pk": task.id}))
+        response = self.client.get(reverse("closeticket", kwargs={"pk": ticket.id}))
         self.assertEqual(response.status_code, 302)
-        task.refresh_from_db()
-        self.assertEqual(task.TASK_STATUS, "Open")
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_STATUS, "Open")
 
-        TaskHistory.objects.create(
-            task=task,
+        TicketHistory.objects.create(
+            ticket=ticket,
             changed_by=self.lead,
             action_type="ASSIGNED",
             old_value="Unassigned",
@@ -80,37 +80,37 @@ class RolePermissionBehaviorTests(TestCase):
             description=f"Auto-assigned to {self.member.username} after department rejections.",
         )
 
-        response = self.client.get(reverse("closetask", kwargs={"pk": task.id}))
+        response = self.client.get(reverse("closeticket", kwargs={"pk": ticket.id}))
         self.assertEqual(response.status_code, 302)
-        task.refresh_from_db()
-        self.assertEqual(task.TASK_STATUS, "Closed")
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_STATUS, "Closed")
 
     def test_lead_can_close_unassigned_department_ticket(self):
-        task = self._create_open_task()
-        MyCart.objects.create(user=self.lead, task=task)
+        ticket = self._create_open_ticket()
+        MyCart.objects.create(user=self.lead, ticket=ticket)
 
         self.client.login(username="lead1", password="pass12345")
-        response = self.client.get(reverse("closetask", kwargs={"pk": task.id}))
+        response = self.client.get(reverse("closeticket", kwargs={"pk": ticket.id}))
 
         self.assertEqual(response.status_code, 302)
-        task.refresh_from_db()
-        self.assertEqual(task.TASK_STATUS, "Closed")
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_STATUS, "Closed")
 
     def test_member_cannot_delete_department_ticket(self):
-        task = self._create_open_task()
+        ticket = self._create_open_ticket()
         self.client.login(username="member1", password="pass12345")
 
-        response = self.client.get(reverse("deletetask", kwargs={"pk": task.id}))
+        response = self.client.get(reverse("deleteticket", kwargs={"pk": ticket.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(TaskDetail.objects.filter(id=task.id).exists())
+        self.assertTrue(TicketDetail.objects.filter(id=ticket.id).exists())
 
     def test_manager_can_delete_department_ticket(self):
-        task = self._create_open_task()
+        ticket = self._create_open_ticket()
         self.client.login(username="manager1", password="pass12345")
 
-        response = self.client.get(reverse("deletetask", kwargs={"pk": task.id}))
+        response = self.client.get(reverse("deleteticket", kwargs={"pk": ticket.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(TaskDetail.objects.filter(id=task.id).exists())
+        self.assertFalse(TicketDetail.objects.filter(id=ticket.id).exists())
 
     def test_single_member_department_cannot_reject_ticket(self):
         solo_department = Department.objects.create(
@@ -126,29 +126,29 @@ class RolePermissionBehaviorTests(TestCase):
             role="MEMBER",
             is_active=True,
         )
-        task = TaskDetail.objects.create(
-            TASK_TITLE="Solo queue ticket",
-            TASK_CREATED=self.creator,
-            TASK_DUE_DATE=timezone.now().date() + timedelta(days=2),
-            TASK_DESCRIPTION="Only one member should not be able to reject this.",
-            TASK_HOLDER="",
-            TASK_STATUS="Open",
+        ticket = TicketDetail.objects.create(
+            TICKET_TITLE="Solo queue ticket",
+            TICKET_CREATED=self.creator,
+            TICKET_DUE_DATE=timezone.now().date() + timedelta(days=2),
+            TICKET_DESCRIPTION="Only one member should not be able to reject this.",
+            TICKET_HOLDER="",
+            TICKET_STATUS="Open",
             priority="MEDIUM",
             assigned_department=solo_department,
         )
-        MyCart.objects.create(user=self.member, task=task)
+        MyCart.objects.create(user=self.member, ticket=ticket)
 
         self.client.login(username="member1", password="pass12345")
         response = self.client.post(
-            reverse("removetask", kwargs={"pk": task.id}),
+            reverse("removeticket", kwargs={"pk": ticket.id}),
             data={"reject_reason": "No backup member."},
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(MyCart.objects.filter(user=self.member, task=task).exists())
+        self.assertTrue(MyCart.objects.filter(user=self.member, ticket=ticket).exists())
         self.assertFalse(
-            TaskHistory.objects.filter(
-                task=task,
+            TicketHistory.objects.filter(
+                ticket=ticket,
                 changed_by=self.member,
                 action_type="REJECTED",
             ).exists()
@@ -180,19 +180,19 @@ class RolePermissionBehaviorTests(TestCase):
 
         self.client.login(username="creator", password="pass12345")
         response = self.client.post(
-            reverse("taskdetail"),
+            reverse("ticketdetail"),
             data={
-                "TASK_TITLE": "Single member assignment",
-                "TASK_DESCRIPTION": "Should auto assign to only department member.",
-                "TASK_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
+                "TICKET_TITLE": "Single member assignment",
+                "TICKET_DESCRIPTION": "Should auto assign to only department member.",
+                "TICKET_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
                 "category": "",
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        task = TaskDetail.objects.latest("id")
-        self.assertEqual(task.assigned_department_id, solo_department.id)
-        self.assertEqual(task.assigned_to_id, self.member.id)
+        ticket = TicketDetail.objects.latest("id")
+        self.assertEqual(ticket.assigned_department_id, solo_department.id)
+        self.assertEqual(ticket.assigned_to_id, self.member.id)
 
     def test_admin_can_change_priority_and_department_but_not_title(self):
         other_department = Department.objects.create(
@@ -202,31 +202,31 @@ class RolePermissionBehaviorTests(TestCase):
             color="#8b5cf6",
             icon="fas fa-users",
         )
-        task = self._create_open_task()
-        original_title = task.TASK_TITLE
+        ticket = self._create_open_ticket()
+        original_title = ticket.TICKET_TITLE
 
         self.client.login(username="admin1", password="pass12345")
         response = self.client.post(
-            reverse("updatetask", kwargs={"pk": task.id}),
+            reverse("updateticket", kwargs={"pk": ticket.id}),
             data={
-                "TASK_TITLE": "Changed by admin should be ignored",
+                "TICKET_TITLE": "Changed by admin should be ignored",
                 "priority": "URGENT",
                 "assigned_department": str(other_department.id),
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        task.refresh_from_db()
-        self.assertEqual(task.TASK_TITLE, original_title)
-        self.assertEqual(task.priority, "URGENT")
-        self.assertEqual(task.assigned_department_id, other_department.id)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_TITLE, original_title)
+        self.assertEqual(ticket.priority, "URGENT")
+        self.assertEqual(ticket.assigned_department_id, other_department.id)
 
     def test_admin_same_department_no_change_shows_error(self):
-        task = self._create_open_task()
+        ticket = self._create_open_ticket()
         self.client.login(username="admin1", password="pass12345")
         response = self.client.post(
-            reverse("updatetask", kwargs={"pk": task.id}),
-            data={"assigned_department": str(self.department.id), "priority": task.priority},
+            reverse("updateticket", kwargs={"pk": ticket.id}),
+            data={"assigned_department": str(self.department.id), "priority": ticket.priority},
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Selected department is already assigned to this ticket.")
@@ -242,27 +242,27 @@ class RolePermissionBehaviorTests(TestCase):
         DepartmentMember.objects.create(user=self.lead, department=other_department, role="LEAD", is_active=True)
         DepartmentMember.objects.create(user=self.manager, department=other_department, role="MANAGER", is_active=True)
 
-        task = self._create_open_task()
-        task.assigned_to = self.member
-        task.TASK_HOLDER = self.member.username
-        task.save(update_fields=["assigned_to", "TASK_HOLDER"])
-        MyCart.objects.get_or_create(user=self.member, task=task)
+        ticket = self._create_open_ticket()
+        ticket.assigned_to = self.member
+        ticket.TICKET_HOLDER = self.member.username
+        ticket.save(update_fields=["assigned_to", "TICKET_HOLDER"])
+        MyCart.objects.get_or_create(user=self.member, ticket=ticket)
 
         self.client.login(username="admin1", password="pass12345")
         response = self.client.post(
-            reverse("updatetask", kwargs={"pk": task.id}),
-            data={"assigned_department": str(other_department.id), "priority": task.priority},
+            reverse("updateticket", kwargs={"pk": ticket.id}),
+            data={"assigned_department": str(other_department.id), "priority": ticket.priority},
         )
         self.assertEqual(response.status_code, 302)
 
-        task.refresh_from_db()
-        self.assertEqual(task.assigned_department_id, other_department.id)
-        self.assertIsNone(task.assigned_to)
-        self.assertEqual(task.TASK_HOLDER, "")
-        self.assertFalse(MyCart.objects.filter(user=self.member, task=task).exists())
-        self.assertTrue(MyCart.objects.filter(user=self.lead, task=task).exists())
-        self.assertTrue(MyCart.objects.filter(user=self.manager, task=task).exists())
-        self.assertTrue(Notification.objects.filter(user=self.member, task=task, notification_type="TASK_UPDATED").exists())
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.assigned_department_id, other_department.id)
+        self.assertIsNone(ticket.assigned_to)
+        self.assertEqual(ticket.TICKET_HOLDER, "")
+        self.assertFalse(MyCart.objects.filter(user=self.member, ticket=ticket).exists())
+        self.assertTrue(MyCart.objects.filter(user=self.lead, ticket=ticket).exists())
+        self.assertTrue(MyCart.objects.filter(user=self.manager, ticket=ticket).exists())
+        self.assertTrue(Notification.objects.filter(user=self.member, ticket=ticket, notification_type="TICKET_UPDATED").exists())
 
     @patch("myapp.views.predict_department")
     @patch("myapp.views.predict_ticket_priority_with_meta")
@@ -289,13 +289,13 @@ class RolePermissionBehaviorTests(TestCase):
         }
 
         self.client.login(username="creator", password="pass12345")
-        before_count = TaskDetail.objects.count()
+        before_count = TicketDetail.objects.count()
         response = self.client.post(
-            reverse("taskdetail"),
+            reverse("ticketdetail"),
             data={
-                "TASK_TITLE": "Creator only predicted department ticket",
-                "TASK_DESCRIPTION": "This should be blocked because creator is sole member.",
-                "TASK_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
+                "TICKET_TITLE": "Creator only predicted department ticket",
+                "TICKET_DESCRIPTION": "This should be blocked because creator is sole member.",
+                "TICKET_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
                 "category": "",
             },
         )
@@ -305,4 +305,4 @@ class RolePermissionBehaviorTests(TestCase):
             response,
             "Ticket cannot be submitted because AI routed it to your own department where you are the only active member."
         )
-        self.assertEqual(TaskDetail.objects.count(), before_count)
+        self.assertEqual(TicketDetail.objects.count(), before_count)

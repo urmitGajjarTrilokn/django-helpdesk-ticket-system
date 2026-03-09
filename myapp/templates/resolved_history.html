@@ -73,7 +73,7 @@
     <div class="page-title"><i class="fas fa-history me-2 text-success"></i>Resolved History</div>
     <div class="page-sub">Resolved and closed tickets across all departments</div>
   </div>
-  <a href="{% url 'taskdetail' %}" class="btn btn-primary btn-sm">
+  <a href="{% url 'ticketdetail' %}" class="btn btn-primary btn-sm">
     <i class="fas fa-plus"></i> New Ticket
   </a>
 </div>
@@ -129,77 +129,77 @@
   </div>
 </div>
 
-{% if resolved_tasks %}
+{% if resolved_tickets %}
 <div class="hd-card">
   <div class="hd-card-header">
     <span class="hd-card-title">
       <i class="fas fa-list me-2 text-success"></i>
-      Tickets - {{ resolved_tasks.paginator.count }} total
+      Tickets - {{ resolved_tickets.paginator.count }} total
     </span>
     <span style="font-size:12px;color:var(--gray-400);">
-      Page {{ resolved_tasks.number }} of {{ resolved_tasks.paginator.num_pages }}
+      Page {{ resolved_tickets.number }} of {{ resolved_tickets.paginator.num_pages }}
     </span>
   </div>
 
   <div>
-    {% for task in resolved_tasks %}
+    {% for ticket in resolved_tickets %}
     <div class="ticket-row">
 
       <div>
         <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-          <span class="ticket-id">#{{ task.id }}</span>
+          <span class="ticket-id">#{{ ticket.id }}</span>
 
           <span class="status-badge sb-resolved">Resolved</span>
 
-          {% if task.effective_priority == 'URGENT' %}
+          {% if ticket.effective_priority == 'URGENT' %}
             <span class="priority-badge pb-urgent"><i class="fas fa-fire"></i> Urgent</span>
-          {% elif task.effective_priority == 'HIGH' %}
+          {% elif ticket.effective_priority == 'HIGH' %}
             <span class="priority-badge pb-high">High</span>
-          {% elif task.effective_priority == 'MEDIUM' %}
+          {% elif ticket.effective_priority == 'MEDIUM' %}
             <span class="priority-badge pb-medium">Medium</span>
-          {% elif task.effective_priority == 'LOW' %}
+          {% elif ticket.effective_priority == 'LOW' %}
             <span class="priority-badge pb-low">Low</span>
           {% endif %}
 
-          {% if task.category %}
+          {% if ticket.category %}
           <span style="font-size:11.5px;color:var(--gray-500);">
-            <i class="{{ task.category.icon }} me-1" style="color:{{ task.category.color }};"></i>
-            {{ task.category.name }}
+            <i class="{{ ticket.category.icon }} me-1" style="color:{{ ticket.category.color }};"></i>
+            {{ ticket.category.name }}
           </span>
           {% endif %}
         </div>
 
         <div class="ticket-title mb-1">
-          {{ task.TASK_TITLE }}
+          {{ ticket.TICKET_TITLE }}
         </div>
 
         <div class="d-flex align-items-center gap-3 flex-wrap">
           <span class="ticket-meta">
             <i class="fas fa-calendar-plus me-1"></i>
-            Created {{ task.TASK_CREATED_ON|date:"M d, Y" }}
+            Created {{ ticket.TICKET_CREATED_ON|date:"M d, Y" }}
           </span>
-          {% if task.TASK_CLOSED_ON %}
+          {% if ticket.TICKET_CLOSED_ON %}
           <span class="ticket-meta">
             <i class="fas fa-calendar-check me-1"></i>
-            Closed {{ task.TASK_CLOSED_ON|date:"M d, Y" }}
+            Closed {{ ticket.TICKET_CLOSED_ON|date:"M d, Y" }}
           </span>
           {% endif %}
-          {% if task.assigned_to %}
+          {% if ticket.assigned_to %}
           <span class="ticket-meta">
             <i class="fas fa-user-check me-1"></i>
-            Handled by <strong>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</strong>
+            Handled by <strong>{{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}</strong>
           </span>
           {% endif %}
-          {% if task.assigned_department %}
+          {% if ticket.assigned_department %}
           <span class="ticket-meta">
             <i class="fas fa-building me-1"></i>
-            {{ task.assigned_department.name }}
+            {{ ticket.assigned_department.name }}
           </span>
           {% endif %}
         </div>
 
-        {% if task.taskrating_set.first %}
-        {% with rating=task.taskrating_set.first %}
+        {% if ticket.ticketrating_set.first %}
+        {% with rating=ticket.ticketrating_set.first %}
         <div class="d-flex align-items-center gap-2 mt-2">
           <div class="stars">
             {% for i in "12345" %}
@@ -217,10 +217,10 @@
       </div>
 
       <div class="d-flex flex-column align-items-end gap-2">
-        {% if task.TASK_CLOSED_ON and task.TASK_CREATED_ON %}
+        {% if ticket.TICKET_CLOSED_ON and ticket.TICKET_CREATED_ON %}
           <span class="res-time">
             <i class="fas fa-clock me-1"></i>
-            {{ task.TASK_CLOSED_ON|timesince:task.TASK_CREATED_ON }}
+            {{ ticket.TICKET_CLOSED_ON|timesince:ticket.TICKET_CREATED_ON }}
           </span>
         {% endif %}
       </div>
@@ -229,31 +229,31 @@
     {% endfor %}
   </div>
 
-  {% if resolved_tasks.has_other_pages %}
+  {% if resolved_tickets.has_other_pages %}
   <div class="hd-card-footer d-flex align-items-center justify-content-between">
     <span style="font-size:12.5px;color:var(--gray-500);">
-      Showing {{ resolved_tasks.start_index }}-{{ resolved_tasks.end_index }}
-      of {{ resolved_tasks.paginator.count }} tickets
+      Showing {{ resolved_tickets.start_index }}-{{ resolved_tickets.end_index }}
+      of {{ resolved_tickets.paginator.count }} tickets
     </span>
     <nav class="hd-pager">
-      {% if resolved_tasks.has_previous %}
-        <a href="?page={{ resolved_tasks.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+      {% if resolved_tickets.has_previous %}
+        <a href="?page={{ resolved_tickets.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
            class="hd-page"><i class="fas fa-chevron-left"></i></a>
       {% else %}
         <span class="hd-page disabled"><i class="fas fa-chevron-left"></i></span>
       {% endif %}
 
-      {% for num in resolved_tasks.paginator.page_range %}
-        {% if resolved_tasks.number == num %}
+      {% for num in resolved_tickets.paginator.page_range %}
+        {% if resolved_tickets.number == num %}
           <span class="hd-page active">{{ num }}</span>
-        {% elif num >= resolved_tasks.number|add:"-2" and num <= resolved_tasks.number|add:"2" %}
+        {% elif num >= resolved_tickets.number|add:"-2" and num <= resolved_tickets.number|add:"2" %}
           <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
              class="hd-page">{{ num }}</a>
         {% endif %}
       {% endfor %}
 
-      {% if resolved_tasks.has_next %}
-        <a href="?page={{ resolved_tasks.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+      {% if resolved_tickets.has_next %}
+        <a href="?page={{ resolved_tickets.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
            class="hd-page"><i class="fas fa-chevron-right"></i></a>
       {% else %}
         <span class="hd-page disabled"><i class="fas fa-chevron-right"></i></span>
@@ -282,7 +282,7 @@
         <i class="fas fa-times me-1"></i>Clear Filters
       </a>
     {% endif %}
-    <a href="{% url 'taskdetail' %}" class="btn btn-sm btn-primary">
+    <a href="{% url 'ticketdetail' %}" class="btn btn-sm btn-primary">
       <i class="fas fa-plus me-1"></i>Create a Ticket
     </a>
   </div>

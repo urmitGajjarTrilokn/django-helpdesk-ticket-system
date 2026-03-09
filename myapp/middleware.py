@@ -65,7 +65,7 @@ class DepartmentAccessMiddleware:
         return self.get_response(request)
 
 
-class TaskAccessMiddleware:
+class TicketAccessMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 

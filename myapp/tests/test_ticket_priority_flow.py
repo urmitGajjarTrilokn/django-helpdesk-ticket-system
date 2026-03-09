@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from myapp.models import AIMLLog, TaskDetail
+from myapp.models import AIMLLog, TicketDetail
 
 
 class TicketPriorityFlowTests(TestCase):
@@ -17,9 +17,9 @@ class TicketPriorityFlowTests(TestCase):
 
     def _ticket_payload(self, **overrides):
         payload = {
-            "TASK_TITLE": "Printer outage at front office",
-            "TASK_DESCRIPTION": "All front office printers are down and users cannot print invoices.",
-            "TASK_DUE_DATE": (timezone.now().date() + timedelta(days=3)).isoformat(),
+            "TICKET_TITLE": "Printer outage at front office",
+            "TICKET_DESCRIPTION": "All front office printers are down and users cannot print invoices.",
+            "TICKET_DUE_DATE": (timezone.now().date() + timedelta(days=3)).isoformat(),
             "priority": "",
             "category": "",
             "assigned_department": "",
@@ -35,14 +35,14 @@ class TicketPriorityFlowTests(TestCase):
             "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
             "error": "",
         }
-        response = self.client.post(reverse("taskdetail"), data=self._ticket_payload())
+        response = self.client.post(reverse("ticketdetail"), data=self._ticket_payload())
         self.assertEqual(response.status_code, 302)
 
-        task = TaskDetail.objects.latest("id")
-        self.assertEqual(task.priority, "HIGH")
-        self.assertEqual(task.ai_suggested_priority, "HIGH")
+        ticket = TicketDetail.objects.latest("id")
+        self.assertEqual(ticket.priority, "HIGH")
+        self.assertEqual(ticket.ai_suggested_priority, "HIGH")
 
-        ai_log = AIMLLog.objects.filter(task=task, log_type="PRIORITY").latest("id")
+        ai_log = AIMLLog.objects.filter(ticket=ticket, log_type="PRIORITY").latest("id")
         output = json.loads(ai_log.output_data)
         self.assertEqual(output["priority"], "HIGH")
 
@@ -55,30 +55,30 @@ class TicketPriorityFlowTests(TestCase):
             "error": "",
         }
         response = self.client.post(
-            reverse("taskdetail"),
+            reverse("ticketdetail"),
             data=self._ticket_payload(priority="LOW"),
         )
         self.assertEqual(response.status_code, 302)
         mock_predict.assert_called_once()
 
-        task = TaskDetail.objects.latest("id")
-        self.assertEqual(task.priority, "MEDIUM")
-        self.assertEqual(task.ai_suggested_priority, "MEDIUM")
-        self.assertTrue(AIMLLog.objects.filter(task=task, log_type="PRIORITY").exists())
+        ticket = TicketDetail.objects.latest("id")
+        self.assertEqual(ticket.priority, "MEDIUM")
+        self.assertEqual(ticket.ai_suggested_priority, "MEDIUM")
+        self.assertTrue(AIMLLog.objects.filter(ticket=ticket, log_type="PRIORITY").exists())
 
     def test_priority_override_marks_ai_feedback(self):
-        task = TaskDetail.objects.create(
-            TASK_TITLE="Email server intermittent failures",
-            TASK_CREATED=self.user,
-            TASK_DUE_DATE=timezone.now().date() + timedelta(days=2),
-            TASK_DESCRIPTION="Users report frequent send failures and delayed inbox sync.",
-            TASK_HOLDER=self.user.username,
-            TASK_STATUS="Open",
+        ticket = TicketDetail.objects.create(
+            TICKET_TITLE="Email server intermittent failures",
+            TICKET_CREATED=self.user,
+            TICKET_DUE_DATE=timezone.now().date() + timedelta(days=2),
+            TICKET_DESCRIPTION="Users report frequent send failures and delayed inbox sync.",
+            TICKET_HOLDER=self.user.username,
+            TICKET_STATUS="Open",
             priority="HIGH",
             ai_suggested_priority="HIGH",
         )
         ai_log = AIMLLog.objects.create(
-            task=task,
+            ticket=ticket,
             log_type="PRIORITY",
             input_data="{}",
             output_data="{}",
@@ -87,11 +87,11 @@ class TicketPriorityFlowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse("updatetask", kwargs={"pk": task.id}),
+            reverse("updateticket", kwargs={"pk": ticket.id}),
             data={
-                "TASK_TITLE": task.TASK_TITLE,
-                "TASK_DESCRIPTION": task.TASK_DESCRIPTION,
-                "TASK_DUE_DATE": task.TASK_DUE_DATE.isoformat(),
+                "TICKET_TITLE": ticket.TICKET_TITLE,
+                "TICKET_DESCRIPTION": ticket.TICKET_DESCRIPTION,
+                "TICKET_DUE_DATE": ticket.TICKET_DUE_DATE.isoformat(),
                 "priority": "LOW",
                 "category": "",
                 "assigned_department": "",

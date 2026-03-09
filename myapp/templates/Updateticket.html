@@ -1,10 +1,10 @@
 {% extends "Base.html" %}
-{% block title %}Edit Ticket #{{ task.id }} — HelpDesk{% endblock %}
+{% block title %}Edit Ticket #{{ ticket.id }} — HelpDesk{% endblock %}
 
 {% block breadcrumb %}
   <a href="{% url 'base' %}">Dashboard</a>
   <span class="bc-sep">/</span>
-  <a href="{% url 'taskinfo' task.id %}">Ticket #{{ task.id }}</a>
+  <a href="{% url 'ticketinfo' ticket.id %}">Ticket #{{ ticket.id }}</a>
   <span class="bc-sep">/</span>
   <strong>Edit</strong>
 {% endblock %}
@@ -51,18 +51,18 @@
   <div class="page-header d-flex align-items-start justify-content-between gap-3 flex-wrap">
     <div>
       <div class="page-title">
-        Edit Ticket <span style="color:var(--brand);">#{{ task.id }}</span>
+        Edit Ticket <span style="color:var(--brand);">#{{ ticket.id }}</span>
       </div>
-      <div class="page-sub">{{ task.TASK_TITLE|truncatechars:70 }}</div>
+      <div class="page-sub">{{ ticket.TICKET_TITLE|truncatechars:70 }}</div>
     </div>
     <span class="status-badge mt-1
-      {% if task.TASK_STATUS == 'Open'        %}sb-open
-      {% elif task.TASK_STATUS == 'In Progress'%}sb-progress
-      {% elif task.TASK_STATUS == 'Closed'    %}sb-closed
-      {% elif task.TASK_STATUS == 'Resolved'  %}sb-resolved
-      {% elif task.TASK_STATUS == 'Reopen'    %}sb-reopen
+      {% if ticket.TICKET_STATUS == 'Open'        %}sb-open
+      {% elif ticket.TICKET_STATUS == 'In Progress'%}sb-progress
+      {% elif ticket.TICKET_STATUS == 'Closed'    %}sb-closed
+      {% elif ticket.TICKET_STATUS == 'Resolved'  %}sb-resolved
+      {% elif ticket.TICKET_STATUS == 'Reopen'    %}sb-reopen
       {% else %}sb-expired{% endif %}">
-      {{ task.TASK_STATUS }}
+      {{ ticket.TICKET_STATUS }}
     </span>
   </div>
 
@@ -84,27 +84,27 @@
       <div class="hd-card-body">
         <div class="row g-3">
 
-          {% if form.TASK_TITLE %}
+          {% if form.TICKET_TITLE %}
           <div class="col-12">
             <label class="form-label">Title <span class="text-danger">*</span></label>
-            {{ form.TASK_TITLE }}
-            {% if form.TASK_TITLE.errors %}
-              <div class="field-error">{{ form.TASK_TITLE.errors.0 }}</div>
+            {{ form.TICKET_TITLE }}
+            {% if form.TICKET_TITLE.errors %}
+              <div class="field-error">{{ form.TICKET_TITLE.errors.0 }}</div>
             {% endif %}
             <div class="field-error" id="err_title" style="display:none;">Title is required.</div>
           </div>
           {% endif %}
 
-          {% if form.TASK_DESCRIPTION %}
+          {% if form.TICKET_DESCRIPTION %}
           <div class="col-12">
             <label class="form-label">Description <span class="text-danger">*</span></label>
-            {{ form.TASK_DESCRIPTION }}
+            {{ form.TICKET_DESCRIPTION }}
             <div style="display:flex;justify-content:space-between;margin-top:4px;">
               <div class="form-text" style="margin:0;">Be specific about the issue and steps to reproduce</div>
               <div class="char-counter" id="descCounter">0</div>
             </div>
-            {% if form.TASK_DESCRIPTION.errors %}
-              <div class="field-error">{{ form.TASK_DESCRIPTION.errors.0 }}</div>
+            {% if form.TICKET_DESCRIPTION.errors %}
+              <div class="field-error">{{ form.TICKET_DESCRIPTION.errors.0 }}</div>
             {% endif %}
             <div class="field-error" id="err_desc" style="display:none;">Description must be at least 20 characters.</div>
           </div>
@@ -121,14 +121,14 @@
           <div class="col-sm-6">
             <label class="form-label">Priority</label>
             {{ form.priority }}
-            <div class="form-text">Changing priority updates task urgency for the team</div>
+            <div class="form-text">Changing priority updates ticket urgency for the team</div>
           </div>
           {% endif %}
 
-          {% if form.TASK_STATUS %}
+          {% if form.TICKET_STATUS %}
           <div class="col-sm-6">
             <label class="form-label">Status</label>
-            {{ form.TASK_STATUS }}
+            {{ form.TICKET_STATUS }}
           </div>
           {% endif %}
 
@@ -147,12 +147,12 @@
           </div>
           {% endif %}
 
-          {% if form.TASK_DUE_DATE %}
+          {% if form.TICKET_DUE_DATE %}
           <div class="col-sm-6">
             <label class="form-label">Due Date <span class="text-danger">*</span></label>
-            {{ form.TASK_DUE_DATE }}
-            {% if form.TASK_DUE_DATE.errors %}
-              <div class="field-error">{{ form.TASK_DUE_DATE.errors.0 }}</div>
+            {{ form.TICKET_DUE_DATE }}
+            {% if form.TICKET_DUE_DATE.errors %}
+              <div class="field-error">{{ form.TICKET_DUE_DATE.errors.0 }}</div>
             {% endif %}
             <div class="field-error" id="err_due" style="display:none;">Due date must be today or later.</div>
           </div>
@@ -169,9 +169,9 @@
           <i class="fas fa-exclamation-triangle mt-1" style="color:var(--warning);flex-shrink:0;"></i>
           <div>
             <strong style="color:var(--slate-800);">Heads up:</strong>
-            {% if form.TASK_TITLE %}
+            {% if form.TICKET_TITLE %}
             Changing <strong>priority</strong> or <strong>department</strong> will automatically
-            update task urgency metadata.
+            update ticket urgency metadata.
             {% else %}
             As admin, you can update only <strong>priority</strong> and <strong>department</strong>.
             {% endif %}
@@ -179,7 +179,7 @@
         </div>
 
         <div class="d-flex justify-content-end gap-2">
-          <a href="{% url 'taskinfo' task.id %}" class="btn btn-outline-secondary">
+          <a href="{% url 'ticketinfo' ticket.id %}" class="btn btn-outline-secondary">
             <i class="fas fa-times me-1"></i>Cancel
           </a>
           <button type="submit" class="btn btn-primary" id="saveBtn">
@@ -205,14 +205,14 @@
   const changeLog  = document.getElementById('changeLog');
   const changeList = document.getElementById('changeList');
   const fieldLabels = {
-    TASK_TITLE:        'Title',
-    TASK_DESCRIPTION:  'Description',
+    TICKET_TITLE:        'Title',
+    TICKET_DESCRIPTION:  'Description',
     category:          'Category',
     priority:          'Priority',
-    TASK_STATUS:       'Status',
+    TICKET_STATUS:       'Status',
     assigned_department: 'Department',
     assigned_to:       'Assigned To',
-    TASK_DUE_DATE:     'Due Date',
+    TICKET_DUE_DATE:     'Due Date',
   };
 
   function updateChangeLog() {
@@ -236,7 +236,7 @@
   document.querySelectorAll('#editForm input, #editForm select, #editForm textarea')
           .forEach(el => el.addEventListener('change', updateChangeLog));
 
-  const descTA  = document.getElementById('id_TASK_DESCRIPTION');
+  const descTA  = document.getElementById('id_TICKET_DESCRIPTION');
   const counter = document.getElementById('descCounter');
   const MAX     = 2000;
 
@@ -253,7 +253,7 @@
   document.getElementById('editForm').addEventListener('submit', function(e) {
     let valid = true;
 
-    const title    = document.getElementById('id_TASK_TITLE');
+    const title    = document.getElementById('id_TICKET_TITLE');
     const errTitle = document.getElementById('err_title');
     if (title && !title.value.trim()) {
       title.classList.add('is-invalid'); errTitle.style.display = 'block'; valid = false;
@@ -261,7 +261,7 @@
       title.classList.remove('is-invalid'); errTitle.style.display = 'none';
     }
 
-    const desc    = document.getElementById('id_TASK_DESCRIPTION');
+    const desc    = document.getElementById('id_TICKET_DESCRIPTION');
     const errDesc = document.getElementById('err_desc');
     if (desc && desc.value.trim().length < 20) {
       desc.classList.add('is-invalid'); errDesc.style.display = 'block'; valid = false;
@@ -269,7 +269,7 @@
       desc.classList.remove('is-invalid'); errDesc.style.display = 'none';
     }
 
-    const due    = document.getElementById('id_TASK_DUE_DATE');
+    const due    = document.getElementById('id_TICKET_DUE_DATE');
     const errDue = document.getElementById('err_due');
     if (due && due.value) {
       const today  = new Date(); today.setHours(0,0,0,0);

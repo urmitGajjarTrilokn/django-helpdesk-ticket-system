@@ -150,7 +150,7 @@ Work order system not updating status ,Maintenance work orders completed by tech
 Sabbatical leave request ,A long-serving employee is requesting a 3-month unpaid sabbatical leave for personal development purposes. Policy allows this after 7 years of service.,HR
 Software deployment failing via MDM ,IT attempted to push a software update to all managed devices using the MDM platform but the deployment is failing on 23 percent of devices.,IT Support
 Annual insurance premium payment confirmation ,Accounts team needs to confirm that the annual business insurance premium has been paid in full before the policy renewal date next week.,Finance
-Night shift handover process breakdown,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Employment tribunal response preparation ,HR legal team is preparing a formal response to an employment tribunal claim filed by a former employee. Documentation and witness statements are needed.,HR
 Software deployment failing via MDM ,IT attempted to push a software update to all managed devices using the MDM platform but the deployment is failing on 23 percent of devices.,IT Support
 Approval for conference sponsorship ,"Marketing team has an opportunity to sponsor an industry conference for brand visibility. Requesting management approval for INR 1,50,000 sponsorship budget.",Manager
@@ -274,7 +274,7 @@ Third-party logistics partner performance drop ,Delivery completion rates by the
 Unable to download purchase history ,Customer is trying to download their complete purchase history as a PDF for tax purposes but the download button is not functioning.,Customer Support
 Production planning data not updated ,The production planning team's data in the ERP system has not been updated with this week's actual production figures. Reports are showing stale data.,Operations
 Product assembly instructions unclear ,Customer received a self-assembly furniture item but the printed instructions are unclear and diagrams are too small to follow. Requesting detailed guide.,Customer Support
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Approval for crisis communication plan ,Reputational risk team has prepared a crisis communication playbook. Requesting senior management review and approval for it to be adopted as official policy.,Manager
 Complaint about management communication style ,Multiple employees have formally raised concerns about a senior manager's aggressive communication style. HR and senior management review is required.,Manager
 Time tracking system not recording correctly ,Employee's time entries in the project time tracking system are not being saved. The form submits successfully but entries disappear after page refresh.,IT Support
@@ -339,7 +339,7 @@ Software deployment failing via MDM ,IT attempted to push a software update to a
 Sabbatical leave request ,A long-serving employee is requesting a 3-month unpaid sabbatical leave for personal development purposes. Policy allows this after 7 years of service.,HR
 Safety incident near miss report ,A near-miss safety incident occurred in the warehouse when a stack of goods nearly fell on a worker. Formal incident report and safety review required.,Operations
 Product assembly instructions unclear ,Customer received a self-assembly furniture item but the printed instructions are unclear and diagrams are too small to follow. Requesting detailed guide.,Customer Support
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Medical reimbursement documents rejected ,Employee's medical reimbursement claim was rejected citing incomplete documentation even though all required documents listed in the policy were submitted.,Finance
 Job evaluation for new role,A newly created role needs to be formally evaluated and graded by HR to determine the appropriate salary band and reporting level before recruitment begins.,HR
 Cross-border payroll compliance query ,An employee who has been working from another country for 6 months has raised questions about cross-border payroll tax and social security implications.,HR
@@ -453,9 +453,9 @@ Quarterly VAT return preparation ,Finance team is requesting supporting data fro
 Account showing wrong membership tier ,Customer's account displays a Silver membership tier but they believe they have accumulated enough points to qualify for Gold status.,Customer Support
 Foreign vendor payment blocked by bank ,An international wire transfer to a foreign vendor was blocked by the bank citing regulatory compliance review. Vendor is waiting for urgent payment.,Finance
 API access token expired ,A developer's API access token for an internal service has expired. Requests are returning 401 unauthorized errors and token renewal process is unclear.,IT Support
-Client onboarding process improvement,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Packing material quality failure ,Incoming packing materials from the current supplier have failed quality checks. Operations needs to decide whether to reject the batch or use it with increased monitoring.,Operations
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Virtual machine snapshot storage full ,The virtual machine snapshot storage volume is at 97 percent capacity. Old snapshots need to be reviewed and deleted to prevent system failures.,IT Support
 Cleaning and sanitation schedule not followed ,The production area cleaning and sanitation schedule is not being consistently followed by the cleaning team. Non-compliance may cause food safety issues.,Operations
 Year-end performance rating distribution ,HR is reviewing the distribution of year-end performance ratings across departments to ensure consistency and fairness before ratings are communicated to employees.,HR
@@ -466,7 +466,7 @@ Re-engagement of boomerang employee,A former employee who left 18 months ago has
 Goods returned by customer quality check ,A batch of goods was returned by a major customer citing quality defects. Operations needs to inspect the batch and initiate a root cause analysis.,Operations
 Export documentation preparation ,"An international shipment is being prepared and operations needs to compile all export documentation including commercial invoice, packing list and certificate of origin.",Operations
 Internship offer letter issuance ,"Eight selected interns for the summer program need to receive formal offer letters with internship terms, stipend details and joining instructions.",HR
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Network monitoring tool false alerts ,"The network monitoring tool is generating a high volume of false positive alerts, causing the IT team to miss genuine issues in the noise.",IT Support
 Underperforming team member escalation ,"After 3 months on a performance improvement plan with no progress, manager is escalating the underperforming employee matter to HR and senior management.",Manager
 IT security awareness training reminder ,IT security team reminding all employees that mandatory annual cybersecurity awareness training must be completed within the next 10 days.,IT Support
@@ -527,7 +527,7 @@ Order queue position not updating ,Customer placed a pre-order and was given a q
 Return received but refund not initiated ,Customer returned an item and the tracking confirms it was delivered to the warehouse 12 days ago but no refund has been initiated yet.,Customer Support
 Quarterly goals review and reset ,Mid-year review shows some departmental goals are no longer achievable due to market changes. Requesting management approval to reset two specific team targets.,Manager
 Safety incident near miss report ,A near-miss safety incident occurred in the warehouse when a stack of goods nearly fell on a worker. Formal incident report and safety review required.,Operations
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Interview panel training needed ,HR has identified that several managers conducting interviews are not following the structured interview process. Training session needs to be arranged.,HR
 Graduate trainee program assessment ,The 12-month graduate trainee program is coming to an end and HR needs to coordinate the final assessments and conversion offers for the successful trainees.,HR
 Training budget utilization review ,Only 40 percent of the annual training budget has been utilized with 3 months remaining. HR is reviewing departmental plans to ensure optimal utilization.,HR
@@ -813,7 +813,7 @@ Incorrect bank details for salary transfer ,Employee's salary was credited to a 
 Payroll cut-off date reminder ,"HR is reminding all managers that any salary-related changes including promotions, transfers and terminations must be submitted before the payroll cut-off date.",HR
 Change management support request ,A major process change is being implemented in the department. Manager is requesting HR and senior leadership support for the change management communication.,Manager
 Pallet racking structural integrity concern ,A warehouse supervisor noticed a bent upright on one of the pallet racking structures. The section has been cordoned off pending a structural inspection.,Operations
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Employee safety boot replacement ,Safety footwear for 12 warehouse employees has reached end of life. Replacement boots must be issued before employees can continue working in restricted zones.,Operations
 Digital certificate for code signing needed ,Developer needs a code signing certificate to sign software releases before distribution. Requesting IT to procure and configure the appropriate certificate.,IT Support
 Merger due diligence team formation ,"Following a board decision to explore a potential acquisition, management needs to form an internal due diligence team from finance, legal, HR and operations.",Manager
@@ -1063,7 +1063,7 @@ Grievance escalation to HR director,An employee grievance that was not resolved 
 Tool crib inventory discrepancy ,The tool crib inventory count does not match the system records. Several expensive tools are missing and their last checkout was not recorded.,Operations
 Change management support request ,A major process change is being implemented in the department. Manager is requesting HR and senior leadership support for the change management communication.,Manager
 New hire pre-employment health check ,Two new employees joining next month need pre-employment medical examinations as required for their specific roles. Appointments need to be scheduled.,HR
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Partial order delivered ,Customer received only 2 out of 4 items ordered. The packing slip inside shows all 4 items but only 2 were physically in the box.,Customer Support
 New market research budget approval ,"Strategy team is proposing a market research study for a potential new service line. Requesting INR 4,50,000 research budget approval from management.",Manager
 Counterfeit product suspected ,Customer suspects the branded product they received is counterfeit based on poor print quality on the packaging and slight differences in product appearance.,Customer Support
@@ -1153,7 +1153,7 @@ Cross-selling initiative approval ,Sales team has developed a cross-selling stra
 IP address conflict on network ,Two devices on the local network have been assigned the same static IP address causing intermittent connectivity loss for both. DHCP configuration review needed.,IT Support
 End-of-year leave planning communication ,HR needs to send guidance to all employees about the process for planning and submitting year-end leave requests before the holiday period begins.,HR
 Product assembly instructions unclear ,Customer received a self-assembly furniture item but the printed instructions are unclear and diagrams are too small to follow. Requesting detailed guide.,Customer Support
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Bad debt provision calculation ,Finance needs to calculate and record the quarterly bad debt provision based on the aging analysis of trade receivables as per the accounting policy.,Finance
 Approval for crisis communication plan ,Reputational risk team has prepared a crisis communication playbook. Requesting senior management review and approval for it to be adopted as official policy.,Manager
 Custom order specifications not followed ,Customer placed a custom product order with specific dimensions and color but the delivered item does not match the confirmed order specifications.,Customer Support
@@ -1194,7 +1194,7 @@ ERP system slow during month-end,The ERP system becomes extremely slow during mo
 Delivery attempted but no notification sent ,Courier attempted delivery while customer was home but did not ring the doorbell and left a card instead. No advance notification was given.,Customer Support
 Production target not met this quarter ,Operations failed to meet the quarterly production target by 12 percent. A report on contributing factors and corrective measures is needed for the management review.,Operations
 Reward points expired without notice ,Customer's accumulated reward points expired without any prior email or in-app notification. Points had been saved for over 6 months.,Customer Support
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Packing material quality failure ,Incoming packing materials from the current supplier have failed quality checks. Operations needs to decide whether to reject the batch or use it with increased monitoring.,Operations
 Custom order specifications not followed ,Customer placed a custom product order with specific dimensions and color but the delivered item does not match the confirmed order specifications.,Customer Support
 Shipping insurance claim not processed ,Customer paid for shipping insurance on a high-value item that was lost in transit. The insurance claim filed 3 weeks ago has not been processed.,Customer Support
@@ -1263,7 +1263,7 @@ Shipping documentation error,An error in the packing list sent to a customer cau
 Skill gap analysis for department ,HR is conducting a skill gap analysis for the engineering department to identify training priorities and inform the next year's learning and development budget.,HR
 Goods returned by customer quality check ,A batch of goods was returned by a major customer citing quality defects. Operations needs to inspect the batch and initiate a root cause analysis.,Operations
 Employee self-service portal error ,Employees are getting errors when trying to submit IT requests through the self-service portal. The submit button is returning a form validation error.,IT Support
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Partial order delivered ,Customer received only 2 out of 4 items ordered. The packing slip inside shows all 4 items but only 2 were physically in the box.,Customer Support
 Regional office closure decision ,Declining business in one regional office makes it economically unviable to continue operating. Manager is presenting closure options and financial implications.,Manager
 Referral link not generating discount ,Customer shared their referral link with friends who signed up but neither the customer nor their friends received the promised referral discount.,Customer Support
@@ -1510,7 +1510,7 @@ Approval for overtime during critical period ,"Due to an unexpected surge in dem
 Data governance policy implementation ,IT and legal have finalized a new data governance policy. Manager requesting a cross-functional meeting to align on implementation responsibilities.,Manager
 Freight cost allocation query ,Operations and Finance disagree on how to allocate inbound freight costs across different product categories for inventory valuation purposes.,Finance
 Waste generation above compliance threshold ,This month's waste generation figures are above the regulatory compliance threshold. Operations needs to investigate the cause and report to the environmental team.,Operations
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Bulk order pricing not applied ,Customer placed an order for 50 units expecting bulk pricing as advertised on the website but was charged the standard per-unit price.,Customer Support
 Annual insurance premium payment confirmation ,Accounts team needs to confirm that the annual business insurance premium has been paid in full before the policy renewal date next week.,Finance
 Complaint about misleading advertisement ,Customer purchased a product based on an advertisement that showed features not present in the actual product. Requesting refund and ad retraction.,Customer Support
@@ -1544,7 +1544,7 @@ Domain name renewal lapse risk ,IT administrator flagged that two company domain
 Approval for system downtime maintenance ,IT needs a 4-hour maintenance window next Saturday to perform critical infrastructure upgrades. Business impact assessment and management approval needed.,Manager
 Password manager enterprise deployment ,IT is deploying an enterprise password manager to all employees and needs to schedule training sessions for each department to ensure adoption.,IT Support
 Account blocked after chargeback ,Customer raised a legitimate chargeback with their bank for an undelivered item but their account was suspended as a result. Requesting reinstatement.,Customer Support
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Asset impairment review required ,One of the company's major assets may have declined in value due to market changes. An impairment review and possible write-down needs to be initiated.,Finance
 Third-party logistics partner performance drop ,Delivery completion rates by the third-party logistics partner have dropped from 96 percent to 81 percent in the last month. Contract review is needed.,Operations
 Customer contract profitability review ,Finance analysis shows a major customer contract is operating at below target margins. Requesting management strategy session to decide on renegotiation approach.,Manager
@@ -1618,7 +1618,7 @@ Contractor to employee reclassification ,A contractor who has worked exclusively
 Lease accounting standard adoption query ,Finance team is seeking guidance on adopting the new lease accounting standard for the company's operating leases starting from the next financial year.,Finance
 Pallet racking structural integrity concern ,A warehouse supervisor noticed a bent upright on one of the pallet racking structures. The section has been cordoned off pending a structural inspection.,Operations
 Merger due diligence team formation ,"Following a board decision to explore a potential acquisition, management needs to form an internal due diligence team from finance, legal, HR and operations.",Manager
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Helpdesk knowledge base update needed ,Many IT helpdesk articles are outdated following recent system upgrades. The knowledge base needs to be reviewed and updated to reflect current procedures.,IT Support
 Order shows delivered but not received ,Customer's order status changed to delivered but the package was not found at the delivery address. Neighbors were checked and no package was left with them either.,Customer Support
 Incorrect depreciation method applied ,Asset depreciation was calculated using the straight-line method for an asset that should have been depreciated using the written-down value method.,Finance
@@ -1962,7 +1962,7 @@ Payroll tax filing error discovered ,"After filing the quarterly payroll tax ret
 Approval for team offsite planning ,"Manager requesting budget approval of INR 2,50,000 for a 2-day team offsite focused on strategy alignment and team building for 15 employees.",Manager
 Shift schedule not published on time ,"Operations employees are complaining that the next month's shift schedule has not been published with adequate notice, causing personal planning difficulties.",HR
 Approval for crisis communication plan ,Reputational risk team has prepared a crisis communication playbook. Requesting senior management review and approval for it to be adopted as official policy.,Manager
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Prepaid expense amortization schedule error ,The prepaid expense amortization schedule has an error in the monthly amounts due to a formula mistake. All future months need to be recalculated.,Finance
 Return received but refund not initiated ,Customer returned an item and the tracking confirms it was delivered to the warehouse 12 days ago but no refund has been initiated yet.,Customer Support
 Waste generation above compliance threshold ,This month's waste generation figures are above the regulatory compliance threshold. Operations needs to investigate the cause and report to the environmental team.,Operations
@@ -2027,7 +2027,7 @@ Lease accounting standard adoption query ,Finance team is seeking guidance on ad
 Tool crib inventory discrepancy ,The tool crib inventory count does not match the system records. Several expensive tools are missing and their last checkout was not recorded.,Operations
 Approval for external legal counsel ,An emerging contractual dispute with a client may require specialized legal advice beyond the company's internal legal team capabilities. External counsel approval needed.,Manager
 Raw material substitution approval ,Primary raw material is out of stock and a substitute material is available. Production needs operations and quality team approval before using the substitute.,Operations
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Password manager enterprise deployment ,IT is deploying an enterprise password manager to all employees and needs to schedule training sessions for each department to ensure adoption.,IT Support
 Quarterly goals review and reset ,Mid-year review shows some departmental goals are no longer achievable due to market changes. Requesting management approval to reset two specific team targets.,Manager
 Performance management process query ,Manager needs clarification on the performance management timeline and how to handle an employee who joined mid-year and missed part of the review cycle.,Manager
@@ -2234,7 +2234,7 @@ Prepaid expense amortization schedule error ,The prepaid expense amortization sc
 Approval for overtime during critical period ,"Due to an unexpected surge in demand, manager is requesting pre-approval for overtime work for the entire team for the next three weekends.",Manager
 Bad debt provision calculation ,Finance needs to calculate and record the quarterly bad debt provision based on the aging analysis of trade receivables as per the accounting policy.,Finance
 Forklift operator certification expired ,The certification for two forklift operators in the warehouse has expired. They cannot legally operate the equipment until recertification is completed.,Operations
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Advance payment to new supplier query ,Procurement is asking whether Finance can make a partial advance payment to a new supplier before the purchase order is formally approved.,Finance
 Production line downtime report ,Production line B has experienced 14 hours of unplanned downtime this week due to recurring equipment issues. Root cause analysis is needed urgently.,Operations
 Shift schedule not published on time ,"Operations employees are complaining that the next month's shift schedule has not been published with adequate notice, causing personal planning difficulties.",HR
@@ -2249,7 +2249,7 @@ Trial balance discrepancy before audit ,"The trial balance prepared for the exte
 Trial balance discrepancy before audit ,"The trial balance prepared for the external audit has a debit-credit difference of INR 4,200. The error needs to be traced and corrected before the auditors arrive.",Finance
 Delivery attempted but no notification sent ,Courier attempted delivery while customer was home but did not ring the doorbell and left a card instead. No advance notification was given.,Customer Support
 Remote employee contract addendum ,An employee transitioning to a permanently remote work arrangement needs a formal contract addendum reflecting the change in work location and terms.,HR
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Wrong seller shipped the product ,Customer ordered from a preferred seller on the marketplace but a different seller fulfilled the order and the product quality is noticeably different.,Customer Support
 Annual leave year-end carryover policy update ,HR is reviewing and updating the annual leave carryover policy for the new year and needs to communicate the changes to all employees with examples.,HR
 Job posting approval needed ,Recruitment team needs manager approval on the job description and salary range before posting a vacancy for a senior data scientist role.,HR
@@ -2400,7 +2400,7 @@ Material handling equipment breakdown ,The conveyor belt system in the packaging
 Long-term disability claim support ,An employee diagnosed with a long-term health condition needs HR support to navigate the company's disability insurance claim process.,HR
 Endpoint detection alert review ,IT security received an alert from the endpoint detection system about suspicious activity on one workstation. Investigation and response are needed.,IT Support
 Overtime authorization for production target ,Production team is requesting pre-authorized overtime for the next two weeks to meet a large customer order that was placed on short notice.,Operations
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Subscription software cost capitalization query ,IT purchased a new cloud-based software subscription. Finance needs to determine whether the annual cost should be expensed or capitalized as an intangible asset.,Finance
 Audit committee presentation preparation ,"Finance is preparing the quarterly presentation for the audit committee covering financial performance, risk areas and compliance status for review.",Finance
 Incorrect depreciation method applied ,Asset depreciation was calculated using the straight-line method for an asset that should have been depreciated using the written-down value method.,Finance
@@ -2470,7 +2470,7 @@ Customer contract profitability review ,Finance analysis shows a major customer 
 Brand ambassador program launch ,Marketing has proposed an employee brand ambassador program for social media. Requesting management approval and guidelines before inviting employees to participate.,Manager
 Internship offer letter issuance ,"Eight selected interns for the summer program need to receive formal offer letters with internship terms, stipend details and joining instructions.",HR
 Conditional access policy blocking remote login,A new conditional access policy deployed last week is preventing employees from logging in from home even with valid VPN connections. Policy needs review.,IT Support
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Fleet maintenance record incomplete ,Annual review of the vehicle fleet maintenance records found that 4 vehicles do not have complete service history documentation as required by policy.,Operations
 Order shows delivered but not received ,Customer's order status changed to delivered but the package was not found at the delivery address. Neighbors were checked and no package was left with them either.,Customer Support
 Approval for overtime during critical period ,"Due to an unexpected surge in demand, manager is requesting pre-approval for overtime work for the entire team for the next three weekends.",Manager
@@ -2514,7 +2514,7 @@ ERP system slow during month-end ,The ERP system becomes extremely slow during m
 Lease accounting standard adoption query ,Finance team is seeking guidance on adopting the new lease accounting standard for the company's operating leases starting from the next financial year.,Finance
 Incorrect discount applied ,Customer was promised a 20 percent discount via a loyalty email but at checkout only a 10 percent discount was applied. Screenshot of email attached.,Customer Support
 Escalation of repeated billing errors to client ,A client has been billed incorrectly for the third consecutive month despite corrections being made. Manager requesting executive involvement to resolve and retain the client.,Manager
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Overtime authorization for production target ,Production team is requesting pre-authorized overtime for the next two weeks to meet a large customer order that was placed on short notice.,Operations
 Employment tribunal response preparation ,HR legal team is preparing a formal response to an employment tribunal claim filed by a former employee. Documentation and witness statements are needed.,HR
 Payroll tax filing error discovered ,"After filing the quarterly payroll tax return, an error was discovered in the taxable wages reported. An amended return needs to be filed promptly.",Finance
@@ -2828,7 +2828,7 @@ Quarter-end closing deadline missed by department ,A department failed to submit
 Vendor shortlisting for new service ,Procurement team has shortlisted three vendors for a new service. Requesting management review of evaluation scorecard and decision on preferred vendor.,Manager
 Asset impairment review required ,One of the company's major assets may have declined in value due to market changes. An impairment review and possible write-down needs to be initiated.,Finance
 Termination letter issuance ,"Following a disciplinary process that concluded with a termination decision, HR needs to prepare and issue the formal termination letter to the employee.",HR
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Customer advance receipt accounting ,Sales team received a large advance payment from a new customer. Finance needs guidance on how to record and report this in the financial statements.,Finance
 Moonlighting policy clarification ,An employee has asked HR for clarification on whether they are permitted to take on freelance work outside of office hours under the current employment contract.,HR
 Payroll cut-off date reminder ,"HR is reminding all managers that any salary-related changes including promotions, transfers and terminations must be submitted before the payroll cut-off date.",HR
@@ -2942,7 +2942,7 @@ Complaint about management communication style ,Multiple employees have formally
 Employee not enrolled in payroll system ,New employee who joined 6 weeks ago was never enrolled in the payroll system and has not received any salary payment for the past month.,Finance
 Spam emails bypassing corporate filter ,A large volume of phishing and spam emails are reaching employee inboxes despite the corporate email security filter. Filter rules may need updating.,IT Support
 Revenue deferral calculation for subscription ,Company sells annual subscriptions and needs guidance on how to correctly defer and recognize revenue on a monthly basis for accounting purposes.,Finance
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Accounts payable duplicate payment audit ,Finance is conducting an audit of all vendor payments made in the past 12 months to identify any duplicate payments and initiate recovery.,Finance
 Audit committee presentation preparation ,"Finance is preparing the quarterly presentation for the audit committee covering financial performance, risk areas and compliance status for review.",Finance
 SharePoint site permission error ,Employee is getting an access denied error when trying to open a SharePoint site that they were recently granted access to. Permissions appear to be set correctly.,IT Support
@@ -3002,7 +3002,7 @@ Approval for AI tool procurement ,Technology team has evaluated three AI-powered
 Interbank transfer confirmation delayed ,An interbank transfer made three days ago has not yet been credited to the beneficiary account. Bank is investigating but update is needed urgently.,Finance
 Cross-selling initiative approval ,Sales team has developed a cross-selling strategy targeting existing customers. Requesting management sign-off on the approach and incentive structure.,Manager
 Account blocked after chargeback ,Customer raised a legitimate chargeback with their bank for an undelivered item but their account was suspended as a result. Requesting reinstatement.,Customer Support
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Order shows delivered but not received ,Customer's order status changed to delivered but the package was not found at the delivery address. Neighbors were checked and no package was left with them either.,Customer Support
 Attrition rate increase investigation ,Attrition in the technology department has increased to 28 percent in the last 6 months. HR is initiating an investigation including exit interview analysis.,HR
 Candidate rejection communication ,HR needs to send formal rejection notifications to 12 candidates who were interviewed for a position that has now been filled internally.,HR
@@ -3013,7 +3013,7 @@ Headcount freeze impact on deliverables ,The company-wide hiring freeze is preve
 Interbank transfer confirmation delayed ,An interbank transfer made three days ago has not yet been credited to the beneficiary account. Bank is investigating but update is needed urgently.,Finance
 Material handling equipment breakdown ,The conveyor belt system in the packaging area has broken down. Manual handling is being used temporarily but is slower and creating a backlog.,Operations
 Software deployment failing via MDM ,IT attempted to push a software update to all managed devices using the MDM platform but the deployment is failing on 23 percent of devices.,IT Support
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Job posting approval needed ,Recruitment team needs manager approval on the job description and salary range before posting a vacancy for a senior data scientist role.,HR
 Waste generation above compliance threshold ,This month's waste generation figures are above the regulatory compliance threshold. Operations needs to investigate the cause and report to the environmental team.,Operations
 API access token expired ,A developer's API access token for an internal service has expired. Requests are returning 401 unauthorized errors and token renewal process is unclear.,IT Support
@@ -3087,7 +3087,7 @@ IP address conflict on network ,Two devices on the local network have been assig
 Approval for system downtime maintenance ,IT needs a 4-hour maintenance window next Saturday to perform critical infrastructure upgrades. Business impact assessment and management approval needed.,Manager
 Virtual machine snapshot storage full ,The virtual machine snapshot storage volume is at 97 percent capacity. Old snapshots need to be reviewed and deleted to prevent system failures.,IT Support
 Lease accounting standard adoption query ,Finance team is seeking guidance on adopting the new lease accounting standard for the company's operating leases starting from the next financial year.,Finance
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Unclear expense category in policy ,Employee is unsure which expense category to use for a coworking space cost incurred during a business trip. Policy does not cover this scenario.,Finance
 Bulk order pricing not applied,Customer placed an order for 50 units expecting bulk pricing as advertised on the website but was charged the standard per-unit price.,Customer Support
 Logistics software system error ,The logistics management software is displaying incorrect vehicle tracking information. Dispatch team is unable to monitor delivery status in real time.,Operations
@@ -3228,7 +3228,7 @@ Interview panel training needed ,HR has identified that several managers conduct
 Internal loan between subsidiaries ,Parent company needs to provide an internal loan to a subsidiary to fund working capital. Finance needs to prepare the intercompany loan documentation.,Finance
 Deferred bonus payment query ,Employee has a deferred bonus that was promised as part of a retention agreement two years ago. The payment date has arrived and the bonus has not been paid.,HR
 Grievance escalation to HR director ,An employee grievance that was not resolved at the manager level is being escalated to the HR director for formal review and decision.,HR
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Payroll reconciliation variance ,"Monthly payroll reconciliation between the HR payroll system and the accounting general ledger shows a variance of INR 6,800 that cannot be explained.",Finance
 Prepaid expense amortization schedule error ,The prepaid expense amortization schedule has an error in the monthly amounts due to a formula mistake. All future months need to be recalculated.,Finance
 Succession plan for key departing employee ,A key technical employee has submitted their resignation. Manager is requesting immediate support to identify and develop a succession candidate.,Manager
@@ -3448,7 +3448,7 @@ Gift card not accepted at third party store ,Customer purchased a gift card to u
 Attrition rate increase investigation ,Attrition in the technology department has increased to 28 percent in the last 6 months. HR is initiating an investigation including exit interview analysis.,HR
 New market research budget approval ,"Strategy team is proposing a market research study for a potential new service line. Requesting INR 4,50,000 research budget approval from management.",Manager
 Raw material substitution approval ,Primary raw material is out of stock and a substitute material is available. Production needs operations and quality team approval before using the substitute.,Operations
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Franchise partner performance review ,Several franchise partners have not met their quarterly performance targets. Management needs to decide on remediation actions or contract terminations.,Manager
 Product recall notification not received ,Customer read in the news about a recall of a product they purchased from this platform but did not receive any recall notification from the company.,Customer Support
 Excessive product packaging complaint ,A customer audit team flagged that the product packaging uses significantly more material than necessary. Operations review of packaging standards is needed.,Operations
@@ -3509,7 +3509,7 @@ Re-engagement of boomerang employee ,A former employee who left 18 months ago ha
 Procurement system access for new manager ,A newly promoted manager needs access to the procurement system to approve purchase orders. Current role does not include this permission level.,IT Support
 Order queue position not updating ,Customer placed a pre-order and was given a queue position but the estimated dispatch date has passed and the queue position has not moved.,Customer Support
 Approval for system downtime maintenance,IT needs a 4-hour maintenance window next Saturday to perform critical infrastructure upgrades. Business impact assessment and management approval needed.,Manager
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Monthly one-on-one meeting schedule ,Manager requesting HR support to set up a recurring monthly one-on-one meeting schedule for all direct reports using the company's scheduling tool.,Manager
 Overtime authorization for production target ,Production team is requesting pre-authorized overtime for the next two weeks to meet a large customer order that was placed on short notice.,Operations
 Spam emails bypassing corporate filter ,A large volume of phishing and spam emails are reaching employee inboxes despite the corporate email security filter. Filter rules may need updating.,IT Support
@@ -3528,7 +3528,7 @@ Product listing shows wrong specifications ,Customer purchased a laptop based on
 Competency framework rollout ,HR is rolling out a new competency framework across the organization and needs department heads to map their team roles to the new competency levels.,HR
 Headcount freeze impact on deliverables ,The company-wide hiring freeze is preventing the team from filling two critical vacancies. Manager is flagging the risk to project deliverables and timelines.,Manager
 Packing material quality failure ,Incoming packing materials from the current supplier have failed quality checks. Operations needs to decide whether to reject the batch or use it with increased monitoring.,Operations
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Cloud VM provisioning request ,Development team requesting provisioning of two additional virtual machines in the cloud environment for a new project starting next Monday.,IT Support
 Asset impairment review required ,One of the company's major assets may have declined in value due to market changes. An impairment review and possible write-down needs to be initiated.,Finance
 Freight cost allocation query ,Operations and Finance disagree on how to allocate inbound freight costs across different product categories for inventory valuation purposes.,Finance
@@ -3572,7 +3572,7 @@ Work order system not updating status ,Maintenance work orders completed by tech
 Long-term disability claim support ,An employee diagnosed with a long-term health condition needs HR support to navigate the company's disability insurance claim process.,HR
 Database backup restoration test needed ,IT policy requires quarterly restoration tests of database backups to verify data integrity. The last scheduled test was not completed and is overdue.,IT Support
 Shipping insurance claim not processed ,Customer paid for shipping insurance on a high-value item that was lost in transit. The insurance claim filed 3 weeks ago has not been processed.,Customer Support
-Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tasks is frequently not communicated.,Operations
+Night shift handover process breakdown ,The handover between day and night shifts in the warehouse is inconsistent. Critical information about pending tickets is frequently not communicated.,Operations
 Revenue deferral calculation for subscription ,Company sells annual subscriptions and needs guidance on how to correctly defer and recognize revenue on a monthly basis for accounting purposes.,Finance
 Candidate rejection communication ,HR needs to send formal rejection notifications to 12 candidates who were interviewed for a position that has now been filled internally.,HR
 Training budget utilization review ,Only 40 percent of the annual training budget has been utilized with 3 months remaining. HR is reviewing departmental plans to ensure optimal utilization.,HR
@@ -3865,7 +3865,7 @@ IT infrastructure upgrade business case ,CTO has submitted a business case for a
 Forklift operator certification expired ,The certification for two forklift operators in the warehouse has expired. They cannot legally operate the equipment until recertification is completed.,Operations
 App shows different price than website ,The same product is showing a higher price on the mobile app compared to the desktop website. Customer wants to know which price is correct.,Customer Support
 Gift card not accepted at third party store,Customer purchased a gift card to use at a partner store but the store's system is rejecting the card code as invalid when the cashier enters it.,Customer Support
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Partial order delivered ,Customer received only 2 out of 4 items ordered. The packing slip inside shows all 4 items but only 2 were physically in the box.,Customer Support
 Safety incident near miss report ,A near-miss safety incident occurred in the warehouse when a stack of goods nearly fell on a worker. Formal incident report and safety review required.,Operations
 Grievance escalation to HR director ,An employee grievance that was not resolved at the manager level is being escalated to the HR director for formal review and decision.,HR
@@ -3907,7 +3907,7 @@ Salary processing delayed this month ,"Due to a banking holiday on the usual pay
 Year-end performance rating distribution,HR is reviewing the distribution of year-end performance ratings across departments to ensure consistency and fairness before ratings are communicated to employees.,HR
 Material handling equipment breakdown ,The conveyor belt system in the packaging area has broken down. Manual handling is being used temporarily but is slower and creating a backlog.,Operations
 Approval for team offsite planning ,"Manager requesting budget approval of INR 2,50,000 for a 2-day team offsite focused on strategy alignment and team building for 15 employees.",Manager
-Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated task force.,Manager
+Client onboarding process improvement ,Multiple clients have complained about the complexity of the onboarding process. Manager is requesting approval to redesign the process with a dedicated ticket force.,Manager
 Print server migration planning ,IT is planning to migrate from a physical print server to a cloud print solution. Impact assessment and communication plan need to be developed.,IT Support
 User account audit and cleanup ,IT is conducting a user account audit and has identified 34 accounts that appear to belong to former employees that were not deactivated upon leaving.,IT Support
 Bulk order pricing not applied ,Customer placed an order for 50 units expecting bulk pricing as advertised on the website but was charged the standard per-unit price.,Customer Support
@@ -4120,7 +4120,7 @@ Data transfer from old laptop to new one [#88],"Employee received a new laptop b
 Delivery route efficiency review needed,Current delivery routes are causing repeated late deliveries. Requesting operations to review and optimize the scheduling and routing logic.,Operations
 Offer letter not issued to new hire,Candidate accepted verbal job offer but formal offer letter has not been sent. Joining date is in one week and candidate is following up.,HR
 Diversity and inclusion training enrollment [#54],Manager requesting enrollment of 8 team members in the mandatory diversity and inclusion training program starting next month.,HR
-Computer extremely slow for two days [#100],Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tasks.,IT Support
+Computer extremely slow for two days [#100],Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tickets.,IT Support
 Offer letter not issued to new hire [#32],Candidate accepted verbal job offer but formal offer letter has not been sent. Joining date is in one week and candidate is following up.,HR
 Profile update not saving,"Customer updates their profile information and clicks save, but changes are not retained after logging out and back in.",Customer Support
 Order cancellation confirmation pending,Customer cancelled an order through the portal but has not received any confirmation email or notification of the cancellation.,Customer Support
@@ -4313,7 +4313,7 @@ All USB ports stopped working [#39],Desktop computer USB ports are completely un
 Shipping delay on express order [#59],Customer paid for express two-day shipping but the order has not arrived after five business days. Requesting full shipping refund.,Customer Support
 Office relocation to new floor [#68],"Department needs to move to a different floor next month. Operations must plan furniture arrangement, cable management and IT setup.",Operations
 Antivirus blocking legitimate business tool [#79],Company antivirus software is blocking a third-party tool required for a client deliverable. Requesting the application to be whitelisted.,IT Support
-Computer extremely slow for two days [#40],Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tasks.,IT Support
+Computer extremely slow for two days [#40],Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tickets.,IT Support
 Depreciation schedule update for new assets,Three new fixed assets were purchased this month and need to be added to the asset register with correct depreciation calculations.,Finance
 Production database access for bug fix [#82],Developer urgently needs read-only access to the production database to diagnose a critical bug affecting all users since this morning.,IT Support
 Data transfer from old laptop to new one [#58],"Employee received a new laptop but all files, bookmarks and application settings from the old device need to be migrated before return.",IT Support
@@ -4414,7 +4414,7 @@ Comp off not added after holiday work,Employee worked on a national holiday last
 Entire floor experiencing slow internet [#66],Internet speeds are extremely slow across the entire floor since morning. Video calls are dropping and file transfers are timing out frequently.,IT Support
 New joiner system and account setup [#42],"New employee joining on Monday needs a configured laptop, email account, network access, and all standard software installed before day one.",IT Support
 Webcam not detected by computer,Webcam is not appearing in device manager or detected by video conferencing applications. Driver reinstallation did not resolve the issue.,IT Support
-Computer extremely slow for two days,Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tasks.,IT Support
+Computer extremely slow for two days,Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tickets.,IT Support
 Manager 360 feedback process initiation,HR is requesting all senior managers to initiate the 360-degree feedback process for their direct reports before the quarter ends.,Manager
 Travel policy exception for conference [#95],Employee requesting an exception to the standard domestic travel policy to attend an international industry conference. Full justification attached.,Manager
 TDS deduction query on payslip [#95],Employee's TDS deduction this month appears significantly higher than expected based on their investment declaration. Requesting clarification.,Finance
@@ -4467,7 +4467,7 @@ Relocation reimbursement pending,"Employee relocated from Delhi to Pune as per c
 Overdue equipment maintenance,Three key pieces of production equipment have exceeded their scheduled maintenance interval. Immediate maintenance scheduling is required.,Operations
 Annual vendor evaluation scheduling [#80],Performance reviews are due for the five major vendors. Requesting manager to approve the evaluation criteria and schedule the review meetings.,Manager
 Customer support team restructuring proposal [#39],Proposing a reorganization of the support team structure to reduce average resolution time. New org chart and transition plan are ready.,Manager
-Computer extremely slow for two days [#70],Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tasks.,IT Support
+Computer extremely slow for two days [#70],Employee's workstation has been very slow for two days. Applications take minutes to open and the system hangs frequently during basic tickets.,IT Support
 Expense reimbursement not processed [#91],Employee submitted expense reimbursement with all receipts and approvals three weeks ago. Payment has not been credited to their account yet.,Finance
 Account merge request for duplicate accounts,Customer accidentally created two accounts with the same email address. Requests merging both accounts while preserving all order history.,Customer Support
 Water cooler broken on second floor,The water cooler on the second floor is not dispensing water. Employees have been without drinking water access for the past day.,Operations
@@ -4599,7 +4599,7 @@ Credit note not received from vendor [#84],Vendor promised a credit note for ret
 ID card not issued after two weeks,Employee joined two weeks ago and has not received their company ID card. Restricted areas require ID for access and work is being affected.,HR
 IP phone not registering on network [#90],Desk phone is not connecting to the VOIP server after office was moved to a new floor. Phone shows unregistered status and cannot make calls.,IT Support
 Emergency procurement bypass approval,Critical server component failed and replacement is needed in 24 hours. Standard 30-day procurement process needs to be bypassed urgently.,Manager
-Screen time-out happening too quickly [Follow-up #569],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tasks. Requesting timeout to be extended.,IT Support
+Screen time-out happening too quickly [Follow-up #569],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tickets. Requesting timeout to be extended.,IT Support
 Office plant maintenance contract [Case #2015],The indoor office plants have not been watered or maintained for three weeks since the maintenance contractor's last visit. Plants are visibly dying.,Operations
 Excel formulas not calculating,Formulas in a critical financial spreadsheet are not recalculating automatically when data is changed. Manual recalculate also fails to update the values.,IT Support
 Fixed deposit maturity funds not credited [Case #2099],A company fixed deposit matured last week but the principal and interest amount have not been credited back to the operating account.,Finance
@@ -4626,7 +4626,7 @@ Cashback not received after eligible purchase [Case #2157],Customer made a purch
 Trade receivables reconciliation discrepancy [Follow-up #75],"Month-end trade receivables balance in the ledger does not match the sum of individual customer balances. Variance of INR 34,000 identified.",Finance
 Long service award recognition [Ref #1086],Employee is completing 10 years with the organization this month. Requesting HR to initiate the long service award recognition process as per policy.,HR
 Checkout page freezing [Follow-up #342],Customers are reporting that the checkout page freezes after entering payment details. The order does not go through and the page needs to be refreshed.,Customer Support
-Scheduled task not running automatically [Follow-up #523],A critical automated report generation task that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
+Scheduled ticket not running automatically [Follow-up #523],A critical automated report generation ticket that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
 Phone extension number change needed [Ref #1078],Employee moved to a new desk location and needs their VOIP phone extension number updated to reflect the new seating assignment.,IT Support
 GitHub repository access request [Follow-up #435],New developer needs read and write access to specific code repositories on the company GitHub organization. Team lead approval is attached.,IT Support
 Retirement planning documentation [Ref #1045],Employee planning to retire in 6 months is requesting HR to provide a checklist of all retirement-related documentation and processes to be completed.,HR
@@ -4657,7 +4657,7 @@ Workstation not joining domain [Ref #1055],A newly provisioned desktop computer 
 Data center access request [Follow-up #275],Systems administrator requesting physical access to the data center for scheduled hardware maintenance. Security clearance form is attached.,IT Support
 Return to work plan after medical leave,Employee returning from 3-month medical leave needs a structured return-to-work plan with HR and their manager to ease back into full duties.,HR
 Internal audit expense variance finding,Internal audit has flagged a 28 percent variance between budgeted and actual marketing expenses for Q2. Finance needs to provide written explanation.,Finance
-Screen time-out happening too quickly [Follow-up #215],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tasks. Requesting timeout to be extended.,IT Support
+Screen time-out happening too quickly [Follow-up #215],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tickets. Requesting timeout to be extended.,IT Support
 Unplanned executive travel approval [Ref #1063],Senior executive needs to travel internationally on short notice for an urgent client meeting. Standard 14-day pre-approval process needs to be expedited.,Manager
 New product feature prioritization [Case #2100],Product managers are requesting a management decision on prioritizing between two major features for the next development sprint given limited resources.,Manager
 Incorrect invoice amount from vendor [Follow-up #78],"Vendor sent an invoice with a total that does not match the purchase order raised. The discrepancy is INR 12,500 and needs resolution before payment.",Finance
@@ -4727,7 +4727,7 @@ In-store pickup not ready when arrived [Follow-up #245],Customer selected in-sto
 Wrong name on personalized product [Follow-up #221],Customer ordered a personalized item with a specific name engraved but the delivered product has a different name on it. Requesting replacement.,Customer Support
 Flexi-time arrangement request,Employee with school-going children is requesting a flexible work timing arrangement to shift their hours from 10 AM to 7 PM instead of the standard 9 to 6.,HR
 Application crashing after update [Follow-up #491],An internally developed application started crashing for all users immediately after a scheduled maintenance update was deployed last night.,IT Support
-Scheduled task not running automatically [Follow-up #359],A critical automated report generation task that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
+Scheduled ticket not running automatically [Follow-up #359],A critical automated report generation ticket that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
 Remote work productivity concerns,Manager is raising concerns about measurable productivity decline in the fully remote team and requesting guidance on policy or tooling changes.,Manager
 Live order tracking map not loading [Ref #1087],The live map tracking feature for the customer's current delivery is not loading. Only a static status message is shown without any location updates.,Customer Support
 Account password reset link expired [Follow-up #295],"Customer requested a password reset link but by the time they opened the email, the link had already expired. Requesting a new reset link.",Customer Support
@@ -4745,7 +4745,7 @@ Server room temperature alarm triggered,Automated monitoring system triggered a 
 In-store pickup not ready when arrived [Follow-up #223],Customer selected in-store pickup with a confirmed ready notification but the item was not ready when they arrived at the store location.,Customer Support
 Wishlist items disappeared [Ref #1046],Customer's saved wishlist with over 30 items has disappeared from their account after a recent app update. Items cannot be recovered from the app.,Customer Support
 Social media login not working [Follow-up #428],Customer is trying to log in using their Google account but the OAuth authentication is failing with a generic error message on the login page.,Customer Support
-Scheduled task not running automatically [Follow-up #413],A critical automated report generation task that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
+Scheduled ticket not running automatically [Follow-up #413],A critical automated report generation ticket that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
 Asset tagging for new purchases,Fifteen new laptops and eight office chairs purchased last month have not been tagged and registered in the fixed asset register as required.,Operations
 Office temperature too cold in winter [Follow-up #468],Employees on the north-facing side of the office are consistently complaining about the office temperature being uncomfortably cold during morning hours.,Operations
 Accessibility feature not working on app,Customer with a disability reports that the screen magnification and high contrast mode features on the app have stopped working after the latest update.,Customer Support
@@ -4832,9 +4832,9 @@ Mobile app push notifications not arriving [Follow-up #135],Employees are not re
 Phone extension number change needed [Case #2148],Employee moved to a new desk location and needs their VOIP phone extension number updated to reflect the new seating assignment.,IT Support
 Workspace redesign budget approval [Case #2093],Facilities team has presented three workspace redesign options with different cost profiles. Requesting management decision on preferred approach.,Manager
 Subscription plan downgrade not applied,Customer downgraded their subscription plan two billing cycles ago but continues to be charged at the higher plan rate without any adjustment.,Customer Support
-Scheduled task not running automatically,A critical automated report generation task that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
+Scheduled ticket not running automatically,A critical automated report generation ticket that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
 SSL certificate expiry warning [Follow-up #391],Development team received an automated alert that an SSL certificate for an internal application will expire in 14 days. Renewal needs to be initiated.,IT Support
-Collaboration tool integration request [Ref #1069],Team requesting integration between their project management tool and the company's Slack workspace to receive automated task update notifications.,IT Support
+Collaboration tool integration request [Ref #1069],Team requesting integration between their project management tool and the company's Slack workspace to receive automated ticket update notifications.,IT Support
 Remote work productivity concerns [Follow-up #112],Manager is raising concerns about measurable productivity decline in the fully remote team and requesting guidance on policy or tooling changes.,Manager
 Form 16 not issued within deadline,"The financial year ended two months ago and the employee has not received their Form 16 certificate, which is required for filing their income tax return.",Finance
 Employee opinion survey results review [Ref #1054],Annual employee opinion survey results are ready. Requesting a management review session to discuss findings and agree on action points.,Manager
@@ -4926,7 +4926,7 @@ Sales territory redistribution approval [Ref #1060],Sales director is proposing 
 SIM card activation for work phone [Follow-up #510],New employee needs their company-issued SIM card activated with the corporate mobile plan. SIM has been issued but not yet activated.,IT Support
 Approval for hiring freeze exception [Ref #1093],Department urgently needs to hire a replacement for a critical role vacated due to sudden resignation during the company-wide hiring freeze.,Manager
 Accessibility feature not working on app [Follow-up #231],Customer with a disability reports that the screen magnification and high contrast mode features on the app have stopped working after the latest update.,Customer Support
-Screen time-out happening too quickly [Follow-up #388],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tasks. Requesting timeout to be extended.,IT Support
+Screen time-out happening too quickly [Follow-up #388],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tickets. Requesting timeout to be extended.,IT Support
 Potable water quality concern raised [Ref #1041],An employee raised a concern about the taste and clarity of the water dispenser on the third floor. Water quality testing has been requested.,Operations
 Printing costs too high [Follow-up #82],Monthly printing costs have doubled over the past quarter. Requesting operations to investigate usage patterns and implement cost reduction measures.,Operations
 Harassment complaint filing [Ref #1042],Employee wants to file a formal harassment complaint against a colleague. Requesting HR to initiate the internal complaints committee process as per policy.,HR
@@ -5035,7 +5035,7 @@ Customer loyalty program redesign [Ref #1065],Marketing has proposed a complete 
 Phone extension number change needed [Follow-up #149],Employee moved to a new desk location and needs their VOIP phone extension number updated to reflect the new seating assignment.,IT Support
 Complaint about product description mismatch [Ref #1062],Product description on the website stated the item was made of stainless steel but the received product is made of plastic. Requesting refund.,Customer Support
 Cash flow forecast accuracy review [Ref #1067],CFO has requested a review of the cash flow forecasting model after actual cash flows deviated significantly from projections for three consecutive months.,Finance
-Collaboration tool integration request,Team requesting integration between their project management tool and the company's Slack workspace to receive automated task update notifications.,IT Support
+Collaboration tool integration request,Team requesting integration between their project management tool and the company's Slack workspace to receive automated ticket update notifications.,IT Support
 Annual maintenance contract renewal [Ref #1068],"Annual maintenance contracts for all office equipment including printers, ACs and elevators are due for renewal. Quotes from vendors are needed.",Operations
 Job description update for promotion [Case #2165],Employee has been performing duties beyond their current job description for 8 months. Requesting HR to formally update the JD to reflect current responsibilities.,HR
 Incentive structure redesign proposal [Ref #1086],Sales leadership has proposed a new commission and incentive structure. Requires senior management approval before being communicated to the team.,Manager
@@ -5108,7 +5108,7 @@ Capital expenditure approval pending,"Project team is requesting approval for ca
 LTA claim submission and processing [Follow-up #531],Employee submitting Leave Travel Allowance claim for the current block year with all supporting travel documents attached for processing.,Finance
 Vendor payment terms renegotiation request [Follow-up #479],Procurement is requesting finance approval to renegotiate payment terms with a key vendor from net 30 to net 60 days to improve cash flow.,Finance
 Delivery of fragile equipment not handled properly [Follow-up #168],A delivery of laboratory equipment arrived with two items damaged. Investigation shows the delivery team did not follow fragile handling procedures.,Operations
-Collaboration tool integration request [Follow-up #67],Team requesting integration between their project management tool and the company's Slack workspace to receive automated task update notifications.,IT Support
+Collaboration tool integration request [Follow-up #67],Team requesting integration between their project management tool and the company's Slack workspace to receive automated ticket update notifications.,IT Support
 ESIC contribution not deducted properly [Follow-up #109],Employee's ESIC deduction for the month appears incorrect. The amount deducted does not match the statutory rate applied to their gross salary.,Finance
 Phone support hold time too long,Customer waited on hold for 45 minutes without reaching an agent. This is the third time this week they have experienced excessive wait times on the support line.,Customer Support
 Vendor invoice dispute for cleaning services [Follow-up #6],Operations team is disputing a cleaning vendor's invoice that includes charges for services that were not requested or delivered during the billing period.,Operations
@@ -5240,7 +5240,7 @@ Digital download link not working [Ref #1041],Customer purchased a digital produ
 Campus recruitment drive planning [Ref #1062],HR is initiating the planning for the annual campus recruitment drive at 5 engineering colleges scheduled for next semester.,HR
 Wishlist items disappeared [Ref #1081],Customer's saved wishlist with over 30 items has disappeared from their account after a recent app update. Items cannot be recovered from the app.,Customer Support
 Incentive structure redesign proposal [Case #2079],Sales leadership has proposed a new commission and incentive structure. Requires senior management approval before being communicated to the team.,Manager
-Collaboration tool integration request [Follow-up #415],Team requesting integration between their project management tool and the company's Slack workspace to receive automated task update notifications.,IT Support
+Collaboration tool integration request [Follow-up #415],Team requesting integration between their project management tool and the company's Slack workspace to receive automated ticket update notifications.,IT Support
 Supply chain resilience review [Follow-up #43],Recent global disruptions have exposed vulnerabilities in the supply chain. Requesting management to approve a formal supply chain risk review.,Manager
 Regulatory compliance deadline approaching [Follow-up #92],A mandatory regulatory compliance submission is due in 21 days. Several departments have not yet provided the required data. Escalation needed.,Manager
 Flexi-time arrangement request [Ref #1054],Employee with school-going children is requesting a flexible work timing arrangement to shift their hours from 10 AM to 7 PM instead of the standard 9 to 6.,HR
@@ -5268,7 +5268,7 @@ Complaint about packaging waste [Follow-up #576],Customer is raising an environm
 Customer survey link broken,Customer received a post-purchase satisfaction survey email but the link to the survey is broken and returns an error when clicked.,Customer Support
 Incorrect estimated delivery date shown [Follow-up #320],The estimated delivery date shown at checkout was 3 days but the order has now been pending for 8 days with no update on when it will arrive.,Customer Support
 Trade receivables reconciliation discrepancy [Follow-up #38],"Month-end trade receivables balance in the ledger does not match the sum of individual customer balances. Variance of INR 34,000 identified.",Finance
-Scheduled task not running automatically [Ref #1058],A critical automated report generation task that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
+Scheduled ticket not running automatically [Ref #1058],A critical automated report generation ticket that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
 SSL certificate expiry warning,Development team received an automated alert that an SSL certificate for an internal application will expire in 14 days. Renewal needs to be initiated.,IT Support
 License management audit request [Ref #1091],IT manager requesting an audit of all currently installed software licenses across the organization to identify compliance gaps before renewal season.,IT Support
 Ergonomic assessment request [Ref #1050],Employee with recurring back pain is requesting a formal ergonomic assessment of their workstation by a certified ergonomics consultant.,Operations
@@ -5281,7 +5281,7 @@ Internal audit expense variance finding [Ref #1088],Internal audit has flagged a
 Professional tax not deducted correctly,Professional tax deduction on the payslip does not match the applicable slab rate for the employee's salary band in the current state.,Finance
 LTA claim submission and processing [Follow-up #394],Employee submitting Leave Travel Allowance claim for the current block year with all supporting travel documents attached for processing.,Finance
 Pantry restocking schedule not followed [Follow-up #324],"The pantry is frequently running out of tea, coffee and sugar before the scheduled restocking day. Supply schedule needs to be revised.",Operations
-Scheduled task not running automatically [Ref #1093],A critical automated report generation task that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
+Scheduled ticket not running automatically [Ref #1093],A critical automated report generation ticket that is scheduled to run every Monday morning has not been executing for the past 3 weeks.,IT Support
 GitHub repository access request [Ref #1051],New developer needs read and write access to specific code repositories on the company GitHub organization. Team lead approval is attached.,IT Support
 Social media login not working [Ref #1061],Customer is trying to log in using their Google account but the OAuth authentication is failing with a generic error message on the login page.,Customer Support
 Outdoor area maintenance needed [Follow-up #358],The outdoor seating area and garden space have not been maintained for several weeks. Overgrown plants and broken furniture need attention.,Operations
@@ -5357,7 +5357,7 @@ Fixed deposit maturity funds not credited [Follow-up #100],A company fixed depos
 Brand guideline violation by vendor [Case #2043],A marketing vendor used the company logo in a manner that violates brand guidelines in published material. Requesting management guidance on response.,Manager
 Customer satisfaction score declining [Ref #1041],CSAT scores have dropped 12 points over the last quarter. Requesting management review of the trend and approval for corrective action initiatives.,Manager
 Harassment complaint filing [Follow-up #34],Employee wants to file a formal harassment complaint against a colleague. Requesting HR to initiate the internal complaints committee process as per policy.,HR
-Collaboration tool integration request [Case #2066],Team requesting integration between their project management tool and the company's Slack workspace to receive automated task update notifications.,IT Support
+Collaboration tool integration request [Case #2066],Team requesting integration between their project management tool and the company's Slack workspace to receive automated ticket update notifications.,IT Support
 Firewall blocking business application [Ref #1088],A new third-party business application required for client work is being blocked by the corporate firewall. IT needs to create an exception rule.,IT Support
 Reconciliation of advance payments needed [Case #2185],Multiple employee travel advances were issued last quarter and the reconciliation against actual expenses has not been completed. Audit is approaching.,Finance
 Incoming courier not being logged [Follow-up #182],The mailroom staff are not logging incoming courier packages into the tracking system. Several packages have been misplaced as a result.,Operations
@@ -5421,7 +5421,7 @@ Relocation of server room equipment [Follow-up #451],IT team needs operations su
 Cashback not received after eligible purchase [Ref #1072],Customer made a purchase that qualified for cashback as per the ongoing promotion but the cashback amount has not been credited after 30 days.,Customer Support
 Wrong cost center assigned to expense [Ref #1077],A departmental expense was charged to the wrong cost center in the accounting system. Requesting reclassification to the correct cost center.,Finance
 Company website down [Follow-up #483],Multiple employees and external users are reporting that the company website is completely inaccessible. Homepage returns a 503 service unavailable error.,IT Support
-Screen time-out happening too quickly,Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tasks. Requesting timeout to be extended.,IT Support
+Screen time-out happening too quickly,Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tickets. Requesting timeout to be extended.,IT Support
 Voice assistant integration not working [Case #2013],Customer is unable to connect their account with their home voice assistant device. The skill authorization process keeps failing with a timeout error.,Customer Support
 LTA claim submission and processing [Ref #1051],Employee submitting Leave Travel Allowance claim for the current block year with all supporting travel documents attached for processing.,Finance
 Hazardous waste disposal needed [Follow-up #439],"Old batteries, expired chemicals and electronic waste have accumulated in the storage room. Certified hazardous waste disposal needs to be arranged.",Operations
@@ -5444,7 +5444,7 @@ Mobile number OTP not received,Customer is trying to verify their mobile number 
 Size exchange request for clothing item,Customer received the correct item but the size does not fit. Requesting an exchange for a larger size. Item is unworn and tags are intact.,Customer Support
 Cash flow forecast accuracy review [Follow-up #422],CFO has requested a review of the cash flow forecasting model after actual cash flows deviated significantly from projections for three consecutive months.,Finance
 Roof terrace access request for event [Ref #1054],HR team requesting access to the building rooftop terrace for a company celebration event scheduled for next Friday evening for 50 employees.,Operations
-Screen time-out happening too quickly [Ref #1098],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tasks. Requesting timeout to be extended.,IT Support
+Screen time-out happening too quickly [Ref #1098],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tickets. Requesting timeout to be extended.,IT Support
 Chemical storage compliance issue,The cleaning chemicals storage area in the basement does not comply with the latest fire safety regulations. Immediate corrective action required.,Operations
 Vendor payment terms renegotiation request [Ref #1052],Procurement is requesting finance approval to renegotiate payment terms with a key vendor from net 30 to net 60 days to improve cash flow.,Finance
 Digital signature setup required [Follow-up #191],Employee needs a digital signature certificate configured on their workstation for signing official documents and contracts electronically.,IT Support
@@ -5807,7 +5807,7 @@ Office signage update required [Ref #1077],"After the recent rebranding, all int
 Return to work plan after medical leave [Follow-up #412],Employee returning from 3-month medical leave needs a structured return-to-work plan with HR and their manager to ease back into full duties.,HR
 No-objection certificate request [Follow-up #185],Employee needs an NOC from HR to pursue a part-time evening MBA program at a local institution while continuing their full-time employment.,HR
 Absenteeism pattern escalation [Ref #1078],Manager is escalating a pattern of unexplained absences by a team member. The employee has been absent for 9 days in the past month without proper leave.,HR
-Screen time-out happening too quickly [Ref #1063],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tasks. Requesting timeout to be extended.,IT Support
+Screen time-out happening too quickly [Ref #1063],Employee's screen locks after 1 minute of inactivity which is disrupting work during reading and review tickets. Requesting timeout to be extended.,IT Support
 Application crashing after update [Case #2061],An internally developed application started crashing for all users immediately after a scheduled maintenance update was deployed last night.,IT Support
 Temporary staff workstation setup [Ref #1092],"Three temporary staff members are joining next Monday for a 3-month project. Workstations, access cards, and parking spaces need to be arranged.",Operations
 New financial year budget template needed [Case #2104],Department heads are requesting the standardized budget template for next financial year planning. Previous year's template is outdated.,Finance

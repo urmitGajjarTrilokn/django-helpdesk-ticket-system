@@ -3,12 +3,12 @@ from django.utils.html import format_html
 
 from .models import (
     Department, DepartmentMember,
-    UserProfile, TaskDetail, MyCart, ActivityLog,
+    UserProfile, TicketDetail, MyCart, ActivityLog,
     UserComment, Category,
     Notification,
     KnowledgeBase, AIMLLog,
-    TaskHistory,
-    CannedResponse, TaskRating,
+    TicketHistory,
+    CannedResponse, TicketRating,
 )
 
 @admin.register(Department)
@@ -117,34 +117,34 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_filter   = ['department', 'City', 'State']
     search_fields = ['user__username', 'user__email', 'Address', 'phone']
 
-@admin.register(TaskDetail)
-class TaskDetailsAdmin(admin.ModelAdmin):
+@admin.register(TicketDetail)
+class TicketDetailsAdmin(admin.ModelAdmin):
     list_display  = [
-        'id', 'TASK_TITLE', 'category', 'priority',
-        'department_badge', 'TASK_CREATED', 'TASK_CLOSED',
-        'TASK_CREATED_ON', 'TASK_DUE_DATE',
+        'id', 'TICKET_TITLE', 'category', 'priority',
+        'department_badge', 'TICKET_CREATED', 'TICKET_CLOSED',
+        'TICKET_CREATED_ON', 'TICKET_DUE_DATE',
         'status_badge',
     ]
     list_filter   = [
-        'TASK_STATUS', 'priority', 'category', 'assigned_department',
-        'TASK_CREATED_ON', 'TASK_DUE_DATE',
+        'TICKET_STATUS', 'priority', 'category', 'assigned_department',
+        'TICKET_CREATED_ON', 'TICKET_DUE_DATE',
     ]
-    search_fields = ['TASK_TITLE', 'TASK_DESCRIPTION', 'TASK_HOLDER', 'TASK_CREATED__username']
-    date_hierarchy = 'TASK_CREATED_ON'
+    search_fields = ['TICKET_TITLE', 'TICKET_DESCRIPTION', 'TICKET_HOLDER', 'TICKET_CREATED__username']
+    date_hierarchy = 'TICKET_CREATED_ON'
     list_per_page  = 25
     readonly_fields = [
-        'TASK_CREATED_ON', 'TASK_CLOSED_ON', 'updated_at', 'assigned_at', 'views_count',
+        'TICKET_CREATED_ON', 'TICKET_CLOSED_ON', 'updated_at', 'assigned_at', 'views_count',
     ]
 
     fieldsets = (
-        ('Basic', {'fields': ('TASK_TITLE', 'TASK_DESCRIPTION', 'category')}),
+        ('Basic', {'fields': ('TICKET_TITLE', 'TICKET_DESCRIPTION', 'category')}),
         ('Assignment', {'fields': ('assigned_department', 'assigned_to', 'assignment_type', 'assigned_by', 'assigned_at')}),
         ('Legacy Assignment', {
-            'fields': ('TASK_CREATED', 'TASK_HOLDER', 'TASK_CLOSED', 'department'),
+            'fields': ('TICKET_CREATED', 'TICKET_HOLDER', 'TICKET_CLOSED', 'department'),
             'classes': ('collapse',),
         }),
-        ('Status & Priority', {'fields': ('TASK_STATUS', 'priority')}),
-        ('Dates', {'fields': ('TASK_DUE_DATE', 'TASK_CREATED_ON', 'TASK_CLOSED_ON', 'updated_at')}),
+        ('Status & Priority', {'fields': ('TICKET_STATUS', 'priority')}),
+        ('Dates', {'fields': ('TICKET_DUE_DATE', 'TICKET_CREATED_ON', 'TICKET_CLOSED_ON', 'updated_at')}),
         ('AI/ML', {
             'classes': ('collapse',),
             'fields': ('ai_suggested_category', 'ai_suggested_priority',
@@ -170,24 +170,24 @@ class TaskDetailsAdmin(admin.ModelAdmin):
         }
         return format_html(
             '<span style="background:{};color:white;padding:4px 12px;border-radius:6px;font-weight:600;font-size:.75rem;">{}</span>',
-            colors.get(obj.TASK_STATUS, '#94a3b8'), obj.TASK_STATUS
+            colors.get(obj.TICKET_STATUS, '#94a3b8'), obj.TICKET_STATUS
         )
     status_badge.short_description = 'Status'
 
 @admin.register(MyCart)
 class MyCartAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'user', 'task', 'task_count', 'accepted_at']
+    list_display  = ['id', 'user', 'ticket', 'ticket_count', 'accepted_at']
     list_filter   = ['accepted_at', 'user']
-    search_fields = ['user__username', 'task__TASK_TITLE']
+    search_fields = ['user__username', 'ticket__TICKET_TITLE']
 
 @admin.register(ActivityLog)
 class ActivityLogAdmin(admin.ModelAdmin):
-    list_display   = ['id', 'user', 'action_badge', 'title', 'task_link', 'timestamp']
+    list_display   = ['id', 'user', 'action_badge', 'title', 'ticket_link', 'timestamp']
     list_filter    = ['action', 'timestamp']
-    search_fields  = ['user__username', 'title', 'description', 'task__TASK_TITLE']
+    search_fields  = ['user__username', 'title', 'description', 'ticket__TICKET_TITLE']
     date_hierarchy = 'timestamp'
     ordering       = ['-timestamp']
-    readonly_fields = ['user', 'task', 'action', 'title', 'description',
+    readonly_fields = ['user', 'ticket', 'action', 'title', 'description',
                        'old_value', 'new_value', 'timestamp']
 
     def has_add_permission(self, request):
@@ -204,20 +204,20 @@ class ActivityLogAdmin(admin.ModelAdmin):
         )
     action_badge.short_description = 'Action'
 
-    def task_link(self, obj):
-        if obj.task:
+    def ticket_link(self, obj):
+        if obj.ticket:
             return format_html(
-                '<a href="/admin/myapp/taskdetail/{}/change/">#{} {}</a>',
-                obj.task.id, obj.task.id, obj.task.TASK_TITLE[:40]
+                '<a href="/admin/myapp/ticketdetail/{}/change/">#{} {}</a>',
+                obj.ticket.id, obj.ticket.id, obj.ticket.TICKET_TITLE[:40]
             )
         return '—'
-    task_link.short_description = 'Ticket'
+    ticket_link.short_description = 'Ticket'
 
 @admin.register(UserComment)
 class UserCommentAdmin(admin.ModelAdmin):
-    list_display  = ['id', 'user', 'task', 'created_at']
+    list_display  = ['id', 'user', 'ticket', 'created_at']
     list_filter   = ['created_at']
-    search_fields = ['user__username', 'task__TASK_TITLE', 'Reopen_comment', 'Closing_comment']
+    search_fields = ['user__username', 'ticket__TICKET_TITLE', 'Reopen_comment', 'Closing_comment']
     readonly_fields = ['created_at']
 
 @admin.register(Category)
@@ -258,10 +258,10 @@ class KnowledgeBaseAdmin(admin.ModelAdmin):
 
 @admin.register(AIMLLog)
 class AIMLLogAdmin(admin.ModelAdmin):
-    list_display    = ['task', 'log_type', 'confidence', 'was_correct', 'created_at']
+    list_display    = ['ticket', 'log_type', 'confidence', 'was_correct', 'created_at']
     list_filter     = ['log_type', 'was_correct', 'created_at']
-    search_fields   = ['task__TASK_TITLE', 'input_data', 'output_data']
-    readonly_fields = ['task', 'log_type', 'input_data', 'output_data', 'confidence', 'created_at']
+    search_fields   = ['ticket__TICKET_TITLE', 'input_data', 'output_data']
+    readonly_fields = ['ticket', 'log_type', 'input_data', 'output_data', 'confidence', 'created_at']
     date_hierarchy  = 'created_at'
 
     def has_add_permission(self, request):
@@ -272,16 +272,16 @@ class AIMLLogAdmin(admin.ModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display    = ['id', 'user', 'notification_type', 'title', 'task',
+    list_display    = ['id', 'user', 'notification_type', 'title', 'ticket',
                        'is_read', 'email_sent', 'created_at']
     list_filter     = ['notification_type', 'is_read', 'email_sent', 'created_at']
-    search_fields   = ['user__username', 'user__email', 'title', 'message', 'task__TASK_TITLE']
+    search_fields   = ['user__username', 'user__email', 'title', 'message', 'ticket__TICKET_TITLE']
     readonly_fields = ['created_at', 'read_at', 'email_sent_at']
     list_per_page   = 50
     date_hierarchy  = 'created_at'
 
     fieldsets = (
-        ('Basic', {'fields': ('user', 'task', 'notification_type')}),
+        ('Basic', {'fields': ('user', 'ticket', 'notification_type')}),
         ('Content', {'fields': ('title', 'message', 'extra_data')}),
         ('Status', {'fields': ('is_read', 'read_at', 'email_sent', 'email_sent_at')}),
         ('Timestamps', {'fields': ('created_at',), 'classes': ('collapse',)}),
@@ -301,26 +301,26 @@ class NotificationAdmin(admin.ModelAdmin):
     mark_as_unread.short_description = 'Mark selected as unread'
 
 
-@admin.register(TaskHistory)
-class TaskHistoryAdmin(admin.ModelAdmin):
-    list_display    = ['task_link', 'action_type', 'changed_by', 'field_name', 'changed_at']
+@admin.register(TicketHistory)
+class TicketHistoryAdmin(admin.ModelAdmin):
+    list_display    = ['ticket_link', 'action_type', 'changed_by', 'field_name', 'changed_at']
     list_filter     = ['action_type', 'changed_at']
-    search_fields   = ['task__TASK_TITLE', 'description', 'field_name']
+    search_fields   = ['ticket__TICKET_TITLE', 'description', 'field_name']
     date_hierarchy  = 'changed_at'
     ordering        = ['-changed_at']
-    readonly_fields = ['task', 'changed_by', 'action_type', 'field_name',
+    readonly_fields = ['ticket', 'changed_by', 'action_type', 'field_name',
                        'old_value', 'new_value', 'description', 'changed_at']
 
     fieldsets = (
-        ('Change', {'fields': ('task', 'changed_by', 'action_type', 'changed_at')}),
+        ('Change', {'fields': ('ticket', 'changed_by', 'action_type', 'changed_at')}),
         ('Fields', {'fields': ('field_name', 'old_value', 'new_value')}),
         ('Description', {'fields': ('description',)}),
     )
 
-    def task_link(self, obj):
-        return format_html('<a href="/admin/myapp/taskdetail/{}/change/">Task #{}</a>',
-                           obj.task.id, obj.task.id)
-    task_link.short_description = 'Task'
+    def ticket_link(self, obj):
+        return format_html('<a href="/admin/myapp/ticketdetail/{}/change/">Ticket #{}</a>',
+                           obj.ticket.id, obj.ticket.id)
+    ticket_link.short_description = 'Ticket'
 
     def has_add_permission(self, request):
         return False
@@ -349,26 +349,26 @@ class CannedResponseAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-@admin.register(TaskRating)
-class TaskRatingAdmin(admin.ModelAdmin):
-    list_display    = ['task_link', 'rating_stars', 'rated_by', 'resolution_quality',
+@admin.register(TicketRating)
+class TicketRatingAdmin(admin.ModelAdmin):
+    list_display    = ['ticket_link', 'rating_stars', 'rated_by', 'resolution_quality',
                        'response_time_rating', 'agent_helpfulness', 'rated_at']
     list_filter     = ['rating', 'resolution_quality', 'response_time_rating', 'agent_helpfulness']
-    search_fields   = ['task__TASK_TITLE', 'feedback', 'rated_by__username']
+    search_fields   = ['ticket__TICKET_TITLE', 'feedback', 'rated_by__username']
     date_hierarchy  = 'rated_at'
     ordering        = ['-rated_at']
-    readonly_fields = ['task', 'rated_by', 'rated_at']
+    readonly_fields = ['ticket', 'rated_by', 'rated_at']
 
     fieldsets = (
-        ('Rating', {'fields': ('task', 'rated_by', 'rating', 'rated_at')}),
+        ('Rating', {'fields': ('ticket', 'rated_by', 'rating', 'rated_at')}),
         ('Detailed', {'fields': ('resolution_quality', 'response_time_rating', 'agent_helpfulness')}),
         ('Feedback', {'fields': ('feedback',)}),
     )
 
-    def task_link(self, obj):
-        return format_html('<a href="/admin/myapp/taskdetail/{}/change/">Task #{}</a>',
-                           obj.task.id, obj.task.id)
-    task_link.short_description = 'Task'
+    def ticket_link(self, obj):
+        return format_html('<a href="/admin/myapp/ticketdetail/{}/change/">Ticket #{}</a>',
+                           obj.ticket.id, obj.ticket.id)
+    ticket_link.short_description = 'Ticket'
 
     def rating_stars(self, obj):
         stars = '⭐' * obj.rating

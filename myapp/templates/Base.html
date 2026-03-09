@@ -529,20 +529,20 @@
       {% for notif in recent_notifications %}
       <div class="nd-item {% if not notif.is_read %}unread{% endif %}"
            data-read="{{ notif.is_read|yesno:'true,false' }}"
-           onclick="window.location='{% if notif.task %}{% url 'taskinfo' notif.task.id %}?mark_read={{ notif.id }}{% else %}{% url 'notifications_list' %}{% endif %}'">
+           onclick="window.location='{% if notif.ticket %}{% url 'ticketinfo' notif.ticket.id %}?mark_read={{ notif.id }}{% else %}{% url 'notifications_list' %}{% endif %}'">
         <div class="nd-icon
-          {% if notif.notification_type == 'TASK_CREATED' %}si-indigo
-          {% elif notif.notification_type == 'TASK_ASSIGNED' %}si-blue
-          {% elif notif.notification_type == 'TASK_CLOSED' or notif.notification_type == 'TASK_RESOLVED' %}si-green
-          {% elif notif.notification_type == 'TASK_OVERDUE' %}si-red
+          {% if notif.notification_type == 'TICKET_CREATED' %}si-indigo
+          {% elif notif.notification_type == 'TICKET_ASSIGNED' %}si-blue
+          {% elif notif.notification_type == 'TICKET_CLOSED' or notif.notification_type == 'TICKET_RESOLVED' %}si-green
+          {% elif notif.notification_type == 'TICKET_OVERDUE' %}si-red
           {% else %}si-slate{% endif %}">
           <i class="fas
-            {% if notif.notification_type == 'TASK_CREATED' %}fa-plus-circle
-            {% elif notif.notification_type == 'TASK_ASSIGNED' %}fa-user-check
-            {% elif notif.notification_type == 'TASK_CLOSED' %}fa-times-circle
-            {% elif notif.notification_type == 'TASK_RESOLVED' %}fa-check-circle
-            {% elif notif.notification_type == 'TASK_COMMENTED' %}fa-comment
-            {% elif notif.notification_type == 'TASK_OVERDUE' %}fa-exclamation-circle
+            {% if notif.notification_type == 'TICKET_CREATED' %}fa-plus-circle
+            {% elif notif.notification_type == 'TICKET_ASSIGNED' %}fa-user-check
+            {% elif notif.notification_type == 'TICKET_CLOSED' %}fa-times-circle
+            {% elif notif.notification_type == 'TICKET_RESOLVED' %}fa-check-circle
+            {% elif notif.notification_type == 'TICKET_COMMENTED' %}fa-comment
+            {% elif notif.notification_type == 'TICKET_OVERDUE' %}fa-exclamation-circle
             {% else %}fa-bell{% endif %}">
           </i>
         </div>
@@ -597,8 +597,8 @@
       </a>
 
       {% if is_admin %}
-      <a href="{% url 'taskdetail' %}"
-         class="nav-item {% if request.resolver_match.url_name == 'taskdetail' %}active{% endif %}">
+      <a href="{% url 'ticketdetail' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'ticketdetail' %}active{% endif %}">
         <i class="nav-icon fas fa-plus-circle"></i> New Ticket
       </a>
       <a href="{% url 'analytics_dashboard' %}"
@@ -614,8 +614,8 @@
         <i class="nav-icon fas fa-users-cog"></i> Department Control
       </a>
       {% else %}
-      <a href="{% url 'taskdetail' %}"
-         class="nav-item {% if request.resolver_match.url_name == 'taskdetail' %}active{% endif %}">
+      <a href="{% url 'ticketdetail' %}"
+         class="nav-item {% if request.resolver_match.url_name == 'ticketdetail' %}active{% endif %}">
         <i class="nav-icon fas fa-plus-circle"></i> New Ticket
       </a>
       <a href="{% url 'mycart' %}"
@@ -697,7 +697,7 @@
   {% if request.user.is_authenticated %}
   <div class="topbar-actions">
 
-    <a href="{% url 'taskdetail' %}" class="topbar-btn" title="New Ticket">
+    <a href="{% url 'ticketdetail' %}" class="topbar-btn" title="New Ticket">
       <i class="fas fa-plus"></i>
     </a>
 

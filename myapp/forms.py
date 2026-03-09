@@ -6,10 +6,10 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 from .models import (
-    UserProfile, TaskDetail, UserComment,
+    UserProfile, TicketDetail, UserComment,
     Category, KnowledgeBase,
     Department, DepartmentMember, CannedResponse,
-    TaskRating,
+    TicketRating,
 )
 
 class LoginForm(forms.Form):
@@ -190,25 +190,25 @@ class DepartmentMemberForm(forms.Form):
     )
 
 
-class TaskDetailForm(forms.ModelForm):
-    TASK_TITLE = forms.CharField(
-        label="Task Title",
+class TicketDetailForm(forms.ModelForm):
+    TICKET_TITLE = forms.CharField(
+        label="Ticket Title",
         widget=forms.TextInput(attrs={
             "class": "form-control",
-            "placeholder": "Brief summary of the task",
+            "placeholder": "Brief summary of the ticket",
         }),
         help_text="Keep it concise and descriptive",
     )
-    TASK_DUE_DATE = forms.DateField(
-        label='Task Due Date',
+    TICKET_DUE_DATE = forms.DateField(
+        label='Ticket Due Date',
         widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
         help_text="When should this be completed?",
     )
-    TASK_DESCRIPTION = forms.CharField(
-        label="Task Description",
+    TICKET_DESCRIPTION = forms.CharField(
+        label="Ticket Description",
         widget=forms.Textarea(attrs={
             "class": "form-control", "rows": "5",
-            "placeholder": "Describe the task in detail...",
+            "placeholder": "Describe the ticket in detail...",
         }),
         help_text="Provide as much detail as possible",
     )
@@ -220,7 +220,7 @@ class TaskDetailForm(forms.ModelForm):
         label="Category",
     )
     priority = forms.ChoiceField(
-        choices=[('', 'Select Priority')] + TaskDetail.PRIORITY_CHOICES,
+        choices=[('', 'Select Priority')] + TicketDetail.PRIORITY_CHOICES,
         required=False,
         widget=forms.Select(attrs={"class": "form-select"}),
         label="Priority",
@@ -235,44 +235,44 @@ class TaskDetailForm(forms.ModelForm):
     )
 
     class Meta:
-        model = TaskDetail
+        model = TicketDetail
         fields = [
-            'TASK_TITLE', 'TASK_DESCRIPTION', 'category', 'priority',
-            'assigned_department', 'TASK_DUE_DATE',
+            'TICKET_TITLE', 'TICKET_DESCRIPTION', 'category', 'priority',
+            'assigned_department', 'TICKET_DUE_DATE',
         ]
 
-    def clean_TASK_TITLE(self):
-        title = self.cleaned_data.get('TASK_TITLE')
+    def clean_TICKET_TITLE(self):
+        title = self.cleaned_data.get('TICKET_TITLE')
         if len(title) < 10:
             raise ValidationError("Title must be at least 10 characters.")
         return title
 
-    def clean_TASK_DESCRIPTION(self):
-        desc = self.cleaned_data.get('TASK_DESCRIPTION')
+    def clean_TICKET_DESCRIPTION(self):
+        desc = self.cleaned_data.get('TICKET_DESCRIPTION')
         if len(desc) < 20:
             raise ValidationError("Please provide more detail (at least 20 characters).")
         return desc
 
 
-class TaskCreateForm(forms.ModelForm):
-    TASK_TITLE = forms.CharField(
-        label="Task Title",
+class TicketCreateForm(forms.ModelForm):
+    TICKET_TITLE = forms.CharField(
+        label="Ticket Title",
         widget=forms.TextInput(attrs={
             "class": "form-control",
-            "placeholder": "Brief summary of the task",
+            "placeholder": "Brief summary of the ticket",
         }),
         help_text="Keep it concise and descriptive",
     )
-    TASK_DUE_DATE = forms.DateField(
-        label='Task Due Date',
+    TICKET_DUE_DATE = forms.DateField(
+        label='Ticket Due Date',
         widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
         help_text="When should this be completed?",
     )
-    TASK_DESCRIPTION = forms.CharField(
-        label="Task Description",
+    TICKET_DESCRIPTION = forms.CharField(
+        label="Ticket Description",
         widget=forms.Textarea(attrs={
             "class": "form-control", "rows": "5",
-            "placeholder": "Describe the task in detail...",
+            "placeholder": "Describe the ticket in detail...",
         }),
         help_text="Provide as much detail as possible",
     )
@@ -285,44 +285,44 @@ class TaskCreateForm(forms.ModelForm):
     )
 
     class Meta:
-        model = TaskDetail
+        model = TicketDetail
         fields = [
-            'TASK_TITLE', 'TASK_DESCRIPTION', 'category', 'TASK_DUE_DATE',
+            'TICKET_TITLE', 'TICKET_DESCRIPTION', 'category', 'TICKET_DUE_DATE',
         ]
 
-    def clean_TASK_TITLE(self):
-        title = self.cleaned_data.get('TASK_TITLE')
+    def clean_TICKET_TITLE(self):
+        title = self.cleaned_data.get('TICKET_TITLE')
         if len(title) < 10:
             raise ValidationError("Title must be at least 10 characters.")
         return title
 
-    def clean_TASK_DESCRIPTION(self):
-        desc = self.cleaned_data.get('TASK_DESCRIPTION')
+    def clean_TICKET_DESCRIPTION(self):
+        desc = self.cleaned_data.get('TICKET_DESCRIPTION')
         if len(desc) < 20:
             raise ValidationError("Please provide more detail (at least 20 characters).")
         return desc
 
 
-class TaskUpdateForm(forms.ModelForm):
-    TASK_TITLE = forms.CharField(
-        label="Task Title",
+class TicketUpdateForm(forms.ModelForm):
+    TICKET_TITLE = forms.CharField(
+        label="Ticket Title",
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
-    TASK_DESCRIPTION = forms.CharField(
-        label="Task Description",
+    TICKET_DESCRIPTION = forms.CharField(
+        label="Ticket Description",
         widget=forms.Textarea(attrs={"class": "form-control", "rows": "5"}),
     )
-    TASK_DUE_DATE = forms.DateField(
+    TICKET_DUE_DATE = forms.DateField(
         label='Due Date',
         widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
     )
-    TASK_STATUS = forms.ChoiceField(
-        choices=TaskDetail.choice,
+    TICKET_STATUS = forms.ChoiceField(
+        choices=TicketDetail.choice,
         widget=forms.Select(attrs={"class": "form-select"}),
         label="Status",
     )
     priority = forms.ChoiceField(
-        choices=TaskDetail.PRIORITY_CHOICES,
+        choices=TicketDetail.PRIORITY_CHOICES,
         required=False,
         widget=forms.Select(attrs={"class": "form-select"}),
         label="Priority",
@@ -349,10 +349,10 @@ class TaskUpdateForm(forms.ModelForm):
     )
 
     class Meta:
-        model = TaskDetail
+        model = TicketDetail
         fields = (
-            'TASK_TITLE', 'TASK_DESCRIPTION', 'TASK_DUE_DATE',
-            'TASK_STATUS', 'priority', 'category',
+            'TICKET_TITLE', 'TICKET_DESCRIPTION', 'TICKET_DUE_DATE',
+            'TICKET_STATUS', 'priority', 'category',
             'assigned_department', 'assigned_to',
         )
 
@@ -374,7 +374,7 @@ class TaskUpdateForm(forms.ModelForm):
 
 class AdminTicketRoutingForm(forms.ModelForm):
     priority = forms.ChoiceField(
-        choices=TaskDetail.PRIORITY_CHOICES,
+        choices=TicketDetail.PRIORITY_CHOICES,
         required=False,
         widget=forms.Select(attrs={"class": "form-select"}),
         label="Priority",
@@ -388,23 +388,23 @@ class AdminTicketRoutingForm(forms.ModelForm):
     )
 
     class Meta:
-        model = TaskDetail
+        model = TicketDetail
         fields = ('priority', 'assigned_department')
 
 
-class TaskFilterForm(forms.Form):
+class TicketFilterForm(forms.Form):
     search = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Search tickets...'}),
     )
     status = forms.ChoiceField(
         required=False,
-        choices=[('', 'All Statuses')] + TaskDetail.choice,
+        choices=[('', 'All Statuses')] + TicketDetail.choice,
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
     priority = forms.ChoiceField(
         required=False,
-        choices=[('', 'All Priorities')] + TaskDetail.PRIORITY_CHOICES,
+        choices=[('', 'All Priorities')] + TicketDetail.PRIORITY_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
     category = forms.ModelChoiceField(
@@ -420,7 +420,7 @@ class TaskFilterForm(forms.Form):
         empty_label="All Departments",
         label="Department",
     )
-    my_tasks = forms.BooleanField(
+    my_tickets = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         label="Mine Only",
@@ -493,7 +493,7 @@ class CannedResponseForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'content': forms.Textarea(attrs={
                 'class': 'form-control', 'rows': 6,
-                'placeholder': 'Use {{task_id}}, {{user_name}}, {{task_title}}',
+                'placeholder': 'Use {{ticket_id}}, {{user_name}}, {{ticket_title}}',
             }),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'department': forms.Select(attrs={'class': 'form-select'}),
@@ -501,7 +501,7 @@ class CannedResponseForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         help_texts = {
-            'content': 'Variables: {{task_id}}, {{user_name}}, {{task_title}}, {{assigned_to}}',
+            'content': 'Variables: {{ticket_id}}, {{user_name}}, {{ticket_title}}, {{assigned_to}}',
             'is_public': 'If unchecked, only you can use this response',
         }
 
@@ -515,9 +515,9 @@ class CannedResponseSelectForm(forms.Form):
     )
 
 
-class TaskRatingForm(forms.ModelForm):
+class TicketRatingForm(forms.ModelForm):
     class Meta:
-        model = TaskRating
+        model = TicketRating
         fields = ['rating', 'resolution_quality', 'response_time_rating',
                   'agent_helpfulness', 'feedback']
         widgets = {

@@ -785,26 +785,26 @@
                 <div class="ticket-head">
                   <div>
                     <div class="ticket-id">#{{ ticket.id }}</div>
-                    <p class="ticket-title">{{ ticket.TASK_TITLE }}</p>
+                    <p class="ticket-title">{{ ticket.TICKET_TITLE }}</p>
                   </div>
-                  {% if ticket.TASK_STATUS == 'Open' %}
-                    <span class="status-badge sb-open">{{ ticket.TASK_STATUS }}</span>
-                  {% elif ticket.TASK_STATUS == 'In Progress' %}
-                    <span class="status-badge sb-progress">{{ ticket.TASK_STATUS }}</span>
-                  {% elif ticket.TASK_STATUS == 'Resolved' %}
-                    <span class="status-badge sb-resolved">{{ ticket.TASK_STATUS }}</span>
-                  {% elif ticket.TASK_STATUS == 'Closed' %}
-                    <span class="status-badge sb-closed">{{ ticket.TASK_STATUS }}</span>
-                  {% elif ticket.TASK_STATUS == 'Reopen' %}
-                    <span class="status-badge sb-reopen">{{ ticket.TASK_STATUS }}</span>
+                  {% if ticket.TICKET_STATUS == 'Open' %}
+                    <span class="status-badge sb-open">{{ ticket.TICKET_STATUS }}</span>
+                  {% elif ticket.TICKET_STATUS == 'In Progress' %}
+                    <span class="status-badge sb-progress">{{ ticket.TICKET_STATUS }}</span>
+                  {% elif ticket.TICKET_STATUS == 'Resolved' %}
+                    <span class="status-badge sb-resolved">{{ ticket.TICKET_STATUS }}</span>
+                  {% elif ticket.TICKET_STATUS == 'Closed' %}
+                    <span class="status-badge sb-closed">{{ ticket.TICKET_STATUS }}</span>
+                  {% elif ticket.TICKET_STATUS == 'Reopen' %}
+                    <span class="status-badge sb-reopen">{{ ticket.TICKET_STATUS }}</span>
                   {% else %}
-                    <span class="status-badge sb-expired">{{ ticket.TASK_STATUS }}</span>
+                    <span class="status-badge sb-expired">{{ ticket.TICKET_STATUS }}</span>
                   {% endif %}
                 </div>
                 <div class="ticket-footer">
                   <span class="ticket-due">
                     <i class="fas fa-calendar-alt"></i>
-                    {{ ticket.TASK_DUE_DATE|date:"M d, Y" }}
+                    {{ ticket.TICKET_DUE_DATE|date:"M d, Y" }}
                   </span>
                   <span class="ticket-assignee">
                     <i class="fas fa-user"></i>
@@ -953,26 +953,26 @@
               <div class="ticket-head">
                 <div>
                   <div class="ticket-id">#{{ ticket.id }}</div>
-                  <p class="ticket-title">{{ ticket.TASK_TITLE }}</p>
+                  <p class="ticket-title">{{ ticket.TICKET_TITLE }}</p>
                 </div>
-                {% if ticket.TASK_STATUS == 'Open' %}
-                  <span class="status-badge sb-open">{{ ticket.TASK_STATUS }}</span>
-                {% elif ticket.TASK_STATUS == 'In Progress' %}
-                  <span class="status-badge sb-progress">{{ ticket.TASK_STATUS }}</span>
-                {% elif ticket.TASK_STATUS == 'Resolved' %}
-                  <span class="status-badge sb-resolved">{{ ticket.TASK_STATUS }}</span>
-                {% elif ticket.TASK_STATUS == 'Closed' %}
-                  <span class="status-badge sb-closed">{{ ticket.TASK_STATUS }}</span>
-                {% elif ticket.TASK_STATUS == 'Reopen' %}
-                  <span class="status-badge sb-reopen">{{ ticket.TASK_STATUS }}</span>
+                {% if ticket.TICKET_STATUS == 'Open' %}
+                  <span class="status-badge sb-open">{{ ticket.TICKET_STATUS }}</span>
+                {% elif ticket.TICKET_STATUS == 'In Progress' %}
+                  <span class="status-badge sb-progress">{{ ticket.TICKET_STATUS }}</span>
+                {% elif ticket.TICKET_STATUS == 'Resolved' %}
+                  <span class="status-badge sb-resolved">{{ ticket.TICKET_STATUS }}</span>
+                {% elif ticket.TICKET_STATUS == 'Closed' %}
+                  <span class="status-badge sb-closed">{{ ticket.TICKET_STATUS }}</span>
+                {% elif ticket.TICKET_STATUS == 'Reopen' %}
+                  <span class="status-badge sb-reopen">{{ ticket.TICKET_STATUS }}</span>
                 {% else %}
-                  <span class="status-badge sb-expired">{{ ticket.TASK_STATUS }}</span>
+                  <span class="status-badge sb-expired">{{ ticket.TICKET_STATUS }}</span>
                 {% endif %}
               </div>
               <div class="ticket-footer">
                 <span class="ticket-due">
                   <i class="fas fa-calendar-alt"></i>
-                  {{ ticket.TASK_DUE_DATE|date:"M d, Y" }}
+                  {{ ticket.TICKET_DUE_DATE|date:"M d, Y" }}
                 </span>
                 <span class="ticket-assignee">
                   <i class="fas fa-user"></i>

@@ -121,7 +121,7 @@
     {% for act in activities %}
     <div class="act-row"
          data-type="{{ act.action|lower|default:'event' }}"
-         data-search="{{ act.description|lower|default:'' }} {{ act.user.username|lower|default:'' }} {% if act.task %}{{ act.task.TASK_TITLE|lower }}{% endif %}">
+         data-search="{{ act.description|lower|default:'' }} {{ act.user.username|lower|default:'' }} {% if act.ticket %}{{ act.ticket.TICKET_TITLE|lower }}{% endif %}">
 
       <div class="act-avatar"
            style="background:
@@ -146,12 +146,12 @@
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <div>
             <div class="act-title">
-              {% if act.task %}
-                <a href="{% url 'taskinfo' act.task.id %}"
+              {% if act.ticket %}
+                <a href="{% url 'ticketinfo' act.ticket.id %}"
                    style="color:inherit;transition:color .12s;"
                    onmouseover="this.style.color='var(--brand)'"
                    onmouseout="this.style.color='inherit'">
-                  {{ act.task.TASK_TITLE|truncatechars:55 }}
+                  {{ act.ticket.TICKET_TITLE|truncatechars:55 }}
                 </a>
               {% else %}
                 System Event

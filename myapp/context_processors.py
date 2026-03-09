@@ -1,29 +1,29 @@
-from myapp.models import Notification, TaskDetail, Department, DepartmentMember, MyCart
+from myapp.models import Notification, TicketDetail, Department, DepartmentMember, MyCart
 from django.db.models import Q
 from django.urls import reverse
 from .decorators import get_user_department_context
 
 
-def task_count(request):
+def ticket_count(request):
     if not request.user.is_authenticated:
         return {
-            'task_count':              0,
+            'ticket_count':              0,
             'unread_notifications':    0,
-            'my_tasks_count':          0,
-            'my_open_tasks':           0,
+            'my_tickets_count':          0,
+            'my_open_tickets':           0,
             'my_cart_count':           0,
             'user_role':               None,
             'is_agent':                False,
             'is_admin':                False,
             'user_departments':        Department.objects.none(),
             'user_department_count':   0,
-            'department_open_tasks':   0,
+            'department_open_tickets':   0,
             'is_department_lead':      False,
             'is_department_manager':   False,
             'is_department_member':    False,
             'recent_notifications':    [],
             'department_count':        0,
-            'department_tasks_count':  0,
+            'department_tickets_count':  0,
             'primary_department':      None,
             'dashboard_url':           '/',
         }
@@ -54,15 +54,15 @@ def task_count(request):
 
                                                                                 
                                                        
-    inbox_count = TaskDetail.objects.filter(
-        ~Q(TASK_STATUS__in=['Closed', 'Resolved', 'Expired'])
+    inbox_count = TicketDetail.objects.filter(
+        ~Q(TICKET_STATUS__in=['Closed', 'Resolved', 'Expired'])
     ).filter(
         Q(assigned_department_id__in=department_ids) | Q(assigned_to=user)
     ).distinct().count()
 
-    my_tasks_count = TaskDetail.objects.filter(TASK_CREATED=user).count()
-    my_open_tasks  = TaskDetail.objects.filter(
-        TASK_CREATED=user, TASK_STATUS='Open'
+    my_tickets_count = TicketDetail.objects.filter(TICKET_CREATED=user).count()
+    my_open_tickets  = TicketDetail.objects.filter(
+        TICKET_CREATED=user, TICKET_STATUS='Open'
     ).count()
 
     my_cart_count = MyCart.objects.filter(user=user).count()
@@ -70,11 +70,11 @@ def task_count(request):
                                                                                 
     notifications_qs = Notification.objects.filter(
         user=user
-    ).select_related('task', 'task__assigned_department')
+    ).select_related('ticket', 'ticket__assigned_department')
 
     if not is_admin:
         notifications_qs = notifications_qs.filter(
-            task__assigned_department_id__in=department_ids
+            ticket__assigned_department_id__in=department_ids
         )
 
     unread_notifications = notifications_qs.filter(is_read=False).count()
@@ -85,10 +85,10 @@ def task_count(request):
 
     return {
                 
-        'task_count':            inbox_count,
+        'ticket_count':            inbox_count,
         'unread_notifications':  unread_notifications,
-        'my_tasks_count':        my_tasks_count,
-        'my_open_tasks':         my_open_tasks,
+        'my_tickets_count':        my_tickets_count,
+        'my_open_tickets':         my_open_tickets,
         'my_cart_count':         my_cart_count,
 
               

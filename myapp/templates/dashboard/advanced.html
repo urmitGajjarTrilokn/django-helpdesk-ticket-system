@@ -7,10 +7,10 @@
 
 {% block content %}
 <div class="row g-3 mb-3">
-  <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon si-indigo"><i class="fas fa-ticket-alt"></i></div><div><div class="stat-label">Total</div><div class="stat-value">{{ total_tasks }}</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon si-yellow"><i class="fas fa-circle"></i></div><div><div class="stat-label">Open</div><div class="stat-value">{{ open_tasks }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon si-indigo"><i class="fas fa-ticket-alt"></i></div><div><div class="stat-label">Total</div><div class="stat-value">{{ total_tickets }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon si-yellow"><i class="fas fa-circle"></i></div><div><div class="stat-label">Open</div><div class="stat-value">{{ open_tickets }}</div></div></div></div>
   <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon si-blue"><i class="fas fa-spinner"></i></div><div><div class="stat-label">In Progress</div><div class="stat-value">{{ in_progress }}</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon si-green"><i class="fas fa-check-circle"></i></div><div><div class="stat-label">Closed</div><div class="stat-value">{{ closed_tasks }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon si-green"><i class="fas fa-check-circle"></i></div><div><div class="stat-label">Closed</div><div class="stat-value">{{ closed_tickets }}</div></div></div></div>
 </div>
 
 <div class="hd-card">
@@ -29,13 +29,13 @@
         </tr>
       </thead>
       <tbody>
-        {% for t in recent_tasks %}
+        {% for t in recent_tickets %}
         <tr>
           <td>#{{ t.id }}</td>
-          <td><a href="{% url 'taskinfo' t.id %}">{{ t.TASK_TITLE|truncatechars:60 }}</a></td>
-          <td>{{ t.TASK_STATUS }}</td>
+          <td><a href="{% url 'ticketinfo' t.id %}">{{ t.TICKET_TITLE|truncatechars:60 }}</a></td>
+          <td>{{ t.TICKET_STATUS }}</td>
           <td>{{ t.effective_priority_display }}</td>
-          <td>{{ t.TASK_CREATED_ON|date:"M d, Y" }}</td>
+          <td>{{ t.TICKET_CREATED_ON|date:"M d, Y" }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="5" class="text-center text-muted py-4">No tickets found.</td></tr>

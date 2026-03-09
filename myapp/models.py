@@ -32,7 +32,7 @@ class Department(models.Model):
         return self.departmentmember_set.filter(is_active=True).count()
 
     def get_open_tickets_count(self):
-        return self.department_tasks.filter(TASK_STATUS='Open').count()
+        return self.department_tickets.filter(TICKET_STATUS='Open').count()
 
 class DepartmentMember(models.Model):
     ROLE_CHOICES = [
@@ -122,24 +122,24 @@ class Category(models.Model):
         return self.name
 
 
-class TaskDetail(models.Model):
-    TASK_TITLE       = models.CharField(max_length=100)
-    TASK_CREATED     = models.ForeignKey(User, related_name='CREATED_BY',
+class TicketDetail(models.Model):
+    TICKET_TITLE       = models.CharField(max_length=100)
+    TICKET_CREATED     = models.ForeignKey(User, related_name='CREATED_BY',
                                          on_delete=models.CASCADE, null=True)
-    TASK_CLOSED      = models.ForeignKey(User, related_name='CLOSED_BY',
+    TICKET_CLOSED      = models.ForeignKey(User, related_name='CLOSED_BY',
                                          on_delete=models.CASCADE, null=True)
-    TASK_CREATED_ON  = models.DateField(auto_now_add=True, null=True)
-    TASK_DUE_DATE    = models.DateField()
-    TASK_CLOSED_ON   = models.DateField(null=True)
-    TASK_DESCRIPTION = models.CharField(max_length=300)
-    TASK_HOLDER      = models.CharField(max_length=100)
+    TICKET_CREATED_ON  = models.DateField(auto_now_add=True, null=True)
+    TICKET_DUE_DATE    = models.DateField()
+    TICKET_CLOSED_ON   = models.DateField(null=True)
+    TICKET_DESCRIPTION = models.CharField(max_length=300)
+    TICKET_HOLDER      = models.CharField(max_length=100)
 
     choice = [
         ('Open', 'Open'), ('In Progress', 'In Progress'),
         ('Closed', 'Closed'), ('Reopen', 'Reopen'),
         ('Expired', 'Expired'), ('Resolved', 'Resolved'),
     ]
-    TASK_STATUS = models.CharField(max_length=100, choices=choice, default='Open')
+    TICKET_STATUS = models.CharField(max_length=100, choices=choice, default='Open')
 
     PRIORITY_CHOICES = [
         ('LOW', 'Low'), ('MEDIUM', 'Medium'), ('HIGH', 'High'), ('URGENT', 'Urgent'),
@@ -148,11 +148,11 @@ class TaskDetail(models.Model):
                                 default='MEDIUM', null=True, blank=True)
 
     category = models.ForeignKey(Category, on_delete=models.SET_NULL,
-                                 null=True, blank=True, related_name='tasks')
+                                 null=True, blank=True, related_name='tickets')
 
     assigned_department = models.ForeignKey(Department, on_delete=models.SET_NULL,
                                             null=True, blank=True,
-                                            related_name='department_tasks')
+                                            related_name='department_tickets')
 
     DEPARTMENT_CHOICES = [
         ('HR','Human Resources'),('TECH','Technical Support'),
@@ -165,7 +165,7 @@ class TaskDetail(models.Model):
 
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL,
                                     null=True, blank=True,
-                                    related_name='assigned_tasks')
+                                    related_name='assigned_tickets')
 
     ASSIGNMENT_TYPE_CHOICES = [
         ('UNASSIGNED',    'Unassigned'),
@@ -185,13 +185,13 @@ class TaskDetail(models.Model):
 
     ai_suggested_category = models.ForeignKey(Category, on_delete=models.SET_NULL,
                                                null=True, blank=True,
-                                               related_name='ai_suggested_tasks')
+                                               related_name='ai_suggested_tickets')
     ai_suggested_priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES,
                                              null=True, blank=True)
 
     ml_predicted_department = models.ForeignKey(Department, on_delete=models.SET_NULL,
                                                 null=True, blank=True,
-                                                related_name='ml_predicted_tasks')
+                                                related_name='ml_predicted_tickets')
     ml_predicted_department_old = models.CharField(max_length=20, choices=DEPARTMENT_CHOICES,
                                                    null=True, blank=True)
     ml_confidence_score  = models.FloatField(null=True, blank=True)
@@ -201,12 +201,12 @@ class TaskDetail(models.Model):
     views_count          = models.IntegerField(default=0)
 
     class Meta:
-        ordering = ['-TASK_CREATED_ON']
-        verbose_name = "Task"
-        verbose_name_plural = "Tasks"
+        ordering = ['-TICKET_CREATED_ON']
+        verbose_name = "Ticket"
+        verbose_name_plural = "Tickets"
 
     def __str__(self):
-        return f"#{self.id} - {self.TASK_TITLE}"
+        return f"#{self.id} - {self.TICKET_TITLE}"
 
     @property
     def effective_priority(self):
@@ -221,15 +221,15 @@ class TaskDetail(models.Model):
 
     @property
     def is_overdue(self):
-        if self.TASK_STATUS in ['Closed', 'Resolved']:
+        if self.TICKET_STATUS in ['Closed', 'Resolved']:
             return False
         from datetime import date
-        return date.today() > self.TASK_DUE_DATE
+        return date.today() > self.TICKET_DUE_DATE
 
     @property
     def days_until_due(self):
         from datetime import date
-        return (self.TASK_DUE_DATE - date.today()).days
+        return (self.TICKET_DUE_DATE - date.today()).days
 
     def can_be_accepted_by(self, user):
         if user.is_superuser:
@@ -251,17 +251,17 @@ class TaskDetail(models.Model):
         self.assigned_to  = user
         self.assigned_by  = assigned_by
         self.assigned_at  = timezone.now()
-        self.TASK_STATUS  = 'In Progress'
+        self.TICKET_STATUS  = 'In Progress'
         self.save()
 
 class MyCart(models.Model):
     user        = models.ForeignKey(User, on_delete=models.CASCADE)
-    task        = models.ForeignKey(TaskDetail, on_delete=models.CASCADE)
-    task_count  = models.IntegerField(default=1)
+    ticket        = models.ForeignKey(TicketDetail, on_delete=models.CASCADE)
+    ticket_count  = models.IntegerField(default=1)
     accepted_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.task.TASK_TITLE}"
+        return f"{self.user.username} - {self.ticket.TICKET_TITLE}"
 
 class ActivityLog(models.Model):
     ACTION_CHOICES = [
@@ -279,7 +279,7 @@ class ActivityLog(models.Model):
     ]
 
     user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_logs')
-    task       = models.ForeignKey(TaskDetail, on_delete=models.SET_NULL,
+    ticket       = models.ForeignKey(TicketDetail, on_delete=models.SET_NULL,
                                    null=True, blank=True, related_name='activity_logs')
     action     = models.CharField(max_length=20, choices=ACTION_CHOICES, default='SYSTEM')
     title      = models.CharField(max_length=200)
@@ -294,7 +294,7 @@ class ActivityLog(models.Model):
         verbose_name_plural = "Activity Logs"
         indexes = [
             models.Index(fields=['user', '-timestamp']),
-            models.Index(fields=['task', '-timestamp']),
+            models.Index(fields=['ticket', '-timestamp']),
         ]
 
     def __str__(self):
@@ -339,7 +339,7 @@ class ActivityLog(models.Model):
 
 class UserComment(models.Model):
     user            = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    task            = models.ForeignKey(TaskDetail, related_name='comments',
+    ticket            = models.ForeignKey(TicketDetail, related_name='comments',
                                         on_delete=models.CASCADE, null=True, blank=True)
     Closing_comment = models.TextField(null=True, blank=True)
     Reopen_comment  = models.TextField(null=True, blank=True)
@@ -354,23 +354,23 @@ class UserComment(models.Model):
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
-        ('TASK_CREATED',       'Task Created'),
-        ('TASK_ASSIGNED',      'Task Assigned'),
-        ('TASK_ACCEPTED',      'Task Accepted'),
-        ('TASK_UPDATED',       'Task Updated'),
-        ('TASK_CLOSED',        'Task Closed'),
-        ('TASK_RESOLVED',      'Task Resolved'),
-        ('TASK_REOPENED',      'Task Reopened'),
-        ('TASK_COMMENTED',     'Task Commented'),
-        ('TASK_OVERDUE',       'Task Overdue'),
+        ('TICKET_CREATED',       'Ticket Created'),
+        ('TICKET_ASSIGNED',      'Ticket Assigned'),
+        ('TICKET_ACCEPTED',      'Ticket Accepted'),
+        ('TICKET_UPDATED',       'Ticket Updated'),
+        ('TICKET_CLOSED',        'Ticket Closed'),
+        ('TICKET_RESOLVED',      'Ticket Resolved'),
+        ('TICKET_REOPENED',      'Ticket Reopened'),
+        ('TICKET_COMMENTED',     'Ticket Commented'),
+        ('TICKET_OVERDUE',       'Ticket Overdue'),
         ('DEPARTMENT_ASSIGNED','Department Assigned'),
-        ('MENTION',            'Mentioned in Task'),
+        ('MENTION',            'Mentioned in Ticket'),
         ('SYSTEM',             'System Notification'),
     )
 
     user              = models.ForeignKey(User, on_delete=models.CASCADE,
                                           related_name='notifications')
-    task              = models.ForeignKey('TaskDetail', on_delete=models.CASCADE,
+    ticket              = models.ForeignKey('TicketDetail', on_delete=models.CASCADE,
                                           null=True, blank=True, related_name='notifications')
     notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES,
                                          default='SYSTEM')
@@ -407,15 +407,15 @@ class Notification(models.Model):
 
     def get_icon(self):
         icons = {
-            'TASK_CREATED':        'fas fa-plus-circle',
-            'TASK_ASSIGNED':       'fas fa-user-check',
-            'TASK_ACCEPTED':       'fas fa-hand-holding',
-            'TASK_UPDATED':        'fas fa-edit',
-            'TASK_CLOSED':         'fas fa-times-circle',
-            'TASK_RESOLVED':       'fas fa-check-circle',
-            'TASK_REOPENED':       'fas fa-redo',
-            'TASK_COMMENTED':      'fas fa-comment',
-            'TASK_OVERDUE':        'fas fa-exclamation-triangle',
+            'TICKET_CREATED':        'fas fa-plus-circle',
+            'TICKET_ASSIGNED':       'fas fa-user-check',
+            'TICKET_ACCEPTED':       'fas fa-hand-holding',
+            'TICKET_UPDATED':        'fas fa-edit',
+            'TICKET_CLOSED':         'fas fa-times-circle',
+            'TICKET_RESOLVED':       'fas fa-check-circle',
+            'TICKET_REOPENED':       'fas fa-redo',
+            'TICKET_COMMENTED':      'fas fa-comment',
+            'TICKET_OVERDUE':        'fas fa-exclamation-triangle',
             'DEPARTMENT_ASSIGNED': 'fas fa-building',
             'MENTION':             'fas fa-at',
             'SYSTEM':              'fas fa-bell',
@@ -424,15 +424,15 @@ class Notification(models.Model):
 
     def get_color_class(self):
         colors = {
-            'TASK_CREATED':        'primary',
-            'TASK_ASSIGNED':       'info',
-            'TASK_ACCEPTED':       'success',
-            'TASK_UPDATED':        'warning',
-            'TASK_CLOSED':         'secondary',
-            'TASK_RESOLVED':       'success',
-            'TASK_REOPENED':       'warning',
-            'TASK_COMMENTED':      'info',
-            'TASK_OVERDUE':        'danger',
+            'TICKET_CREATED':        'primary',
+            'TICKET_ASSIGNED':       'info',
+            'TICKET_ACCEPTED':       'success',
+            'TICKET_UPDATED':        'warning',
+            'TICKET_CLOSED':         'secondary',
+            'TICKET_RESOLVED':       'success',
+            'TICKET_REOPENED':       'warning',
+            'TICKET_COMMENTED':      'info',
+            'TICKET_OVERDUE':        'danger',
             'DEPARTMENT_ASSIGNED': 'primary',
             'MENTION':             'info',
             'SYSTEM':              'secondary',
@@ -440,9 +440,9 @@ class Notification(models.Model):
         return colors.get(self.notification_type, 'secondary')
 
     def get_url(self):
-        if self.task:
+        if self.ticket:
             from django.urls import reverse
-            return reverse('taskinfo', kwargs={'pk': self.task.id})
+            return reverse('ticketinfo', kwargs={'pk': self.ticket.id})
         return '#'
 
     @property
@@ -479,7 +479,7 @@ class AIMLLog(models.Model):
         ('DEPARTMENT', 'Department Assignment'),
         ('DUPLICATE',  'Duplicate Detection'),
     ]
-    task        = models.ForeignKey(TaskDetail, on_delete=models.CASCADE, related_name='ai_logs')
+    ticket        = models.ForeignKey(TicketDetail, on_delete=models.CASCADE, related_name='ai_logs')
     log_type    = models.CharField(max_length=20, choices=TYPE_CHOICES)
     input_data  = models.TextField()
     output_data = models.TextField()
@@ -493,10 +493,10 @@ class AIMLLog(models.Model):
         verbose_name_plural = "AI/ML Logs"
 
     def __str__(self):
-        return f"{self.log_type} - Task #{self.task.id}"
+        return f"{self.log_type} - Ticket #{self.ticket.id}"
 
-class TaskHistory(models.Model):
-    task       = models.ForeignKey('TaskDetail', on_delete=models.CASCADE,
+class TicketHistory(models.Model):
+    ticket       = models.ForeignKey('TicketDetail', on_delete=models.CASCADE,
                                    related_name='history')
     changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action_type = models.CharField(max_length=50, choices=[
@@ -519,16 +519,16 @@ class TaskHistory(models.Model):
 
     class Meta:
         ordering = ['-changed_at']
-        verbose_name = "Task History"
-        verbose_name_plural = "Task History"
-        indexes = [models.Index(fields=['task', '-changed_at'])]
+        verbose_name = "Ticket History"
+        verbose_name_plural = "Ticket History"
+        indexes = [models.Index(fields=['ticket', '-changed_at'])]
 
     def __str__(self):
-        return f"Task #{self.task.id} - {self.action_type} by {self.changed_by}"
+        return f"Ticket #{self.ticket.id} - {self.action_type} by {self.changed_by}"
 
 class CannedResponse(models.Model):
     title      = models.CharField(max_length=200)
-    content    = models.TextField(help_text="Use {{task_id}}, {{user_name}}, {{task_title}}")
+    content    = models.TextField(help_text="Use {{ticket_id}}, {{user_name}}, {{ticket_title}}")
     category   = models.ForeignKey('Category', on_delete=models.SET_NULL,
                                    null=True, blank=True, related_name='canned_responses')
     department = models.ForeignKey('Department', on_delete=models.SET_NULL,
@@ -560,8 +560,8 @@ class CannedResponse(models.Model):
         self.save(update_fields=['usage_count'])
 
 
-class TaskRating(models.Model):
-    task    = models.OneToOneField('TaskDetail', on_delete=models.CASCADE, related_name='rating')
+class TicketRating(models.Model):
+    ticket    = models.OneToOneField('TicketDetail', on_delete=models.CASCADE, related_name='rating')
     rated_by = models.ForeignKey(User, on_delete=models.CASCADE)
     rating  = models.IntegerField(choices=[
         (1,'⭐ Very Dissatisfied'),(2,'⭐⭐ Dissatisfied'),
@@ -578,11 +578,11 @@ class TaskRating(models.Model):
 
     class Meta:
         ordering = ['-rated_at']
-        verbose_name = "Task Rating"
-        verbose_name_plural = "Task Ratings"
+        verbose_name = "Ticket Rating"
+        verbose_name_plural = "Ticket Ratings"
 
     def __str__(self):
-        return f"Task #{self.task.id} - {self.rating}⭐ by {self.rated_by.username}"
+        return f"Ticket #{self.ticket.id} - {self.rating}⭐ by {self.rated_by.username}"
 
 @receiver(post_migrate)
 def create_default_departments(sender, **kwargs):
@@ -642,7 +642,7 @@ def create_default_categories(sender, **kwargs):
          'description':'System maintenance and updates'},
         {'name':'Documentation',   'icon':'fa-book',           'color':'#0d6efd',
          'ml_keywords':'documentation,docs,readme,guide,manual,instructions',
-         'description':'Documentation related tasks and improvements'},
+         'description':'Documentation related tickets and improvements'},
         {'name':'Security',        'icon':'fa-shield-alt',     'color':'#d63384',
          'ml_keywords':'security,vulnerability,permission,access,password,authentication',
          'description':'Security issues, vulnerabilities and access control'},

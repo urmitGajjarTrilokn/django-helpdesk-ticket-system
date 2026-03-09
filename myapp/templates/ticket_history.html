@@ -1,8 +1,8 @@
 {% extends "Base.html" %}
-{% block title %}Task History - HelpDesk{% endblock %}
+{% block title %}Ticket History - HelpDesk{% endblock %}
 
 {% block breadcrumb %}
-  <strong>Task History</strong>
+  <strong>Ticket History</strong>
 {% endblock %}
 
 {% block content %}
@@ -17,11 +17,11 @@
         <tr><th>#</th><th>Title</th><th>Status</th><th>Resolved By</th><th>Resolved On</th></tr>
       </thead>
       <tbody>
-        {% for t in resolved_tasks %}
+        {% for t in resolved_tickets %}
         <tr>
           <td>#{{ t.id }}</td>
-          <td><a href="{% url 'taskinfo' t.id %}">{{ t.TASK_TITLE|truncatechars:60 }}</a></td>
-          <td>{{ t.TASK_STATUS }}</td>
+          <td><a href="{% url 'ticketinfo' t.id %}">{{ t.TICKET_TITLE|truncatechars:60 }}</a></td>
+          <td>{{ t.TICKET_STATUS }}</td>
           <td>{{ t.resolved_by|default:"-" }}</td>
           <td>{{ t.resolved_on|date:"M d, Y H:i"|default:"-" }}</td>
         </tr>
@@ -35,7 +35,7 @@
 {% else %}
 <div class="hd-card">
   <div class="hd-card-header">
-    <div class="hd-card-title"><i class="fas fa-stream" style="color:var(--brand);"></i> #{{ task.id }} {{ task.TASK_TITLE|truncatechars:60 }}</div>
+    <div class="hd-card-title"><i class="fas fa-stream" style="color:var(--brand);"></i> #{{ ticket.id }} {{ ticket.TICKET_TITLE|truncatechars:60 }}</div>
   </div>
   <div class="hd-card-body">
     <div class="timeline">

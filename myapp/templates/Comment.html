@@ -1,14 +1,14 @@
 {% extends "Base.html" %}
 {% block title %}
-  {% if action == 'closing_comment' %}Close Ticket #{{ task.id }}
-  {% else %}Reopen Ticket #{{ task.id }}{% endif %}
+  {% if action == 'closing_comment' %}Close Ticket #{{ ticket.id }}
+  {% else %}Reopen Ticket #{{ ticket.id }}{% endif %}
   — HelpDesk
 {% endblock %}
 
 {% block breadcrumb %}
   <a href="{% url 'base' %}">Dashboard</a>
   <span class="bc-sep">/</span>
-  <a href="{% url 'taskinfo' task.id %}">Ticket #{{ task.id }}</a>
+  <a href="{% url 'ticketinfo' ticket.id %}">Ticket #{{ ticket.id }}</a>
   <span class="bc-sep">/</span>
   <strong>
     {% if action == 'closing_comment' %}Close
@@ -82,10 +82,10 @@
       </div>
       <div>
         <div class="page-title">
-          {% if action == 'closing_comment' %}Close Ticket #{{ task.id }}
-          {% else %}Reopen Ticket #{{ task.id }}{% endif %}
+          {% if action == 'closing_comment' %}Close Ticket #{{ ticket.id }}
+          {% else %}Reopen Ticket #{{ ticket.id }}{% endif %}
         </div>
-        <div class="page-sub">{{ task.TASK_TITLE|truncatechars:75 }}</div>
+        <div class="page-sub">{{ ticket.TICKET_TITLE|truncatechars:75 }}</div>
       </div>
     </div>
   </div>
@@ -97,13 +97,13 @@
         {% else %}Reopen Reason{% endif %}
       </div>
       <span class="status-badge
-        {% if task.TASK_STATUS == 'Open'        %}sb-open
-        {% elif task.TASK_STATUS == 'In Progress'%}sb-progress
-        {% elif task.TASK_STATUS == 'Closed'    %}sb-closed
-        {% elif task.TASK_STATUS == 'Resolved'  %}sb-resolved
-        {% elif task.TASK_STATUS == 'Reopen'    %}sb-reopen
+        {% if ticket.TICKET_STATUS == 'Open'        %}sb-open
+        {% elif ticket.TICKET_STATUS == 'In Progress'%}sb-progress
+        {% elif ticket.TICKET_STATUS == 'Closed'    %}sb-closed
+        {% elif ticket.TICKET_STATUS == 'Resolved'  %}sb-resolved
+        {% elif ticket.TICKET_STATUS == 'Reopen'    %}sb-reopen
         {% else %}sb-expired{% endif %}">
-        {{ task.TASK_STATUS }}
+        {{ ticket.TICKET_STATUS }}
       </span>
     </div>
 
@@ -224,7 +224,7 @@
       </div>
 
       <div class="hd-card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <a href="{% url 'taskinfo' task.id %}" class="btn btn-outline-secondary btn-sm">
+        <a href="{% url 'ticketinfo' ticket.id %}" class="btn btn-outline-secondary btn-sm">
           <i class="fas fa-arrow-left me-1"></i>Back to Ticket
         </a>
         <button type="submit" id="submitBtn" class="btn btn-sm
@@ -276,10 +276,10 @@
 
   function insertCannedContent(rawContent, id) {
     let content = rawContent || '';
-    content = content.replace(/\{\{task_id\}\}/g,    '{{ task.id }}');
-    content = content.replace(/\{\{task_title\}\}/g,  '{{ task.TASK_TITLE|escapejs }}');
-    content = content.replace(/\{\{user_name\}\}/g,   '{{ task.TASK_CREATED.username|escapejs }}');
-    content = content.replace(/\{\{assigned_to\}\}/g, '{{ task.assigned_to.username|default:"Unassigned"|escapejs }}');
+    content = content.replace(/\{\{ticket_id\}\}/g,    '{{ ticket.id }}');
+    content = content.replace(/\{\{ticket_title\}\}/g,  '{{ ticket.TICKET_TITLE|escapejs }}');
+    content = content.replace(/\{\{user_name\}\}/g,   '{{ ticket.TICKET_CREATED.username|escapejs }}');
+    content = content.replace(/\{\{assigned_to\}\}/g, '{{ ticket.assigned_to.username|default:"Unassigned"|escapejs }}');
 
     const closingTA = document.querySelector('textarea[name="Closing_comment"]');
     const reopenTA  = document.querySelector('textarea[name="Reopen_comment"]');

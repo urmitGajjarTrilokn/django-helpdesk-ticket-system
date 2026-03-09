@@ -244,7 +244,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="TaskDetail",
+            name="TicketDetail",
             fields=[
                 (
                     "id",
@@ -255,14 +255,14 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("TASK_TITLE", models.CharField(max_length=100)),
-                ("TASK_CREATED_ON", models.DateField(auto_now_add=True, null=True)),
-                ("TASK_DUE_DATE", models.DateField()),
-                ("TASK_CLOSED_ON", models.DateField(null=True)),
-                ("TASK_DESCRIPTION", models.CharField(max_length=300)),
-                ("TASK_HOLDER", models.CharField(max_length=100)),
+                ("TICKET_TITLE", models.CharField(max_length=100)),
+                ("TICKET_CREATED_ON", models.DateField(auto_now_add=True, null=True)),
+                ("TICKET_DUE_DATE", models.DateField()),
+                ("TICKET_CLOSED_ON", models.DateField(null=True)),
+                ("TICKET_DESCRIPTION", models.CharField(max_length=300)),
+                ("TICKET_HOLDER", models.CharField(max_length=100)),
                 (
-                    "TASK_STATUS",
+                    "TICKET_STATUS",
                     models.CharField(
                         choices=[
                             ("Open", "Open"),
@@ -371,7 +371,7 @@ class Migration(migrations.Migration):
                 ("escalation_level", models.IntegerField(default=0)),
                 ("last_escalated_at", models.DateTimeField(blank=True, null=True)),
                 (
-                    "TASK_CLOSED",
+                    "TICKET_CLOSED",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
@@ -380,7 +380,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "TASK_CREATED",
+                    "TICKET_CREATED",
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
@@ -394,7 +394,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="ai_suggested_tasks",
+                        related_name="ai_suggested_tickets",
                         to="myapp.category",
                     ),
                 ),
@@ -414,7 +414,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="department_tasks",
+                        related_name="department_tickets",
                         to="myapp.department",
                     ),
                 ),
@@ -424,7 +424,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="assigned_tasks",
+                        related_name="assigned_tickets",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
@@ -434,7 +434,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="tasks",
+                        related_name="tickets",
                         to="myapp.category",
                     ),
                 ),
@@ -444,7 +444,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="escalated_tasks",
+                        related_name="escalated_tickets",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
@@ -454,7 +454,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="ml_predicted_tasks",
+                        related_name="ml_predicted_tickets",
                         to="myapp.department",
                     ),
                 ),
@@ -464,7 +464,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
                 (
@@ -473,15 +473,15 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="tasks",
+                        related_name="tickets",
                         to="myapp.slapolicy",
                     ),
                 ),
             ],
             options={
-                "verbose_name": "Task",
-                "verbose_name_plural": "Tasks",
-                "ordering": ["-TASK_CREATED_ON"],
+                "verbose_name": "Ticket",
+                "verbose_name_plural": "Tickets",
+                "ordering": ["-TICKET_CREATED_ON"],
             },
         ),
         migrations.CreateModel(
@@ -560,13 +560,13 @@ class Migration(migrations.Migration):
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True, null=True)),
                 (
-                    "task",
+                    "ticket",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="comments",
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
                 (
@@ -584,7 +584,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="TaskRating",
+            name="TicketRating",
             fields=[
                 (
                     "id",
@@ -641,22 +641,22 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "task",
+                    "ticket",
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="rating",
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
             ],
             options={
-                "verbose_name": "Task Rating",
-                "verbose_name_plural": "Task Ratings",
+                "verbose_name": "Ticket Rating",
+                "verbose_name_plural": "Ticket Ratings",
                 "ordering": ["-rated_at"],
             },
         ),
         migrations.CreateModel(
-            name="TaskEscalation",
+            name="TicketEscalation",
             fields=[
                 (
                     "id",
@@ -700,17 +700,17 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "task",
+                    "ticket",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="escalations",
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
             ],
             options={
-                "verbose_name": "Task Escalation",
-                "verbose_name_plural": "Task Escalations",
+                "verbose_name": "Ticket Escalation",
+                "verbose_name_plural": "Ticket Escalations",
                 "ordering": ["-escalated_at"],
             },
         ),
@@ -726,13 +726,13 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("task_count", models.IntegerField(default=1)),
+                ("ticket_count", models.IntegerField(default=1)),
                 ("accepted_at", models.DateTimeField(auto_now_add=True, null=True)),
                 (
-                    "task",
+                    "ticket",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
                 (
@@ -805,7 +805,7 @@ class Migration(migrations.Migration):
                 (
                     "content",
                     models.TextField(
-                        help_text="Use {{task_id}}, {{user_name}}, {{task_title}}"
+                        help_text="Use {{ticket_id}}, {{user_name}}, {{ticket_title}}"
                     ),
                 ),
                 ("is_public", models.BooleanField(default=True)),
@@ -879,11 +879,11 @@ class Migration(migrations.Migration):
                 ("was_correct", models.BooleanField(blank=True, null=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
-                    "task",
+                    "ticket",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="ai_logs",
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
             ],
@@ -894,7 +894,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="TaskHistory",
+            name="TicketHistory",
             fields=[
                 (
                     "id",
@@ -937,22 +937,22 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "task",
+                    "ticket",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="history",
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
             ],
             options={
-                "verbose_name": "Task History",
-                "verbose_name_plural": "Task History",
+                "verbose_name": "Ticket History",
+                "verbose_name_plural": "Ticket History",
                 "ordering": ["-changed_at"],
                 "indexes": [
                     models.Index(
-                        fields=["task", "-changed_at"],
-                        name="myapp_taskh_task_id_bae3f8_idx",
+                        fields=["ticket", "-changed_at"],
+                        name="myapp_ticketh_ticket_id_bae3f8_idx",
                     )
                 ],
             },
@@ -973,17 +973,17 @@ class Migration(migrations.Migration):
                     "notification_type",
                     models.CharField(
                         choices=[
-                            ("TASK_CREATED", "Task Created"),
-                            ("TASK_ASSIGNED", "Task Assigned"),
-                            ("TASK_ACCEPTED", "Task Accepted"),
-                            ("TASK_UPDATED", "Task Updated"),
-                            ("TASK_CLOSED", "Task Closed"),
-                            ("TASK_RESOLVED", "Task Resolved"),
-                            ("TASK_REOPENED", "Task Reopened"),
-                            ("TASK_COMMENTED", "Task Commented"),
-                            ("TASK_OVERDUE", "Task Overdue"),
+                            ("TICKET_CREATED", "Ticket Created"),
+                            ("TICKET_ASSIGNED", "Ticket Assigned"),
+                            ("TICKET_ACCEPTED", "Ticket Accepted"),
+                            ("TICKET_UPDATED", "Ticket Updated"),
+                            ("TICKET_CLOSED", "Ticket Closed"),
+                            ("TICKET_RESOLVED", "Ticket Resolved"),
+                            ("TICKET_REOPENED", "Ticket Reopened"),
+                            ("TICKET_COMMENTED", "Ticket Commented"),
+                            ("TICKET_OVERDUE", "Ticket Overdue"),
                             ("DEPARTMENT_ASSIGNED", "Department Assigned"),
-                            ("MENTION", "Mentioned in Task"),
+                            ("MENTION", "Mentioned in Ticket"),
                             ("SYSTEM", "System Notification"),
                         ],
                         default="SYSTEM",
@@ -999,13 +999,13 @@ class Migration(migrations.Migration):
                 ("email_sent", models.BooleanField(default=False)),
                 ("email_sent_at", models.DateTimeField(blank=True, null=True)),
                 (
-                    "task",
+                    "ticket",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="notifications",
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
                 (
@@ -1131,13 +1131,13 @@ class Migration(migrations.Migration):
                 ("new_value", models.CharField(blank=True, max_length=200)),
                 ("timestamp", models.DateTimeField(auto_now_add=True)),
                 (
-                    "task",
+                    "ticket",
                     models.ForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="activity_logs",
-                        to="myapp.taskdetail",
+                        to="myapp.ticketdetail",
                     ),
                 ),
                 (
@@ -1159,8 +1159,8 @@ class Migration(migrations.Migration):
                         name="myapp_activ_user_id_39b568_idx",
                     ),
                     models.Index(
-                        fields=["task", "-timestamp"],
-                        name="myapp_activ_task_id_970c87_idx",
+                        fields=["ticket", "-timestamp"],
+                        name="myapp_activ_ticket_id_970c87_idx",
                     ),
                 ],
             },

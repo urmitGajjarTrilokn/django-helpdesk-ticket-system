@@ -231,9 +231,9 @@
               <span style="font-weight:600;color:var(--slate-800);">{{ d.name }}</span>
             </div>
           </td>
-          <td><strong>{{ d.total_tasks }}</strong></td>
-          <td><span style="color:var(--warning);font-weight:600;">{{ d.open_tasks }}</span></td>
-          <td><span style="color:var(--success);font-weight:600;">{{ d.closed_tasks }}</span></td>
+          <td><strong>{{ d.total_tickets }}</strong></td>
+          <td><span style="color:var(--warning);font-weight:600;">{{ d.open_tickets }}</span></td>
+          <td><span style="color:var(--success);font-weight:600;">{{ d.closed_tickets }}</span></td>
           <td>
             <div class="dept-completion-bar">
               <div class="dcb-track">
@@ -413,7 +413,7 @@ const lineCtx = document.getElementById('lineChart');
 if (lineCtx) {
   const range = '{{ range_type }}';
   const dept  = '{{ selected_department.id|default:"" }}';
-  let apiUrl  = `{% url 'api_tasks_over_time' %}?range=${range}`;
+  let apiUrl  = `{% url 'api_tickets_over_time' %}?range=${range}`;
   if (dept) apiUrl += `&department=${dept}`;
 
   fetch(apiUrl)

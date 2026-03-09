@@ -161,7 +161,7 @@
       <div class="stat-icon si-green"><i class="fas fa-user"></i></div>
       <div>
         <div class="stat-label">My Tickets</div>
-        <div class="stat-value">{{ stats.my_tasks|default:0 }}</div>
+        <div class="stat-value">{{ stats.my_tickets|default:0 }}</div>
         <div class="stat-meta">Created by you</div>
       </div>
     </div>
@@ -237,7 +237,7 @@
       {% endif %}
     </div>
     <div class="d-flex gap-2">
-      <a href="{% url 'taskdetail' %}" class="btn btn-sm btn-primary">
+      <a href="{% url 'ticketdetail' %}" class="btn btn-sm btn-primary">
         <i class="fas fa-plus me-1"></i>New Ticket
       </a>
     </div>
@@ -327,24 +327,24 @@
     <div>Assigned To</div>
   </div>
 
-  {% if Taskdatas %}
-    {% for task in Taskdatas %}
+  {% if Ticketdatas %}
+    {% for ticket in Ticketdatas %}
     <div class="ticket-row {% if is_admin %}admin-select{% endif %}">
       {% if is_admin %}
       <div class="ticket-select-col">
-        <input type="checkbox" class="ticket-select-checkbox ticket-select-item" value="{{ task.id }}" aria-label="Select ticket {{ task.id }}">
+        <input type="checkbox" class="ticket-select-checkbox ticket-select-item" value="{{ ticket.id }}" aria-label="Select ticket {{ ticket.id }}">
       </div>
       {% endif %}
 
-      <div class="ticket-id">#{{ task.id }}</div>
+      <div class="ticket-id">#{{ ticket.id }}</div>
 
       <div>
         <div class="ticket-title">
-          <a href="{% url 'taskinfo' task.id %}{% if is_mine_only_filter %}?mine_only=1{% endif %}">{{ task.TASK_TITLE }}</a>
+          <a href="{% url 'ticketinfo' ticket.id %}{% if is_mine_only_filter %}?mine_only=1{% endif %}">{{ ticket.TICKET_TITLE }}</a>
         </div>
         <div class="ticket-sub">
-          by {{ task.TASK_CREATED.username }}
-          {% if task.assignment_type == 'AUTO_AI' or task.assignment_type == 'AUTO_ML' %}
+          by {{ ticket.TICKET_CREATED.username }}
+          {% if ticket.assignment_type == 'AUTO_AI' or ticket.assignment_type == 'AUTO_ML' %}
             &nbsp;<span class="ai-badge" style="font-size:9.5px;padding:1px 6px;"><i class="fas fa-robot"></i> AI</span>
           {% endif %}
         </div>
@@ -352,28 +352,28 @@
         <div class="ticket-sub" style="margin-top:4px;color:var(--slate-600);">
           <i class="fas fa-user-check" style="font-size:10px;"></i>
           Currently solving:
-          {% if task.assigned_to %}
-            {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+          {% if ticket.assigned_to %}
+            {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
           {% else %}
             Unassigned
           {% endif %}
         </div>
         {% endif %}
-        {% if is_admin and task.latest_reject_reason %}
+        {% if is_admin and ticket.latest_reject_reason %}
         <div class="ticket-sub" style="margin-top:4px;color:#B45309;">
           <i class="fas fa-ban" style="font-size:10px;"></i>
-          Earlier rejection by {{ task.latest_rejected_by }}: {{ task.latest_reject_reason|truncatechars:95 }}
+          Earlier rejection by {{ ticket.latest_rejected_by }}: {{ ticket.latest_reject_reason|truncatechars:95 }}
         </div>
         {% endif %}
       </div>
 
       <div>
-        {% if task.assigned_department %}
+        {% if ticket.assigned_department %}
         <div class="dept-label"
-             style="background:{{ task.assigned_department.color|default:'#4F46E5' }}18;
-                    color:{{ task.assigned_department.color|default:'#4F46E5' }};">
-          <i class="{{ task.assigned_department.icon|default:'fas fa-building' }}" style="font-size:10px;"></i>
-          {{ task.assigned_department.name }}
+             style="background:{{ ticket.assigned_department.color|default:'#4F46E5' }}18;
+                    color:{{ ticket.assigned_department.color|default:'#4F46E5' }};">
+          <i class="{{ ticket.assigned_department.icon|default:'fas fa-building' }}" style="font-size:10px;"></i>
+          {{ ticket.assigned_department.name }}
         </div>
         {% else %}
         <span style="font-size:12px;color:var(--slate-400);">Unassigned</span>
@@ -382,24 +382,24 @@
 
       <div>
         <span class="status-badge
-          {% if task.TASK_STATUS == 'Open'         %}sb-open
-          {% elif task.TASK_STATUS == 'In Progress'%}sb-progress
-          {% elif task.TASK_STATUS == 'Closed'     %}sb-closed
-          {% elif task.TASK_STATUS == 'Resolved'   %}sb-resolved
-          {% elif task.TASK_STATUS == 'Reopen'     %}sb-reopen
+          {% if ticket.TICKET_STATUS == 'Open'         %}sb-open
+          {% elif ticket.TICKET_STATUS == 'In Progress'%}sb-progress
+          {% elif ticket.TICKET_STATUS == 'Closed'     %}sb-closed
+          {% elif ticket.TICKET_STATUS == 'Resolved'   %}sb-resolved
+          {% elif ticket.TICKET_STATUS == 'Reopen'     %}sb-reopen
           {% else %}sb-expired{% endif %}">
-          {{ task.TASK_STATUS }}
+          {{ ticket.TICKET_STATUS }}
         </span>
       </div>
 
       <div>
-        {% if task.effective_priority %}
+        {% if ticket.effective_priority %}
         <span class="priority-badge
-          {% if task.effective_priority == 'LOW' %}pb-low
-          {% elif task.effective_priority == 'MEDIUM' %}pb-medium
-          {% elif task.effective_priority == 'HIGH' %}pb-high
+          {% if ticket.effective_priority == 'LOW' %}pb-low
+          {% elif ticket.effective_priority == 'MEDIUM' %}pb-medium
+          {% elif ticket.effective_priority == 'HIGH' %}pb-high
           {% else %}pb-urgent{% endif %}">
-          {{ task.effective_priority_display }}
+          {{ ticket.effective_priority_display }}
         </span>
         {% else %}
         <span style="color:var(--slate-400);font-size:12px;">—</span>
@@ -407,18 +407,18 @@
       </div>
 
       <div style="font-size:12.5px;
-                  {% if task.is_overdue %}color:var(--danger);font-weight:700;{% else %}color:var(--slate-500);{% endif %}">
-        {{ task.TASK_DUE_DATE|date:"M d" }}
-        {% if task.is_overdue %}<i class="fas fa-exclamation-circle ms-1" style="font-size:10px;"></i>{% endif %}
+                  {% if ticket.is_overdue %}color:var(--danger);font-weight:700;{% else %}color:var(--slate-500);{% endif %}">
+        {{ ticket.TICKET_DUE_DATE|date:"M d" }}
+        {% if ticket.is_overdue %}<i class="fas fa-exclamation-circle ms-1" style="font-size:10px;"></i>{% endif %}
       </div>
 
       <div style="font-size:12.5px;color:var(--slate-600);">
-        {% if task.assigned_to %}
+        {% if ticket.assigned_to %}
           <div class="d-flex align-items-center gap-6px">
             <div class="hd-avatar" style="width:22px;height:22px;font-size:10px;flex-shrink:0;">
-              {{ task.assigned_to.username|first|upper }}
+              {{ ticket.assigned_to.username|first|upper }}
             </div>
-            {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+            {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
           </div>
         {% else %}
           <span style="color:var(--slate-300);">—</span>
@@ -428,21 +428,21 @@
     </div>
     {% endfor %}
 
-    {% if Taskdatas.has_other_pages %}
+    {% if Ticketdatas.has_other_pages %}
     <div class="hd-card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
       <span style="font-size:12.5px;color:var(--slate-500);">
-        Page {{ Taskdatas.number }} of {{ Taskdatas.paginator.num_pages }}
-        &nbsp;·&nbsp; {{ Taskdatas.paginator.count }} ticket{{ Taskdatas.paginator.count|pluralize }}
+        Page {{ Ticketdatas.number }} of {{ Ticketdatas.paginator.num_pages }}
+        &nbsp;·&nbsp; {{ Ticketdatas.paginator.count }} ticket{{ Ticketdatas.paginator.count|pluralize }}
       </span>
       <nav class="hd-pager">
-        {% if Taskdatas.has_previous %}
+        {% if Ticketdatas.has_previous %}
           <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page=1" class="hd-page"><i class="fas fa-angle-double-left" style="font-size:11px;"></i></a>
-          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Taskdatas.previous_page_number }}" class="hd-page"><i class="fas fa-angle-left" style="font-size:11px;"></i></a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.previous_page_number }}" class="hd-page"><i class="fas fa-angle-left" style="font-size:11px;"></i></a>
         {% endif %}
-        <span class="hd-page active">{{ Taskdatas.number }}</span>
-        {% if Taskdatas.has_next %}
-          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Taskdatas.next_page_number }}" class="hd-page"><i class="fas fa-angle-right" style="font-size:11px;"></i></a>
-          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Taskdatas.paginator.num_pages }}" class="hd-page"><i class="fas fa-angle-double-right" style="font-size:11px;"></i></a>
+        <span class="hd-page active">{{ Ticketdatas.number }}</span>
+        {% if Ticketdatas.has_next %}
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.next_page_number }}" class="hd-page"><i class="fas fa-angle-right" style="font-size:11px;"></i></a>
+          <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ Ticketdatas.paginator.num_pages }}" class="hd-page"><i class="fas fa-angle-double-right" style="font-size:11px;"></i></a>
         {% endif %}
       </nav>
     </div>
@@ -459,7 +459,7 @@
           No tickets have been submitted yet. Be the first!
         {% endif %}
       </div>
-      <a href="{% url 'taskdetail' %}" class="btn btn-sm btn-primary">
+      <a href="{% url 'ticketdetail' %}" class="btn btn-sm btn-primary">
         <i class="fas fa-plus me-1"></i>Submit New Ticket
       </a>
     </div>

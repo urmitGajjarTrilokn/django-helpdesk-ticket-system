@@ -227,7 +227,7 @@
       <div class="stat-icon si-indigo"><i class="fas fa-ticket-alt"></i></div>
       <div>
         <div class="stat-label">Tickets Created</div>
-        <div class="stat-value" style="color:var(--brand);">{{ my_tasks_count|default:0 }}</div>
+        <div class="stat-value" style="color:var(--brand);">{{ my_tickets_count|default:0 }}</div>
       </div>
     </div>
   </div>
@@ -245,7 +245,7 @@
       <div class="stat-icon si-yellow"><i class="fas fa-inbox"></i></div>
       <div>
         <div class="stat-label">Active Queue</div>
-        <div class="stat-value" style="color:var(--warning);">{{ task_count|default:0 }}</div>
+        <div class="stat-value" style="color:var(--warning);">{{ ticket_count|default:0 }}</div>
       </div>
     </div>
   </div>
@@ -383,7 +383,7 @@
         Resolved History
         <i class="fas fa-chevron-right p-menu-arr"></i>
       </a>
-      <a href="{% url 'taskdetail' %}" class="p-menu-item">
+      <a href="{% url 'ticketdetail' %}" class="p-menu-item">
         <div class="p-menu-icon"><i class="fas fa-plus"></i></div>
         New Ticket
         <i class="fas fa-chevron-right p-menu-arr"></i>

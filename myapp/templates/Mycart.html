@@ -103,8 +103,6 @@
   </a>
 </div>
 
-{% if Carts %}
-
 <div class="row g-3 mb-4">
   <div class="col-6 col-sm-4">
     <div class="stat-card">
@@ -147,59 +145,73 @@
   {% endif %}
 </div>
 
-<div class="my-filter-bar" id="sortPills">
-  <a href="?sort=all{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="mf-pill {% if sort == 'all' %}active{% endif %}">All</a>
-  <a href="?sort=urgent{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="mf-pill {% if sort == 'urgent' %}active{% endif %}">Urgent</a>
-  <a href="?sort=overdue{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="mf-pill {% if sort == 'overdue' %}active{% endif %}">Overdue</a>
+<div class="my-filter-bar" id="sortFilter">
+  <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
+    {% if selected_department_filter %}
+    <input type="hidden" name="department" value="{{ selected_department_filter }}">
+    {% endif %}
+    <label for="sortFilterSelect" class="mb-0" style="font-size:12px;font-weight:700;color:var(--slate-500);">Priority/Status</label>
+    <select id="sortFilterSelect" name="sort" class="form-select form-select-sm" style="min-width:180px;">
+      <option value="all" {% if sort == 'all' %}selected{% endif %}>All Tickets</option>
+      <option value="low" {% if sort == 'low' %}selected{% endif %}>Low Priority</option>
+      <option value="medium" {% if sort == 'medium' %}selected{% endif %}>Medium Priority</option>
+      <option value="high" {% if sort == 'high' %}selected{% endif %}>High Priority</option>
+      <option value="urgent" {% if sort == 'urgent' %}selected{% endif %}>Urgent Priority</option>
+      <option value="overdue" {% if sort == 'overdue' %}selected{% endif %}>Overdue</option>
+    </select>
+    <button type="submit" class="btn btn-sm btn-outline-secondary">Apply</button>
+    <a href="?sort=all{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="btn btn-sm btn-light border">Reset</a>
+  </form>
 </div>
 
+{% if Carts %}
 <div class="row g-3">
   {% for cart in Carts %}
-  <div class="col-12 col-md-6 col-xl-4" data-overdue="{{ cart.task.is_overdue|yesno:'true,false' }}" data-priority="{{ cart.task.effective_priority|lower }}">
+  <div class="col-12 col-md-6 col-xl-4" data-overdue="{{ cart.ticket.is_overdue|yesno:'true,false' }}" data-priority="{{ cart.ticket.effective_priority|lower }}">
     <div class="ticket-card">
       <div class="tc-header">
         <div class="d-flex align-items-center gap-2">
-          <span class="mono" style="font-size:11.5px;color:var(--slate-400);">#{{ cart.task.id }}</span>
+          <span class="mono" style="font-size:11.5px;color:var(--slate-400);">#{{ cart.ticket.id }}</span>
           <span class="status-badge
-            {% if cart.task.TASK_STATUS == 'Open' %}sb-open
-            {% elif cart.task.TASK_STATUS == 'In Progress' %}sb-progress
-            {% elif cart.task.TASK_STATUS == 'Reopen' %}sb-reopen
+            {% if cart.ticket.TICKET_STATUS == 'Open' %}sb-open
+            {% elif cart.ticket.TICKET_STATUS == 'In Progress' %}sb-progress
+            {% elif cart.ticket.TICKET_STATUS == 'Reopen' %}sb-reopen
             {% else %}sb-closed{% endif %}">
-            {{ cart.task.TASK_STATUS }}
+            {{ cart.ticket.TICKET_STATUS }}
           </span>
         </div>
-        {% if cart.task.effective_priority %}
+        {% if cart.ticket.effective_priority %}
         <span class="priority-badge
-          {% if cart.task.effective_priority == 'LOW' %}pb-low
-          {% elif cart.task.effective_priority == 'MEDIUM' %}pb-medium
-          {% elif cart.task.effective_priority == 'HIGH' %}pb-high
+          {% if cart.ticket.effective_priority == 'LOW' %}pb-low
+          {% elif cart.ticket.effective_priority == 'MEDIUM' %}pb-medium
+          {% elif cart.ticket.effective_priority == 'HIGH' %}pb-high
           {% else %}pb-urgent{% endif %}">
-          {{ cart.task.effective_priority_display }}
+          {{ cart.ticket.effective_priority_display }}
         </span>
         {% endif %}
       </div>
 
       <div class="tc-body">
-        <div class="tc-title">{{ cart.task.TASK_TITLE|truncatechars:65 }}</div>
+        <div class="tc-title">{{ cart.ticket.TICKET_TITLE|truncatechars:65 }}</div>
         <div class="tc-meta">
-          <i class="fas fa-user" style="font-size:10px;"></i> {{ cart.task.TASK_CREATED.username }}
-          {% if cart.task.assigned_department %}
-          &nbsp;|&nbsp;<i class="fas fa-building" style="font-size:10px;"></i> {{ cart.task.assigned_department.name }}
+          <i class="fas fa-user" style="font-size:10px;"></i> {{ cart.ticket.TICKET_CREATED.username }}
+          {% if cart.ticket.assigned_department %}
+          &nbsp;|&nbsp;<i class="fas fa-building" style="font-size:10px;"></i> {{ cart.ticket.assigned_department.name }}
           {% endif %}
         </div>
 
         <div class="tc-grid">
           <div class="tc-cell">
             <div class="tc-cell-label">Due Date</div>
-            <div class="tc-cell-val {% if cart.task.is_overdue %}text-danger{% endif %}">
-              {{ cart.task.TASK_DUE_DATE|date:"M d, Y" }}
+            <div class="tc-cell-val {% if cart.ticket.is_overdue %}text-danger{% endif %}">
+              {{ cart.ticket.TICKET_DUE_DATE|date:"M d, Y" }}
             </div>
           </div>
 
-          {% if cart.task.category %}
+          {% if cart.ticket.category %}
           <div class="tc-cell">
             <div class="tc-cell-label">Category</div>
-            <div class="tc-cell-val" style="color:{{ cart.task.category.color }};">{{ cart.task.category.name }}</div>
+            <div class="tc-cell-val" style="color:{{ cart.ticket.category.color }};">{{ cart.ticket.category.name }}</div>
           </div>
           {% endif %}
 
@@ -213,23 +225,23 @@
       </div>
 
       <div class="tc-footer">
-        <a href="{% url 'taskinfo' cart.task.id %}?from_assigned=1" class="btn btn-xs btn-outline-secondary flex-fill text-center">
+        <a href="{% url 'ticketinfo' cart.ticket.id %}?from_assigned=1" class="btn btn-xs btn-outline-secondary flex-fill text-center">
           <i class="fas fa-eye"></i> View
         </a>
 
-        {% if cart.task.TASK_STATUS == 'In Progress' %}
-        <a href="{% url 'resolvedtask' cart.task.id %}" class="btn btn-xs btn-success" title="Mark as Resolved">
+        {% if cart.ticket.TICKET_STATUS == 'In Progress' %}
+        <a href="{% url 'resolvedticket' cart.ticket.id %}" class="btn btn-xs btn-success" title="Mark as Resolved">
           <i class="fas fa-check-circle"></i>
         </a>
-        {% if cart.task.id in closable_task_ids %}
-        <a href="{% url 'comment' pk=cart.task.id action='closing_comment' %}" class="btn btn-xs btn-outline-success" title="Close with Note">
+        {% if cart.ticket.id in closable_ticket_ids %}
+        <a href="{% url 'comment' pk=cart.ticket.id action='closing_comment' %}" class="btn btn-xs btn-outline-success" title="Close with Note">
           <i class="fas fa-check"></i>
         </a>
         {% endif %}
         {% endif %}
 
-        {% if cart.task.id not in non_rejectable_task_ids and cart.task.TASK_STATUS != 'Reopen' %}
-        <a href="{% url 'removetask' cart.task.id %}" class="btn btn-xs btn-outline-danger" title="Reject this assignment">
+        {% if cart.ticket.id not in non_rejectable_ticket_ids and cart.ticket.TICKET_STATUS != 'Reopen' %}
+        <a href="{% url 'removeticket' cart.ticket.id %}" class="btn btn-xs btn-outline-danger" title="Reject this assignment">
           <i class="fas fa-times"></i>
         </a>
         {% endif %}
@@ -242,12 +254,21 @@
 {% else %}
 <div class="hd-card">
   <div class="empty-state" style="padding:64px 32px;">
-    <div class="empty-icon"><i class="fas fa-inbox" style="color:var(--slate-300);"></i></div>
-    <div class="empty-title">No tickets assigned</div>
-    <div class="empty-text">You currently have no assigned tickets.</div>
-    <a href="{{ dashboard_url|default:'/' }}" class="btn btn-sm btn-primary">
-      <i class="fas fa-th-large me-1"></i>Browse All Tickets
-    </a>
+    {% if total_assigned_count > 0 and has_active_ticket_filter %}
+      <div class="empty-icon"><i class="fas fa-filter" style="color:var(--slate-300);"></i></div>
+      <div class="empty-title">No tickets for this filter</div>
+      <div class="empty-text">Try a different priority/status filter.</div>
+      <a href="?sort=all{% if selected_department_filter %}&department={{ selected_department_filter }}{% endif %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-list me-1"></i>Show All Assigned Tickets
+      </a>
+    {% else %}
+      <div class="empty-icon"><i class="fas fa-inbox" style="color:var(--slate-300);"></i></div>
+      <div class="empty-title">No tickets assigned</div>
+      <div class="empty-text">You currently have no assigned tickets.</div>
+      <a href="{{ dashboard_url|default:'/' }}" class="btn btn-sm btn-primary">
+        <i class="fas fa-th-large me-1"></i>Browse All Tickets
+      </a>
+    {% endif %}
   </div>
 </div>
 {% endif %}

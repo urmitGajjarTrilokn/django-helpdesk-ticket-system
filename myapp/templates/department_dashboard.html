@@ -27,14 +27,14 @@
         </tr>
       </thead>
       <tbody>
-        {% for t in tasks %}
+        {% for t in tickets %}
         <tr>
           <td>#{{ t.id }}</td>
-          <td><a href="{% url 'taskinfo' t.id %}">{{ t.TASK_TITLE|truncatechars:60 }}</a></td>
-          <td>{{ t.TASK_STATUS }}</td>
+          <td><a href="{% url 'ticketinfo' t.id %}">{{ t.TICKET_TITLE|truncatechars:60 }}</a></td>
+          <td>{{ t.TICKET_STATUS }}</td>
           <td>{{ t.effective_priority_display }}</td>
           <td>{{ t.assigned_to.username|default:"Unassigned" }}</td>
-          <td>{{ t.TASK_DUE_DATE|date:"M d, Y" }}</td>
+          <td>{{ t.TICKET_DUE_DATE|date:"M d, Y" }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="text-center text-muted py-4">No tickets in this department.</td></tr>

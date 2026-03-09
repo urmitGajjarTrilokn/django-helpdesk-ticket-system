@@ -1,10 +1,10 @@
 {% extends "Base.html" %}
-{% block title %}{% if edit_mode %}Edit Ticket #{{ task.id }}{% else %}New Ticket{% endif %} - HelpDesk{% endblock %}
+{% block title %}{% if edit_mode %}Edit Ticket #{{ ticket.id }}{% else %}New Ticket{% endif %} - HelpDesk{% endblock %}
 
 {% block breadcrumb %}
   <a href="{% url 'base' %}">Dashboard</a>
   <span class="bc-sep">/</span>
-  <strong>{% if edit_mode %}Edit Ticket #{{ task.id }}{% else %}New Ticket{% endif %}</strong>
+  <strong>{% if edit_mode %}Edit Ticket #{{ ticket.id }}{% else %}New Ticket{% endif %}</strong>
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
 <div class="col-12 col-lg-9 col-xl-8">
 
   <div class="page-header">
-    <div class="page-title">{% if edit_mode %}Edit Ticket #{{ task.id }}{% else %}Submit a New Ticket{% endif %}</div>
+    <div class="page-title">{% if edit_mode %}Edit Ticket #{{ ticket.id }}{% else %}Submit a New Ticket{% endif %}</div>
     <div class="page-sub">{% if edit_mode %}Update your existing ticket and submit the changes{% else %}Be specific - the clearer your description, the faster it gets resolved{% endif %}</div>
   </div>
 
@@ -31,19 +31,19 @@
 
           <div class="col-12">
             <label class="form-label">Title <span class="text-danger">*</span></label>
-            {{ form.TASK_TITLE }}
+            {{ form.TICKET_TITLE }}
             <div class="form-text">Short, specific summary - e.g. "Printer not working on 3rd floor"</div>
-            {% if form.TASK_TITLE.errors %}
-              <div class="field-error">{{ form.TASK_TITLE.errors.0 }}</div>
+            {% if form.TICKET_TITLE.errors %}
+              <div class="field-error">{{ form.TICKET_TITLE.errors.0 }}</div>
             {% endif %}
           </div>
 
           <div class="col-12">
             <label class="form-label">Description <span class="text-danger">*</span></label>
-            {{ form.TASK_DESCRIPTION }}
+            {{ form.TICKET_DESCRIPTION }}
             <div class="form-text">What's happening? What did you expect vs what you saw? Any error messages?</div>
-            {% if form.TASK_DESCRIPTION.errors %}
-              <div class="field-error">{{ form.TASK_DESCRIPTION.errors.0 }}</div>
+            {% if form.TICKET_DESCRIPTION.errors %}
+              <div class="field-error">{{ form.TICKET_DESCRIPTION.errors.0 }}</div>
             {% endif %}
           </div>
 
@@ -76,9 +76,9 @@
 
           <div class="col-sm-6">
             <label class="form-label">Due Date <span class="text-danger">*</span></label>
-            {{ form.TASK_DUE_DATE }}
-            {% if form.TASK_DUE_DATE.errors %}
-              <div class="field-error">{{ form.TASK_DUE_DATE.errors.0 }}</div>
+            {{ form.TICKET_DUE_DATE }}
+            {% if form.TICKET_DUE_DATE.errors %}
+              <div class="field-error">{{ form.TICKET_DUE_DATE.errors.0 }}</div>
             {% endif %}
           </div>
         </div>
@@ -105,7 +105,7 @@
         </div>
 
         <div class="d-flex justify-content-end gap-2">
-          <a href="{% if edit_mode %}{% url 'taskinfo' task.id %}{% if mine_only_mode %}?mine_only=1{% endif %}{% else %}{% url 'base' %}{% endif %}" class="btn btn-sm btn-outline-secondary">
+          <a href="{% if edit_mode %}{% url 'ticketinfo' ticket.id %}{% if mine_only_mode %}?mine_only=1{% endif %}{% else %}{% url 'base' %}{% endif %}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-times"></i> Cancel
           </a>
           <button type="submit" class="btn btn-sm btn-primary">
@@ -128,9 +128,9 @@
     if (!form) return;
     const submitBtn = form.querySelector('button[type="submit"]');
 
-    const title = document.getElementById('id_TASK_TITLE');
-    const description = document.getElementById('id_TASK_DESCRIPTION');
-    const dueDate = document.getElementById('id_TASK_DUE_DATE');
+    const title = document.getElementById('id_TICKET_TITLE');
+    const description = document.getElementById('id_TICKET_DESCRIPTION');
+    const dueDate = document.getElementById('id_TICKET_DUE_DATE');
 
     function setMinDueDate() {
       if (!dueDate) return;

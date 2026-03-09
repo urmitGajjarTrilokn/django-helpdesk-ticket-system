@@ -17,22 +17,22 @@ urlpatterns = [
     path('advanced/',                   views.advanced_dashboard, name='advanced_dashboard'),
 
                                                                                
-    path('ticket/new/',            views.TaskDetails,        name='taskdetail'),
-    path('ticket/<int:pk>/',       views.TaskInfo,            name='taskinfo'),
-    path('ticket/<int:pk>/edit/',  views.updatetask,         name='updatetask'),
-    path('ticket/<int:pk>/delete/',views.deletetask,         name='deletetask'),
+    path('ticket/new/',            views.TicketDetails,        name='ticketdetail'),
+    path('ticket/<int:pk>/',       views.TicketInfo,            name='ticketinfo'),
+    path('ticket/<int:pk>/edit/',  views.updateticket,         name='updateticket'),
+    path('ticket/<int:pk>/delete/',views.deleteticket,         name='deleteticket'),
     path('tickets/bulk-delete/',   views.bulk_delete_tickets, name='bulk_delete_tickets'),
-    path('ticket/<int:pk>/reject/',views.RemoveTask,         name='removetask'),
-    path('ticket/<int:pk>/close/', views.CloseTask,          name='closetask'),
-    path('ticket/<int:pk>/reopen/',views.reopentask,         name='reopentask'),
-    path('ticket/<int:pk>/resolve/',views.resolvedtask,     name='resolvedtask'),
-    path('ticket/<int:pk>/history/',views.task_history,     name='task_history'),
-    path('ticket/<int:pk>/rate/',  views.rate_task,          name='rate_task'),
+    path('ticket/<int:pk>/reject/',views.RemoveTicket,         name='removeticket'),
+    path('ticket/<int:pk>/close/', views.CloseTicket,          name='closeticket'),
+    path('ticket/<int:pk>/reopen/',views.reopenticket,         name='reopenticket'),
+    path('ticket/<int:pk>/resolve/',views.resolvedticket,     name='resolvedticket'),
+    path('ticket/<int:pk>/history/',views.ticket_history,     name='ticket_history'),
+    path('ticket/<int:pk>/rate/',  views.rate_ticket,          name='rate_ticket'),
     path('ticket/<int:pk>/overdue-note/', views.send_overdue_note, name='send_overdue_note'),
     path('ticket/<int:pk>/overdue-note-reply/', views.reply_overdue_note, name='reply_overdue_note'),
 
                                                 
-    path('reject/<int:pk>/',       views.RemoveTask,         name='reject_task'),
+    path('reject/<int:pk>/',       views.RemoveTicket,         name='reject_ticket'),
 
                                                                                
     path('my-tickets/',            views.MyCarts,            name='mycart'),
@@ -145,7 +145,7 @@ urlpatterns = [
                                                                                
     path('api/notification-count/',     views.notification_count_api,     name='notification_count_api'),
     path('api/username-exists/',        views.username_exists_api,        name='username_exists_api'),
-    path('api/tasks-over-time/',        views.api_tasks_over_time,        name='api_tasks_over_time'),
+    path('api/tickets-over-time/',        views.api_tickets_over_time,        name='api_tickets_over_time'),
     path('api/department-comparison/',  views.api_department_comparison,  name='api_department_comparison'),
     path('api/priority-distribution/',  views.api_priority_distribution,  name='api_priority_distribution'),
     path('api/category-distribution/',  views.api_category_distribution,  name='api_category_distribution'),
