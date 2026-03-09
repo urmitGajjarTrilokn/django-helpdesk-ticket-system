@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -148,7 +149,9 @@ class RolePermissionBehaviorTests(TestCase):
             ).exists()
         )
 
-    def test_ticket_auto_assigned_when_department_has_one_member(self):
+    @patch("myapp.views.predict_department")
+    @patch("myapp.views.predict_ticket_priority_with_meta")
+    def test_ticket_auto_assigned_when_department_has_one_member(self, mock_predict_priority, mock_predict_department):
         solo_department = Department.objects.create(
             name="Lone Desk",
             code="LONE",
@@ -156,6 +159,13 @@ class RolePermissionBehaviorTests(TestCase):
             color="#0ea5e9",
             icon="fas fa-user-check",
         )
+        mock_predict_department.return_value = "Lone Desk"
+        mock_predict_priority.return_value = {
+            "priority": "MEDIUM",
+            "reason": "Default",
+            "model": "test",
+            "error": "",
+        }
         DepartmentMember.objects.create(
             user=self.member,
             department=solo_department,
@@ -170,9 +180,7 @@ class RolePermissionBehaviorTests(TestCase):
                 "TASK_TITLE": "Single member assignment",
                 "TASK_DESCRIPTION": "Should auto assign to only department member.",
                 "TASK_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
-                "priority": "MEDIUM",
                 "category": "",
-                "assigned_department": str(solo_department.id),
             },
         )
 

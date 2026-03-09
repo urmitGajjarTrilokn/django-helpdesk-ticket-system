@@ -55,6 +55,7 @@
             {% endif %}
           </div>
 
+          {% if form.priority %}
           <div class="col-sm-6">
             <label class="form-label">Priority</label>
             {{ form.priority }}
@@ -63,6 +64,7 @@
               <div class="field-error">{{ form.priority.errors.0 }}</div>
             {% endif %}
           </div>
+          {% endif %}
 
           {% if form.assigned_department %}
           <div class="col-sm-6">
@@ -92,8 +94,13 @@
           </div>
           <ul style="font-size:12.5px;color:var(--gray-600);margin:0;padding-left:18px;line-height:1.9;">
             <li>Attach screenshots or error logs when possible</li>
+            {% if edit_mode %}
             <li>Select the correct department - wrong routing causes delays</li>
             <li>Urgent tickets are usually handled first by department teams</li>
+            {% else %}
+            <li>Priority is decided automatically by AI</li>
+            <li>Department is routed automatically by ML</li>
+            {% endif %}
           </ul>
         </div>
 

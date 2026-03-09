@@ -47,18 +47,24 @@ class TicketPriorityFlowTests(TestCase):
         self.assertEqual(output["priority"], "HIGH")
 
     @patch("myapp.views.predict_ticket_priority_with_meta")
-    def test_manual_priority_skips_ai_prediction(self, mock_predict):
+    def test_manual_priority_input_is_ignored_and_ai_still_runs(self, mock_predict):
+        mock_predict.return_value = {
+            "priority": "MEDIUM",
+            "reason": "AI-only priority flow",
+            "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
+            "error": "",
+        }
         response = self.client.post(
             reverse("taskdetail"),
             data=self._ticket_payload(priority="LOW"),
         )
         self.assertEqual(response.status_code, 302)
-        mock_predict.assert_not_called()
+        mock_predict.assert_called_once()
 
         task = TaskDetail.objects.latest("id")
-        self.assertEqual(task.priority, "LOW")
-        self.assertEqual(task.ai_suggested_priority, None)
-        self.assertFalse(AIMLLog.objects.filter(task=task, log_type="PRIORITY").exists())
+        self.assertEqual(task.priority, "MEDIUM")
+        self.assertEqual(task.ai_suggested_priority, "MEDIUM")
+        self.assertTrue(AIMLLog.objects.filter(task=task, log_type="PRIORITY").exists())
 
     def test_priority_override_marks_ai_feedback(self):
         task = TaskDetail.objects.create(

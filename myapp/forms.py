@@ -254,6 +254,55 @@ class TaskDetailForm(forms.ModelForm):
         return desc
 
 
+class TaskCreateForm(forms.ModelForm):
+    TASK_TITLE = forms.CharField(
+        label="Task Title",
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Brief summary of the task",
+        }),
+        help_text="Keep it concise and descriptive",
+    )
+    TASK_DUE_DATE = forms.DateField(
+        label='Task Due Date',
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        help_text="When should this be completed?",
+    )
+    TASK_DESCRIPTION = forms.CharField(
+        label="Task Description",
+        widget=forms.Textarea(attrs={
+            "class": "form-control", "rows": "5",
+            "placeholder": "Describe the task in detail...",
+        }),
+        help_text="Provide as much detail as possible",
+    )
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.filter(is_active=True),
+        required=False,
+        empty_label="Select Category",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Category",
+    )
+
+    class Meta:
+        model = TaskDetail
+        fields = [
+            'TASK_TITLE', 'TASK_DESCRIPTION', 'category', 'TASK_DUE_DATE',
+        ]
+
+    def clean_TASK_TITLE(self):
+        title = self.cleaned_data.get('TASK_TITLE')
+        if len(title) < 10:
+            raise ValidationError("Title must be at least 10 characters.")
+        return title
+
+    def clean_TASK_DESCRIPTION(self):
+        desc = self.cleaned_data.get('TASK_DESCRIPTION')
+        if len(desc) < 20:
+            raise ValidationError("Please provide more detail (at least 20 characters).")
+        return desc
+
+
 class TaskUpdateForm(forms.ModelForm):
     TASK_TITLE = forms.CharField(
         label="Task Title",

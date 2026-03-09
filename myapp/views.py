@@ -51,7 +51,7 @@ from .notifications import (
 )
 from .ai.ai_priority import predict_ticket_priority_with_meta
 from .forms import (
-    LoginForm, RegisterForm, UserProfileForm, TaskDetailForm,
+    LoginForm, RegisterForm, UserProfileForm, TaskDetailForm, TaskCreateForm,
     UserCommentForm, TaskUpdateForm, TaskFilterForm, CategoryForm,
     AccountSettingsForm, UsernameEmailPasswordResetForm,
 )
@@ -608,37 +608,29 @@ def Basepage(request, dept_id=None):
 @login_required
 def TaskDetails(request):
     if request.method == "POST":
-        form = TaskDetailForm(request.POST, request.FILES)
+        form = TaskCreateForm(request.POST, request.FILES)
         if form.is_valid():
             task = form.save(commit=False)
             task.TASK_CREATED = request.user
 
             prediction = {}
-            submitted_priority = (form.cleaned_data.get("priority") or "").strip().upper()
-            used_ai_priority = (submitted_priority == "")
+            used_ai_priority = True
+            logger.info("AI priority prediction started for new ticket submit.")
 
-            if used_ai_priority:
-                logger.info("AI priority prediction started for new ticket submit.")
+            prediction = predict_ticket_priority_with_meta(
+                title=task.TASK_TITLE,
+                description=task.TASK_DESCRIPTION,
+            )
 
-                prediction = predict_ticket_priority_with_meta(
-                    title=task.TASK_TITLE,
-                    description=task.TASK_DESCRIPTION,
-                )
+            predicted_priority = (prediction or {}).get("priority")
 
-                predicted_priority = (prediction or {}).get("priority")
-
-                if predicted_priority:
-                    task.priority = predicted_priority
-                    task.ai_suggested_priority = predicted_priority
-                    logger.info("AI priority prediction applied: %s", predicted_priority)
-                else:
-                    logger.warning(
-                        "AI priority prediction returned no valid priority; falling back to default."
-                    )
+            if predicted_priority:
+                task.priority = predicted_priority
+                task.ai_suggested_priority = predicted_priority
+                logger.info("AI priority prediction applied: %s", predicted_priority)
             else:
-                logger.info(
-                    "AI priority prediction skipped: manual priority provided (%s).",
-                    submitted_priority,
+                logger.warning(
+                    "AI priority prediction returned no valid priority; falling back to default."
                 )
 
             if not (task.priority or "").strip():
@@ -715,7 +707,7 @@ def TaskDetails(request):
             return redirect(_get_dashboard_redirect_url(request.user))
 
     else:
-        form = TaskDetailForm()
+        form = TaskCreateForm()
 
     return render(request, "TaskDetail.html", {"form": form})
 
