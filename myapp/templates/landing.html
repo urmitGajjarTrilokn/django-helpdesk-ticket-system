@@ -84,7 +84,7 @@
     <p class="hero-sub">Smart ticket routing, due-date tracking, department dashboards and real-time alerts - all in one modern helpdesk platform.</p>
 
     <div class="login-cards">
-      <a href="{% url 'login' %}role=user" class="login-card user-card">
+      <a href="{% url 'login' %}?role=user" class="login-card user-card">
         <div class="lc-icon"><i class="fas fa-user"></i></div>
         <div>
           <div class="lc-title">User Login</div>
@@ -92,7 +92,7 @@
         </div>
         <div class="lc-btn"><i class="fas fa-arrow-right"></i> Sign In</div>
       </a>
-      <a href="{% url 'login' %}role=admin" class="login-card admin-card">
+      <a href="{% url 'login' %}?role=admin" class="login-card admin-card">
         <div class="lc-icon"><i class="fas fa-shield-alt"></i></div>
         <div>
           <div class="lc-title">Admin Login</div>

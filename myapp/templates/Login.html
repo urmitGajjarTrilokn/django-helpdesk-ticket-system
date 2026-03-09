@@ -152,7 +152,7 @@
       {% if allow_register %}
         No account <a href="{% url 'register' %}">Register</a>
       {% else %}
-        Regular user <a href="{% url 'login' %}role=user">User Login</a>
+        Regular user <a href="{% url 'login' %}?role=user">User Login</a>
       {% endif %}
     </div>
   </div>
@@ -163,8 +163,8 @@
   function togglePw(btn){
     const inp=btn.closest('.iw').querySelector('input');
     const ic=btn.querySelector('i');
-    inp.type=inp.type==='password''text':'password';
-    ic.className=inp.type==='password''fas fa-eye':'fas fa-eye-slash';
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    ic.className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
   }
 
   function setFieldError(input, message) {

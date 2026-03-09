@@ -1524,11 +1524,12 @@ def LogoutView(request):
 def RegisterView(request):
     if request.method == "POST":
         register_form = RegisterForm(request.POST)
-        profile_form  = UserProfileForm(request.POST, request.FILES)
+        profile_form  = UserProfileForm(request.POST, request.FILES, require_phone=True)
         if register_form.is_valid() and profile_form.is_valid():
             user         = register_form.save()
             profile      = profile_form.save(commit=False)
             profile.user = user
+            profile.phone = profile_form.get_full_phone()
             profile.save()
             messages.success(request, "Registered successfully! Please sign in.")
             return redirect('login')
@@ -1536,7 +1537,7 @@ def RegisterView(request):
             messages.error(request, "Please correct the errors below.")
     else:
         register_form = RegisterForm()
-        profile_form  = UserProfileForm()
+        profile_form  = UserProfileForm(require_phone=True)
     return render(request, 'Register.html', {
         'Register_form': register_form,
         'UserProfile_form': profile_form,

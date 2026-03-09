@@ -199,18 +199,27 @@
           <i class="fas fa-id-card" style="color:var(--brand);"></i>
           Personal Details
         </div>
-        <span style="font-size:12px;color:var(--slate-400);">Optional</span>
+        <span style="font-size:12px;color:var(--slate-400);">Phone is required</span>
       </div>
       <div class="hd-card-body">
         <div class="row g-3">
 
           <div class="col-sm-6">
             <div class="f-group">
-              <label class="form-label">Phone Number</label>
-              <div class="f-icon-wrap">
+              <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+              <div class="row g-2">
+                <div class="col-5">
+                  {{ UserProfile_form.country_code }}
+                  {% if UserProfile_form.country_code.errors %}
+                    <div class="field-error">{{ UserProfile_form.country_code.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-7 f-icon-wrap">
                 <i class="fi fas fa-phone"></i>
                 {{ UserProfile_form.phone }}
+                </div>
               </div>
+              <div class="form-text">Example: +91 9876543210</div>
               {% if UserProfile_form.phone.errors %}
                 <div class="field-error">{{ UserProfile_form.phone.errors.0 }}</div>
               {% endif %}
@@ -350,11 +359,15 @@
   }
 
   const phoneEl = document.getElementById('id_phone');
+  const countryCodeEl = document.getElementById('id_country_code');
   if (phoneEl) {
     phoneEl.addEventListener('blur', function() {
       const err = document.getElementById('err_phone');
-      const ph  = this.value.replace(/\s/g,'');
-      if (ph && !/^[+][\d\-\(\)]{7,15}$/.test(ph)) {
+      const digits = (this.value || '').replace(/\D/g,'');
+      if (!digits) {
+        err.textContent = 'Phone number is required.';
+        err.style.display = 'block';
+      } else if (digits.length < 6 || digits.length > 12) {
         err.textContent = 'Enter a valid phone number.';
         err.style.display = 'block';
       } else {
@@ -384,6 +397,7 @@
       { id: 'id_last_name',   errId: 'err_last_name',   msg: 'Last name is required.' },
       { id: 'id_username',    errId: 'err_username',    msg: 'Username is required.' },
       { id: 'id_email',       errId: 'err_email',       msg: 'Email is required.' },
+      { id: 'id_phone',       errId: 'err_phone',       msg: 'Phone number is required.' },
       { id: 'id_password1',   errId: 'err_password1',   msg: 'Password is required.' },
       { id: 'id_password2',   errId: 'err_password2',   msg: 'Please confirm your password.' },
     ];
@@ -406,6 +420,13 @@
     if (pwd1 && pwd2 && pwd1.value && pwd2.value && pwd1.value !== pwd2.value) {
       const err = document.getElementById('err_password2');
       err.textContent = 'Passwords do not match.';
+      err.style.display = 'block';
+      valid = false;
+    }
+
+    if (countryCodeEl && !countryCodeEl.value) {
+      const err = document.getElementById('err_phone');
+      err.textContent = 'Please select a country code.';
       err.style.display = 'block';
       valid = false;
     }
