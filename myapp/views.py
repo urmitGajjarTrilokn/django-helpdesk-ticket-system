@@ -2476,6 +2476,15 @@ def notification_count_api(request):
 
 @admin_required
 def analytics_dashboard(request):
+    def _department_from_query(param_name):
+        dept_id = request.GET.get(param_name)
+        if not dept_id:
+            return None
+        try:
+            return Department.objects.get(id=dept_id)
+        except Department.DoesNotExist:
+            return None
+
     range_type = request.GET.get('range', '30_days')
     start_date, end_date = get_date_range(range_type)
     start_dt = datetime.combine(start_date, time.min)
@@ -2491,25 +2500,23 @@ def analytics_dashboard(request):
             messages.error(request, 'Invalid date format.')
             start_date, end_date = get_date_range('30_days')
 
-    department = None
-    dept_id    = request.GET.get('department')
-    if dept_id:
-        try:
-            department = Department.objects.get(id=dept_id)
-        except Department.DoesNotExist:
-            pass
+    department = _department_from_query('department')
+    resolver_department = _department_from_query('resolver_department') or department
+    creator_department = _department_from_query('creator_department') or department
 
     context = {
         'start_date':           start_date,
         'end_date':             end_date,
         'range_type':           range_type,
         'selected_department':  department,
+        'selected_resolver_department': resolver_department,
+        'selected_creator_department': creator_department,
         'departments':          Department.objects.filter(is_active=True),
         'stats':                get_ticket_statistics(start_dt, end_dt, department),
         'dept_stats':           get_department_statistics(start_dt, end_dt),
         'dept_comparison':      get_department_comparison(),
-        'top_creators':         get_top_ticket_creators(5, start_dt, end_dt),
-        'top_resolvers':        get_top_ticket_resolvers(5, start_dt, end_dt),
+        'top_creators':         get_top_ticket_creators(5, start_dt, end_dt, creator_department),
+        'top_resolvers':        get_top_ticket_resolvers(5, start_dt, end_dt, resolver_department),
         'priority_dist':        get_priority_distribution(start_dt, end_dt, department),
         'category_dist':        get_category_distribution(start_dt, end_dt),
     }
@@ -2577,11 +2584,30 @@ def api_category_distribution(request):
 def export_analytics_excel(request):
     import openpyxl
     from openpyxl.styles import Font
+
+    def _department_from_query(param_name):
+        dept_id = request.GET.get(param_name)
+        if not dept_id:
+            return None
+        try:
+            return Department.objects.get(id=dept_id)
+        except Department.DoesNotExist:
+            return None
+
     range_type       = request.GET.get('range', '30_days')
     start_date, end_date = get_date_range(range_type)
     start_dt = datetime.combine(start_date, time.min)
     end_dt   = datetime.combine(end_date,   time.max)
-    data     = prepare_export_data(start_dt, end_dt)
+    department = _department_from_query('department')
+    resolver_department = _department_from_query('resolver_department') or department
+    creator_department = _department_from_query('creator_department') or department
+    data     = prepare_export_data(
+        start_dt,
+        end_dt,
+        department=department,
+        resolver_department=resolver_department,
+        creator_department=creator_department,
+    )
 
     wb  = openpyxl.Workbook()
     ws1 = wb.active
@@ -2872,11 +2898,29 @@ def export_analytics_pdf(request):
     from reportlab.lib import colors
     from io import BytesIO
 
+    def _department_from_query(param_name):
+        dept_id = request.GET.get(param_name)
+        if not dept_id:
+            return None
+        try:
+            return Department.objects.get(id=dept_id)
+        except Department.DoesNotExist:
+            return None
+
     range_type           = request.GET.get('range', '30_days')
     start_date, end_date = get_date_range(range_type)
     start_dt = datetime.combine(start_date, time.min)
     end_dt   = datetime.combine(end_date,   time.max)
-    data     = prepare_export_data(start_dt, end_dt)
+    department = _department_from_query('department')
+    resolver_department = _department_from_query('resolver_department') or department
+    creator_department = _department_from_query('creator_department') or department
+    data     = prepare_export_data(
+        start_dt,
+        end_dt,
+        department=department,
+        resolver_department=resolver_department,
+        creator_department=creator_department,
+    )
 
     buffer = BytesIO()
     doc    = SimpleDocTemplate(buffer, pagesize=letter)

@@ -1,7 +1,7 @@
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.utils import timezone
 from datetime import timedelta, date
-from .models import TicketDetail, Department, ActivityLog, TicketHistory
+from .models import TicketDetail, Department, DepartmentMember, ActivityLog, TicketHistory
 from django.contrib.auth.models import User
 import logging
 
@@ -168,11 +168,18 @@ def get_department_comparison():
         logger.error(f"get_department_comparison error: {e}")
         return {'labels': [], 'total_tickets': [], 'open_tickets': [], 'closed_tickets': [], 'colors': []}
 
-def get_top_ticket_creators(limit=10, start_date=None, end_date=None):
+def get_top_ticket_creators(limit=10, start_date=None, end_date=None, department=None):
     try:
         tickets = TicketDetail.objects.filter(TICKET_CREATED__isnull=False)
         if start_date and end_date:
             tickets = tickets.filter(TICKET_CREATED_ON__range=[start_date, end_date])
+        if department:
+            creator_ids = DepartmentMember.objects.filter(
+                department=department,
+                is_active=True,
+                user__is_active=True,
+            ).values_list('user_id', flat=True)
+            tickets = tickets.filter(TICKET_CREATED_id__in=creator_ids)
 
         top = tickets.values('TICKET_CREATED__username', 'TICKET_CREATED__id').annotate(
             count=Count('id')
@@ -192,16 +199,25 @@ def get_top_ticket_creators(limit=10, start_date=None, end_date=None):
         return []
 
 
-def get_top_ticket_resolvers(limit=10, start_date=None, end_date=None):
+def get_top_ticket_resolvers(limit=10, start_date=None, end_date=None, department=None):
     try:
         resolver_events = TicketHistory.objects.filter(
             changed_by__isnull=False
         ).filter(
             Q(action_type='CLOSED') |
             Q(action_type='STATUS_CHANGED', new_value='Resolved')
+        ).exclude(
+            ticket__TICKET_CREATED_id=F('changed_by_id')
         )
         if start_date and end_date:
             resolver_events = resolver_events.filter(changed_at__range=[start_date, end_date])
+        if department:
+            resolver_ids = DepartmentMember.objects.filter(
+                department=department,
+                is_active=True,
+                user__is_active=True,
+            ).values_list('user_id', flat=True)
+            resolver_events = resolver_events.filter(changed_by_id__in=resolver_ids)
 
         top = resolver_events.values('changed_by__username', 'changed_by__id').annotate(
             count=Count('id')
@@ -221,7 +237,8 @@ def get_top_ticket_resolvers(limit=10, start_date=None, end_date=None):
                 for t in user_tickets:
                     completed_on = t.resolved_at or t.TICKET_CLOSED_ON
                     if completed_on and t.TICKET_CREATED_ON:
-                        total_days += (completed_on - t.TICKET_CREATED_ON).days
+                        completed_date = completed_on.date() if hasattr(completed_on, 'date') else completed_on
+                        total_days += (completed_date - t.TICKET_CREATED_ON).days
                         count += 1
                 avg_hours = round(total_days / count * 24, 2) if count else 0
                 result.append({
@@ -297,8 +314,10 @@ def get_top_active_users(limit=10, start_date=None, end_date=None):
         logger.error(f"get_top_active_users error: {e}")
         return []
 
-def prepare_export_data(start_date, end_date, department=None):
+def prepare_export_data(start_date, end_date, department=None, resolver_department=None, creator_department=None):
     try:
+        resolver_department = resolver_department or department
+        creator_department = creator_department or department
         return {
             'date_range':           f"{start_date} to {end_date}",
             'generated_at':         timezone.now(),
@@ -306,8 +325,8 @@ def prepare_export_data(start_date, end_date, department=None):
             'department_stats':     get_department_statistics(start_date, end_date),
             'priority_distribution':get_priority_distribution(start_date, end_date, department),
             'category_distribution':get_category_distribution(start_date, end_date),
-            'top_creators':         get_top_ticket_creators(10, start_date, end_date),
-            'top_resolvers':        get_top_ticket_resolvers(10, start_date, end_date),
+            'top_creators':         get_top_ticket_creators(10, start_date, end_date, creator_department),
+            'top_resolvers':        get_top_ticket_resolvers(10, start_date, end_date, resolver_department),
         }
     except Exception as e:
         logger.error(f"prepare_export_data error: {e}")

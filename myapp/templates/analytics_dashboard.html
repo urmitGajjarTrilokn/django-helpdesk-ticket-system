@@ -131,11 +131,11 @@
       {% endfor %}
     </select>
 
-    <a href="{% url 'export_analytics_excel' %}?range={{ range_type|urlencode }}"
+    <a href="{% url 'export_analytics_excel' %}?range={{ range_type|urlencode }}{% if selected_department %}&department={{ selected_department.id }}{% endif %}{% if selected_resolver_department %}&resolver_department={{ selected_resolver_department.id }}{% endif %}{% if selected_creator_department %}&creator_department={{ selected_creator_department.id }}{% endif %}"
        class="btn btn-sm btn-outline-secondary" title="Export to Excel">
       <i class="fas fa-file-excel" style="color:#16A34A;"></i> Excel
     </a>
-    <a href="{% url 'export_analytics_pdf' %}?range={{ range_type|urlencode }}"
+    <a href="{% url 'export_analytics_pdf' %}?range={{ range_type|urlencode }}{% if selected_department %}&department={{ selected_department.id }}{% endif %}{% if selected_resolver_department %}&resolver_department={{ selected_resolver_department.id }}{% endif %}{% if selected_creator_department %}&creator_department={{ selected_creator_department.id }}{% endif %}"
        class="btn btn-sm btn-outline-secondary" title="Export to PDF">
       <i class="fas fa-file-pdf" style="color:var(--danger);"></i> PDF
     </a>
@@ -316,6 +316,15 @@
           <i class="fas fa-trophy" style="color:var(--warning);"></i>
           Top Resolvers
         </div>
+        <select class="form-select form-select-sm" style="width:auto;" onchange="applyLeaderboardFilter('resolver_department', this.value);">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}"
+                  {% if selected_resolver_department and selected_resolver_department.id == dept.id %}selected{% endif %}>
+            {{ dept.name }}
+          </option>
+          {% endfor %}
+        </select>
       </div>
       {% if top_resolvers %}
       {% for item in top_resolvers %}
@@ -352,6 +361,15 @@
           <i class="fas fa-pencil-alt" style="color:var(--brand);"></i>
           Top Ticket Creators
         </div>
+        <select class="form-select form-select-sm" style="width:auto;" onchange="applyLeaderboardFilter('creator_department', this.value);">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}"
+                  {% if selected_creator_department and selected_creator_department.id == dept.id %}selected{% endif %}>
+            {{ dept.name }}
+          </option>
+          {% endfor %}
+        </select>
       </div>
       {% if top_creators %}
       {% for item in top_creators %}
@@ -425,10 +443,37 @@
 
 function applyFilter() {
   const range = document.getElementById('rangeSelect').value;
-  const dept  = document.getElementById('deptSelect').value;
-  let url = `range=${range}`;
-  if (dept) url += `&department=${dept}`;
-  window.location.href = url;
+  const dept = document.getElementById('deptSelect').value;
+  const resolverDept = '{{ selected_resolver_department.id|default:"" }}';
+  const creatorDept = '{{ selected_creator_department.id|default:"" }}';
+  const params = new URLSearchParams();
+  params.set('range', range);
+  if (dept) params.set('department', dept);
+  if (resolverDept) params.set('resolver_department', resolverDept);
+  if (creatorDept) params.set('creator_department', creatorDept);
+  window.location.href = `?${params.toString()}`;
+}
+
+function applyLeaderboardFilter(paramName, value) {
+  const params = new URLSearchParams(window.location.search);
+  const range = document.getElementById('rangeSelect').value;
+  const dept = document.getElementById('deptSelect').value;
+
+  params.set('range', range);
+
+  if (dept) {
+    params.set('department', dept);
+  } else {
+    params.delete('department');
+  }
+
+  if (value) {
+    params.set(paramName, value);
+  } else {
+    params.delete(paramName);
+  }
+
+  window.location.href = `?${params.toString()}`;
 }
 
 const priorityCtx = document.getElementById('priorityChart');
