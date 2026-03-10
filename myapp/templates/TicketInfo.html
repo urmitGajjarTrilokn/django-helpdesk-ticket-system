@@ -616,7 +616,7 @@
 
   function validateReject(e) {
     const reasonEl = document.getElementById('rejectReason');
-    const reason = reasonEl  reasonEl.value.trim() : '';
+    const reason = reasonEl ? reasonEl.value.trim() : '';
     const err    = document.getElementById('rejectErr');
     if (!reason) {
       err.style.display = 'block';

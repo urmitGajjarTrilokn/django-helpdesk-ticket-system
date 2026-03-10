@@ -261,9 +261,9 @@
   const previewBadgeName= document.getElementById('previewBadgeName');
 
   function updatePreview() {
-    const name  = nameInput   nameInput.value.trim()  : '';
-    const icon  = (customIcon && customIcon.value.trim())  customIcon.value.trim() : (iconInput  iconInput.value.trim() : 'fa-folder');
-    const color = colorInput  colorInput.value : '#4F46E5';
+    const name  = nameInput ? nameInput.value.trim() : '';
+    const icon  = (customIcon && customIcon.value.trim()) ? customIcon.value.trim() : (iconInput ? iconInput.value.trim() : 'fa-folder');
+    const color = colorInput ? colorInput.value : '#4F46E5';
     const bg    = color + '18';
     const border= color + '30';
 
@@ -300,7 +300,7 @@
     updatePreview();
   }
 
-  const existingIcon = iconInput  iconInput.value.trim() : '';
+  const existingIcon = iconInput ? iconInput.value.trim() : '';
   if (existingIcon) {
     const btn = document.querySelector(`.icon-btn[data-icon="${existingIcon}"]`);
     if (btn) btn.classList.add('selected');

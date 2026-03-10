@@ -263,7 +263,7 @@
       setForgotHint('', '');
       return;
     }
-    const value = username  username.value.trim() : '';
+    const value = username ? username.value.trim() : '';
     if (value) {
       setForgotDisabled(forgot, 'Checking username...');
       clearTimeout(forgotLookupTimer);
