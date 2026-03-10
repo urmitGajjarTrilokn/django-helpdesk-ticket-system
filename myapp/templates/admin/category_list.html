@@ -290,14 +290,14 @@
 
     cards.forEach(c => {
       const matchText = c.dataset.name.includes(q) || c.dataset.desc.includes(q) || c.dataset.kw.includes(q);
-      const matchActive = activeFilter === null  true : (c.dataset.active === String(activeFilter));
+      const matchActive = activeFilter === null ? true : (c.dataset.active === String(activeFilter));
       const show = matchText && matchActive;
-      c.style.display = show  '' : 'none';
+      c.style.display = show ? '' : 'none';
       if (show) visible++;
     });
 
     document.getElementById('catCounter').textContent = visible;
-    document.getElementById('catEmpty').style.display = visible === 0 && cards.length > 0  'block' : 'none';
+    document.getElementById('catEmpty').style.display = visible === 0 && cards.length > 0 ? 'block' : 'none';
   }
 
   function filterActive(val) {

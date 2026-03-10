@@ -322,10 +322,10 @@
     const ok = phoneRe.test(phoneInput.value.trim());
     if (phoneStatus) {
       phoneStatus.innerHTML = ok
-         '<i class="fas fa-check-circle" style="color:var(--success);"></i>'
+        ? '<i class="fas fa-check-circle" style="color:var(--success);"></i>'
         : '<i class="fas fa-times-circle" style="color:var(--danger);"></i>';
     }
-    if (phoneErr)  phoneErr.style.display = ok  'none' : 'block';
+    if (phoneErr) phoneErr.style.display = ok ? 'none' : 'block';
     phoneInput.classList.toggle('is-invalid', !ok);
     return ok;
   }

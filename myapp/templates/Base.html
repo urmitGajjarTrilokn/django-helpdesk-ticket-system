@@ -804,8 +804,8 @@
     document.querySelectorAll('.nd-item').forEach(item => {
       const isRead = item.dataset.read === 'true';
       if (type === 'all')    item.style.display = '';
-      if (type === 'unread') item.style.display = isRead     'none' : '';
-      if (type === 'read')   item.style.display = !isRead    'none' : '';
+      if (type === 'unread') item.style.display = isRead ? 'none' : '';
+      if (type === 'read')   item.style.display = !isRead ? 'none' : '';
     });
   }
 
@@ -855,7 +855,7 @@
     }
 
     function fieldValue(field) {
-      if (field.type === 'checkbox') return field.checked  '1' : '';
+      if (field.type === 'checkbox') return field.checked ? '1' : '';
       return (field.value || '').trim();
     }
 
@@ -958,7 +958,7 @@
 
       fields.forEach(field => {
         const eventName = field.tagName === 'SELECT' || field.type === 'checkbox' || field.type === 'radio'
-           'change' : 'blur';
+          ? 'change' : 'blur';
         field.addEventListener(eventName, () => validateField(field));
       });
 

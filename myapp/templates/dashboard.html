@@ -499,7 +499,7 @@
     function refreshBulkDeleteState() {
       const selected = selectedItems();
       const count = selected.length;
-      actions.style.display = count > 0  'flex' : 'none';
+      actions.style.display = count > 0 ? 'flex' : 'none';
       countEl.textContent = `${count} selected`;
       selectAll.checked = count > 0 && count === items.length;
       selectAll.indeterminate = count > 0 && count < items.length;
