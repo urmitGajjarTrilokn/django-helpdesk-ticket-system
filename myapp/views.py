@@ -2962,4 +2962,3 @@ def export_analytics_pdf(request):
         f'attachment; filename=analytics_{start_date}_{end_date}.pdf'
     )
     return response
-
