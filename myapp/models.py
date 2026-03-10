@@ -1,8 +1,13 @@
 from django.db import models
+from django.db import connection
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
+
+
+def _table_exists(table_name):
+    return table_name in connection.introspection.table_names()
 
 class Department(models.Model):
     name        = models.CharField(max_length=100, unique=True)
@@ -588,6 +593,8 @@ class TicketRating(models.Model):
 def create_default_departments(sender, **kwargs):
     if sender.name != 'myapp':
         return
+    if not _table_exists(Department._meta.db_table):
+        return
     defaults = [
         {'name':'Finance',          'code':'FIN', 'color':'#10b981','icon':'fas fa-dollar-sign',
          'description':'Handles billing, payments and financial queries',
@@ -626,6 +633,8 @@ def create_default_departments(sender, **kwargs):
 @receiver(post_migrate)
 def create_default_categories(sender, **kwargs):
     if sender.name != 'myapp':
+        return
+    if not _table_exists(Category._meta.db_table):
         return
     defaults = [
         {'name':'Bug Report',      'icon':'fa-bug',            'color':'#dc3545',
