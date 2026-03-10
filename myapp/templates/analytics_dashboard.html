@@ -53,6 +53,50 @@
     border: 1px solid var(--slate-100);
     padding: 10px;
   }
+  .chart-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+  }
+  .chart-canvas-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 320px;
+  }
+  .priority-chart-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px 0;
+  }
+  .priority-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1 1 auto;
+    height: 100%;
+    gap: 12px;
+  }
+  .priority-legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 16px;
+    padding: 4px 4px 0;
+  }
+  .priority-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--slate-700);
+    line-height: 1.2;
+  }
 </style>
 {% endblock %}
 
@@ -150,7 +194,7 @@
 <div class="row g-4 mb-4">
 
   <div class="col-12 col-lg-7">
-    <div class="hd-card h-100">
+    <div class="hd-card h-100 d-flex flex-column">
       <div class="hd-card-header">
         <div class="hd-card-title">
           <i class="fas fa-chart-line" style="color:var(--brand);"></i>
@@ -158,37 +202,41 @@
         </div>
         <span style="font-size:12px;color:var(--slate-400);">{{ range_type|default:"30 days"|title }}</span>
       </div>
-      <div class="hd-card-body chart-container">
-        <canvas id="lineChart" height="200"></canvas>
+      <div class="hd-card-body chart-container chart-panel">
+        <div class="chart-canvas-wrap">
+          <canvas id="lineChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="col-12 col-lg-5">
-    <div class="hd-card h-100">
+    <div class="hd-card h-100 d-flex flex-column">
       <div class="hd-card-header">
         <div class="hd-card-title">
-          <i class="fas fa-chart-donut" style="color:var(--brand);"></i>
+          <i class="fas fa-chart-pie" style="color:var(--brand);"></i>
           Priority Distribution
         </div>
       </div>
-      <div class="hd-card-body d-flex flex-column align-items-center justify-content-center">
-        <canvas id="priorityChart" style="max-width:200px;max-height:200px;"></canvas>
+      <div class="hd-card-body chart-container priority-panel">
+        <div class="priority-chart-wrap">
+          <canvas id="priorityChart"></canvas>
+        </div>
         {% if priority_dist %}
-        <div class="d-flex flex-wrap gap-3 mt-3 justify-content-center">
-          <div class="d-flex align-items-center gap-1" style="font-size:12px;">
+        <div class="priority-legend-row">
+          <div class="priority-legend-item">
             <span style="width:9px;height:9px;border-radius:50%;background:#EF4444;display:inline-block;"></span>
             Urgent ({{ priority_dist.URGENT|default:0 }})
           </div>
-          <div class="d-flex align-items-center gap-1" style="font-size:12px;">
+          <div class="priority-legend-item">
             <span style="width:9px;height:9px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>
             High ({{ priority_dist.HIGH|default:0 }})
           </div>
-          <div class="d-flex align-items-center gap-1" style="font-size:12px;">
+          <div class="priority-legend-item">
             <span style="width:9px;height:9px;border-radius:50%;background:#4F46E5;display:inline-block;"></span>
             Medium ({{ priority_dist.MEDIUM|default:0 }})
           </div>
-          <div class="d-flex align-items-center gap-1" style="font-size:12px;">
+          <div class="priority-legend-item">
             <span style="width:9px;height:9px;border-radius:50%;background:#94A3B8;display:inline-block;"></span>
             Low ({{ priority_dist.LOW|default:0 }})
           </div>
@@ -386,7 +434,7 @@ function applyFilter() {
 const priorityCtx = document.getElementById('priorityChart');
 if (priorityCtx) {
   new Chart(priorityCtx, {
-    type: 'doughnut',
+    type: 'pie',
     data: {
       labels: ['Urgent', 'High', 'Medium', 'Low'],
       datasets: [{
@@ -397,14 +445,25 @@ if (priorityCtx) {
           {{ priority_dist.LOW|default:0 }}
         ],
         backgroundColor: ['#EF4444', '#F59E0B', '#4F46E5', '#94A3B8'],
-        borderWidth: 0,
-        hoverOffset: 6
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        hoverOffset: 8,
+        radius: '88%'
       }]
     },
     options: {
-      cutout: '68%',
-      plugins: { legend: { display: false } },
-      maintainAspectRatio: true
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0F172A',
+          titleColor: '#fff',
+          bodyColor: '#E2E8F0',
+          displayColors: true,
+          padding: 10,
+        },
+      }
     }
   });
 }
