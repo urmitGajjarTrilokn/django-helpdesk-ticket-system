@@ -1,4 +1,5 @@
 {% extends "Base.html" %}
+{% load string_filters %}
 {% block title %}Activity Log — HelpDesk{% endblock %}
 
 {% block breadcrumb %}
@@ -171,7 +172,7 @@
                     {% elif act.action == 'COMMENTED'       %}var(--brand-light);color:var(--brand);border:1px solid var(--brand-muted)
                     {% elif act.action == 'REOPENED'        %}var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border)
                     {% else %}var(--slate-100);color:var(--slate-500);border:1px solid var(--slate-200){% endif %};">
-              {{ act.action|lower|replace:"_"," " }}
+              {{ act.action|lower|replace:"_, " }}
             </span>
             <span style="font-size:11.5px;color:var(--slate-400);white-space:nowrap;">
               {{ act.timestamp|date:"M d, Y" }}
