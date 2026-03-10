@@ -25,28 +25,6 @@
     min-height: 340px;
     flex: 1 1 auto;
   }
-  .status-legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px 16px;
-    padding: 12px 4px 4px;
-  }
-  .status-legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--slate-700);
-    line-height: 1.2;
-  }
-  .status-legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-  }
   .chart-caption {
     margin-top: 10px;
     font-size: 13px;
@@ -68,13 +46,6 @@
         <div class="chart-shell">
           <div class="chart-canvas-wrap">
             <canvas id="statusDistributionChart"></canvas>
-          </div>
-          <div class="status-legend">
-            <div class="status-legend-item"><span class="status-legend-dot" style="background:#3B82F6;"></span>Open</div>
-            <div class="status-legend-item"><span class="status-legend-dot" style="background:#F59E0B;"></span>In Progress</div>
-            <div class="status-legend-item"><span class="status-legend-dot" style="background:#F97316;"></span>Reopen</div>
-            <div class="status-legend-item"><span class="status-legend-dot" style="background:#10B981;"></span>Resolved</div>
-            <div class="status-legend-item"><span class="status-legend-dot" style="background:#64748B;"></span>Closed</div>
           </div>
         </div>
         <div class="chart-caption">Quick share of current ticket statuses.</div>
