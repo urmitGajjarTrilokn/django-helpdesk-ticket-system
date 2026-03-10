@@ -45,6 +45,8 @@
     box-shadow: 0 2px 10px rgba(15,23,42,.1);
   }
   .p-avatar img { width:100%; height:100%; object-fit:cover; }
+  .p-avatar .p-avatar-initial { display: inline-flex; }
+  .p-avatar img + .p-avatar-initial { display: none; }
 
   .p-id-body { flex: 1; min-width: 0; }
   .p-name {
@@ -187,7 +189,9 @@
   <div class="p-avatar">
     {% with avatar=ProfileData.user|avatar_url %}
     {% if avatar %}
-      <img src="{{ avatar }}" alt="Profile">
+      <img src="{{ avatar }}" alt="Profile"
+           onerror="this.style.display='none'; if(this.nextElementSibling){ this.nextElementSibling.style.display='inline-flex'; }">
+      <span class="p-avatar-initial">{{ ProfileData.user|avatar_initial }}</span>
     {% else %}
       {{ ProfileData.user|avatar_initial }}
     {% endif %}
