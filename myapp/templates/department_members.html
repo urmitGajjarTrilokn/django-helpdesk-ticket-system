@@ -355,6 +355,8 @@
     box-shadow: 0 2px 8px rgba(15,23,42,.12);
   }
   .member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .member-avatar .member-avatar-initial { display: inline-flex; }
+  .member-avatar img + .member-avatar-initial { display: none; }
   .member-name {
     font-size: 14px;
     font-weight: 700;
@@ -679,7 +681,10 @@
               <div class="member-top">
                 <div class="member-avatar">
                   {% if row.profile_image %}
-                  <img src="{{ row.profile_image }}" alt="{{ row.membership.user.username }}">
+                  <img src="{{ row.profile_image }}"
+                       alt="{{ row.membership.user.username }}"
+                       onerror="this.style.display='none'; if(this.nextElementSibling){ this.nextElementSibling.style.display='inline-flex'; }">
+                  <span class="member-avatar-initial">{{ row.membership.user|avatar_initial }}</span>
                   {% else %}
                   {{ row.membership.user|avatar_initial }}
                   {% endif %}
@@ -846,7 +851,10 @@
             <div class="member-top">
               <div class="member-avatar">
                 {% if row.profile_image %}
-                <img src="{{ row.profile_image }}" alt="{{ row.membership.user.username }}">
+                <img src="{{ row.profile_image }}"
+                     alt="{{ row.membership.user.username }}"
+                     onerror="this.style.display='none'; if(this.nextElementSibling){ this.nextElementSibling.style.display='inline-flex'; }">
+                <span class="member-avatar-initial">{{ row.membership.user|avatar_initial }}</span>
                 {% else %}
                 {{ row.membership.user|avatar_initial }}
                 {% endif %}
