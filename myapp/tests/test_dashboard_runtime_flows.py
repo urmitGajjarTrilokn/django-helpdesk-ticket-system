@@ -235,3 +235,16 @@ class DashboardRuntimeFlowTests(TestCase):
         self.assertGreaterEqual(member_stats["tickets_created"], 1)
         self.assertGreaterEqual(member_stats["tickets_resolved"], 1)
         self.assertGreaterEqual(member_stats["active_tickets"], 1)
+
+    def test_status_charts_page_includes_chartjs_context_data(self):
+        self._create_ticket("Open chart ticket", self.creator_it, self.it_department, TICKET_STATUS="Open")
+        self._create_ticket("Closed chart ticket", self.creator_hr, self.hr_department, TICKET_STATUS="Closed")
+
+        self.client.login(username="runtime_admin", password="pass12345")
+        response = self.client.get(reverse("pie_chart"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "statusDistributionChart")
+        self.assertContains(response, "statusCountChart")
+        self.assertIn("status_labels", response.context)
+        self.assertIn("status_counts", response.context)

@@ -124,7 +124,7 @@
             {% elif ticketinfos.TICKET_STATUS == 'Closed'     %}sb-closed
             {% elif ticketinfos.TICKET_STATUS == 'Resolved'   %}sb-resolved
             {% elif ticketinfos.TICKET_STATUS == 'Reopen'     %}sb-reopen
-            {% else %}sb-expired{% endif %}">
+            {% else %}sb-reopen{% endif %}">
             {{ ticketinfos.TICKET_STATUS }}
           </span>
 
@@ -165,7 +165,7 @@
             <i class="fas fa-edit me-1"></i>Edit
           </a>
 
-          {% if ticketinfos.TICKET_STATUS not in 'Closed,Resolved,Expired' and can_close_ticket %}
+          {% if ticketinfos.TICKET_STATUS not in 'Closed,Resolved' and can_close_ticket %}
           <a href="{% url 'comment' pk=ticketinfos.id action='closing_comment' %}"
              class="btn btn-sm btn-outline-success">
             <i class="fas fa-check-double me-1"></i>Close with Note
@@ -181,7 +181,7 @@
             {% endif %}
           {% endif %}
 
-          {% if ticketinfos.TICKET_STATUS not in 'Closed,Resolved,Expired' and can_reject and not request.GET.from_assigned %}
+          {% if ticketinfos.TICKET_STATUS not in 'Closed,Resolved' and can_reject and not request.GET.from_assigned %}
           <a href="{% url 'removeticket' ticketinfos.id %}" class="btn btn-sm btn-outline-danger">
             <i class="fas fa-times me-1"></i>Reject Assignment
           </a>
@@ -364,7 +364,7 @@
       {% if not creator_edit_only_mode %}
       <div class="hd-card-footer">
         <div class="d-flex gap-2 flex-wrap">
-          {% if ticketinfos.TICKET_STATUS not in 'Closed,Resolved,Expired' and can_close_ticket %}
+          {% if ticketinfos.TICKET_STATUS not in 'Closed,Resolved' and can_close_ticket %}
           <a href="{% url 'comment' pk=ticketinfos.id action='closing_comment' %}"
              class="btn btn-xs btn-outline-success">
             <i class="fas fa-check me-1"></i>Close with Note

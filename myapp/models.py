@@ -137,7 +137,7 @@ class TicketDetail(models.Model):
     choice = [
         ('Open', 'Open'), ('In Progress', 'In Progress'),
         ('Closed', 'Closed'), ('Reopen', 'Reopen'),
-        ('Expired', 'Expired'), ('Resolved', 'Resolved'),
+        ('Resolved', 'Resolved'),
     ]
     TICKET_STATUS = models.CharField(max_length=100, choices=choice, default='Open')
 

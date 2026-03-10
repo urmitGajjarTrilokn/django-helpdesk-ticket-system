@@ -102,7 +102,7 @@
         {% elif ticket.TICKET_STATUS == 'Closed'    %}sb-closed
         {% elif ticket.TICKET_STATUS == 'Resolved'  %}sb-resolved
         {% elif ticket.TICKET_STATUS == 'Reopen'    %}sb-reopen
-        {% else %}sb-expired{% endif %}">
+        {% else %}sb-reopen{% endif %}">
         {{ ticket.TICKET_STATUS }}
       </span>
     </div>

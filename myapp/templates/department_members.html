@@ -804,7 +804,7 @@
                   {% elif ticket.TICKET_STATUS == 'Reopen' %}
                     <span class="status-badge sb-reopen">{{ ticket.TICKET_STATUS }}</span>
                   {% else %}
-                    <span class="status-badge sb-expired">{{ ticket.TICKET_STATUS }}</span>
+                    <span class="status-badge sb-reopen">{{ ticket.TICKET_STATUS }}</span>
                   {% endif %}
                 </div>
                 <div class="ticket-footer">
@@ -975,7 +975,7 @@
                 {% elif ticket.TICKET_STATUS == 'Reopen' %}
                   <span class="status-badge sb-reopen">{{ ticket.TICKET_STATUS }}</span>
                 {% else %}
-                  <span class="status-badge sb-expired">{{ ticket.TICKET_STATUS }}</span>
+                  <span class="status-badge sb-reopen">{{ ticket.TICKET_STATUS }}</span>
                 {% endif %}
               </div>
               <div class="ticket-footer">

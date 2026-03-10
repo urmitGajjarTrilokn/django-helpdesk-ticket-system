@@ -166,7 +166,7 @@ class TicketDetailsAdmin(admin.ModelAdmin):
     def status_badge(self, obj):
         colors = {
             'Open':'#3b82f6','In Progress':'#f59e0b','Closed':'#94a3b8',
-            'Resolved':'#10b981','Reopen':'#ef4444','Expired':'#64748b',
+            'Resolved':'#10b981','Reopen':'#ef4444',
         }
         return format_html(
             '<span style="background:{};color:white;padding:4px 12px;border-radius:6px;font-weight:600;font-size:.75rem;">{}</span>',

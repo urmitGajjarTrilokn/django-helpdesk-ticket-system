@@ -55,7 +55,7 @@ def ticket_count(request):
                                                                                 
                                                        
     inbox_count = TicketDetail.objects.filter(
-        ~Q(TICKET_STATUS__in=['Closed', 'Resolved', 'Expired'])
+        ~Q(TICKET_STATUS__in=['Closed', 'Resolved'])
     ).filter(
         Q(assigned_department_id__in=department_ids) | Q(assigned_to=user)
     ).distinct().count()

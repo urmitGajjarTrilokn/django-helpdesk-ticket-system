@@ -13,18 +13,39 @@
   .chart-shell {
     border: 1px solid var(--slate-100);
     border-radius: 12px;
-    padding: 14px;
+    padding: 16px 16px 10px;
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     min-height: 430px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
   }
-  .chart-shell img {
+  .chart-canvas-wrap {
+    position: relative;
     width: 100%;
-    max-width: 1250px;
-    height: auto;
-    border-radius: 8px;
+    min-height: 340px;
+    flex: 1 1 auto;
+  }
+  .status-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 16px;
+    padding: 12px 4px 4px;
+  }
+  .status-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--slate-700);
+    line-height: 1.2;
+  }
+  .status-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
   }
   .chart-caption {
     margin-top: 10px;
@@ -36,17 +57,25 @@
 {% endblock %}
 
 {% block content %}
-{% now "U" as chart_ts %}
 <div class="charts-wrap">
   <div class="row g-4">
   <div class="col-12 col-xl-6">
     <div class="hd-card">
       <div class="hd-card-header">
-        <div class="hd-card-title"><i class="fas fa-chart-pie" style="color:var(--brand);"></i> Status Distribution</div>
+        <div class="hd-card-title"><i class="fas fa-chart-bar" style="color:var(--brand);"></i> Status Distribution</div>
       </div>
       <div class="hd-card-body text-center">
         <div class="chart-shell">
-          <img src="{% url 'dashboard_pie' %}?v={{ chart_ts }}" alt="Ticket status pie chart">
+          <div class="chart-canvas-wrap">
+            <canvas id="statusDistributionChart"></canvas>
+          </div>
+          <div class="status-legend">
+            <div class="status-legend-item"><span class="status-legend-dot" style="background:#3B82F6;"></span>Open</div>
+            <div class="status-legend-item"><span class="status-legend-dot" style="background:#F59E0B;"></span>In Progress</div>
+            <div class="status-legend-item"><span class="status-legend-dot" style="background:#F97316;"></span>Reopen</div>
+            <div class="status-legend-item"><span class="status-legend-dot" style="background:#10B981;"></span>Resolved</div>
+            <div class="status-legend-item"><span class="status-legend-dot" style="background:#64748B;"></span>Closed</div>
+          </div>
         </div>
         <div class="chart-caption">Quick share of current ticket statuses.</div>
       </div>
@@ -59,7 +88,9 @@
       </div>
       <div class="hd-card-body text-center">
         <div class="chart-shell">
-          <img src="{% url 'bar_chart' %}?v={{ chart_ts }}" alt="Ticket status bar chart">
+          <div class="chart-canvas-wrap">
+            <canvas id="statusCountChart"></canvas>
+          </div>
         </div>
         <div class="chart-caption">Status counts for quick comparison.</div>
       </div>
@@ -67,4 +98,132 @@
   </div>
 </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const statusLabels = {{ status_labels|safe }};
+const statusCounts = {{ status_counts|safe }};
+const statusColors = {{ status_colors|safe }};
+const statusPercentages = {{ status_percentages|safe }};
+const statusTotal = {{ status_total|default:0 }};
+
+const defaultTooltip = {
+  backgroundColor: '#0F172A',
+  titleColor: '#fff',
+  bodyColor: '#E2E8F0',
+  displayColors: true,
+  padding: 10,
+};
+
+const distributionCtx = document.getElementById('statusDistributionChart');
+if (distributionCtx) {
+  new Chart(distributionCtx, {
+    type: 'polarArea',
+    data: {
+      labels: statusLabels.map((label, index) => `${label} (${statusCounts[index] || 0})`),
+      datasets: [{
+        label: 'Status Share',
+        data: statusCounts,
+        backgroundColor: statusColors,
+        borderColor: '#FFFFFF',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#334155',
+            font: { size: 12, weight: 700 },
+            padding: 16,
+            usePointStyle: true,
+            pointStyle: 'circle',
+          }
+        },
+        tooltip: {
+          ...defaultTooltip,
+          callbacks: {
+            label: (context) => {
+              const count = statusCounts[context.dataIndex] || 0;
+              const value = statusPercentages[context.dataIndex] || 0;
+              return `${count} tickets (${value}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+const countCtx = document.getElementById('statusCountChart');
+if (countCtx) {
+  const gradient = countCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+  gradient.addColorStop(0, 'rgba(79,70,229,0.90)');
+  gradient.addColorStop(1, 'rgba(79,70,229,0.20)');
+
+  new Chart(countCtx, {
+    type: 'bar',
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        label: 'Tickets',
+        data: statusCounts,
+        backgroundColor: statusColors.map((color, index) => index === 0 ? gradient : color),
+        borderColor: statusColors,
+        borderWidth: 1.2,
+        borderRadius: 12,
+        borderSkipped: false,
+        maxBarThickness: 52,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...defaultTooltip,
+          displayColors: false,
+          callbacks: {
+            label: (context) => `${context.raw || 0} tickets`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#334155', font: { size: 11, weight: 700 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#E2E8F0' },
+          ticks: { color: '#64748B', font: { size: 11, weight: 600 }, stepSize: 1 }
+        }
+      }
+    },
+    plugins: [{
+      id: 'countLabels',
+      afterDatasetsDraw(chart) {
+        const {ctx} = chart;
+        const meta = chart.getDatasetMeta(0);
+        ctx.save();
+        ctx.fillStyle = '#0F172A';
+        ctx.font = '700 11px sans-serif';
+        meta.data.forEach((bar, index) => {
+          const value = statusCounts[index] || 0;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(String(value), bar.x, bar.y - 6);
+        });
+        ctx.restore();
+      }
+    }]
+  });
+}
+</script>
 {% endblock %}

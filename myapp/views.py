@@ -178,7 +178,7 @@ def _is_close_locked_by_rejection(user, ticket):
 def _can_user_close_ticket(user, ticket):
     if _is_admin_user(user):
         return False
-    if ticket.TICKET_STATUS in ['Closed', 'Resolved', 'Expired']:
+    if ticket.TICKET_STATUS in ['Closed', 'Resolved']:
         return False
     if not _can_work_on_ticket(user, ticket):
         return False
@@ -262,7 +262,7 @@ def _sync_mycart_for_user(user):
     )
 
     eligible_tickets = TicketDetail.objects.filter(
-        ~Q(TICKET_STATUS__in=['Closed', 'Resolved', 'Expired'])
+        ~Q(TICKET_STATUS__in=['Closed', 'Resolved'])
     ).filter(
         Q(assigned_to=user) |
         (
@@ -329,7 +329,7 @@ def _is_non_rejectable_assignment(user, ticket):
 def _auto_assign_on_department_rejection(ticket, rejected_by):
     if not ticket.assigned_department_id:
         return None
-    if ticket.TICKET_STATUS in ['Closed', 'Resolved', 'Expired']:
+    if ticket.TICKET_STATUS in ['Closed', 'Resolved']:
         return None
 
     memberships = (
@@ -833,7 +833,7 @@ def TicketInfo(request, pk):
     can_reply_admin_overdue_note = (
         can_view_admin_note_thread
         and not is_admin
-        and ticketinfos.TICKET_STATUS not in ['Closed', 'Resolved', 'Expired']
+        and ticketinfos.TICKET_STATUS not in ['Closed', 'Resolved']
     )
     latest_rejection = (
         TicketHistory.objects
@@ -1628,7 +1628,7 @@ def MyCarts(request):
         )
     elif sort == 'overdue':
         carts = carts.filter(ticket__TICKET_DUE_DATE__lt=today).exclude(
-            ticket__TICKET_STATUS__in=['Closed', 'Resolved', 'Expired']
+            ticket__TICKET_STATUS__in=['Closed', 'Resolved']
         )
 
     comments = UserComment.objects.filter(user=request.user)
@@ -1689,7 +1689,7 @@ def MyCarts(request):
         'assigned': carts.count(),
         'in_progress': carts.filter(ticket__TICKET_STATUS='In Progress').count(),
         'overdue': carts.filter(ticket__TICKET_DUE_DATE__lt=today).exclude(
-            ticket__TICKET_STATUS__in=['Closed', 'Resolved', 'Expired']
+            ticket__TICKET_STATUS__in=['Closed', 'Resolved']
         ).count(),
     }
     closable_ticket_ids = {
@@ -1858,12 +1858,12 @@ def account_settings(request):
 
 @admin_required
 def dashboard_pie(request):
-    statuses = ['Open', 'In Progress', 'Reopen', 'Resolved', 'Closed', 'Expired']
+    statuses = ['Open', 'In Progress', 'Reopen', 'Resolved', 'Closed']
     counts = [TicketDetail.objects.filter(TICKET_STATUS=s).count() for s in statuses]
-    colors = ['#3B82F6', '#F59E0B', '#F97316', '#10B981', '#64748B', '#EF4444']
+    colors = ['#3B82F6', '#F59E0B', '#F97316', '#10B981', '#64748B']
     total = sum(counts)
 
-    fig, ax = plt.subplots(figsize=(12.5, 7.4), dpi=140)
+    fig, ax = plt.subplots(figsize=(13.2, 7.8), dpi=140)
     fig.patch.set_facecolor('#F8FAFC')
     ax.set_facecolor('#F8FAFC')
 
@@ -1872,30 +1872,40 @@ def dashboard_pie(request):
                 fontsize=13, color='#64748B', fontweight='semibold')
         ax.axis('off')
     else:
-        wedges, _texts = ax.pie(
-            counts,
-            colors=colors,
-            startangle=135,
-            radius=1.18,
-            labels=None,
-            wedgeprops={
-                'linewidth': 2.0,
-                'edgecolor': 'white',
-                'width': 0.52,                                                   
-            },
+        percentages = [(count / total * 100) if total else 0 for count in counts]
+        positions = range(len(statuses))
+        bars = ax.barh(
+            positions,
+            percentages,
+            color=colors,
+            edgecolor='white',
+            linewidth=1.2,
+            height=0.62,
         )
-        ax.legend(
-            wedges,
-            [f'{s} ({c})' for s, c in zip(statuses, counts)],
-            title='Ticket Status',
-            loc='upper center',
-            bbox_to_anchor=(0.5, -0.05),
-            ncol=3,
-            frameon=False,
-            fontsize=11,
-            title_fontsize=12,
-        )
-        ax.axis('equal')
+        ax.set_yticks(list(positions), labels=statuses)
+        ax.invert_yaxis()
+        ax.set_xlim(0, max(100, max(percentages) + 12))
+        ax.set_xlabel('Share of Tickets (%)', color='#334155', fontsize=12, fontweight='bold', labelpad=10)
+        ax.tick_params(axis='x', labelsize=11, colors='#475569')
+        ax.tick_params(axis='y', labelsize=12, colors='#0F172A')
+        ax.grid(axis='x', color='#E2E8F0', linewidth=1.0, alpha=0.95)
+        ax.set_axisbelow(True)
+        for spine in ['top', 'right']:
+            ax.spines[spine].set_visible(False)
+        ax.spines['left'].set_color('#CBD5E1')
+        ax.spines['bottom'].set_color('#CBD5E1')
+
+        for bar, count, percentage in zip(bars, counts, percentages):
+            ax.text(
+                min(bar.get_width() + 1.2, ax.get_xlim()[1] - 1),
+                bar.get_y() + bar.get_height() / 2,
+                f'{count} ({percentage:.1f}%)',
+                va='center',
+                ha='left',
+                fontsize=11,
+                color='#0F172A',
+                fontweight='bold'
+            )
     ax.set_title('Ticket Status Distribution', fontsize=17, color='#0F172A', pad=12, weight='bold')
 
     buffer = io.BytesIO()
@@ -1908,23 +1918,35 @@ def dashboard_pie(request):
 
 @admin_required
 def pie_chart(request):
-    return render(request, 'ticket_status_pie.html')
+    statuses = ['Open', 'In Progress', 'Reopen', 'Resolved', 'Closed']
+    counts = [TicketDetail.objects.filter(TICKET_STATUS=s).count() for s in statuses]
+    colors = ['#3B82F6', '#F59E0B', '#F97316', '#10B981', '#64748B']
+    total = sum(counts)
+    percentages = [round((count / total * 100), 1) if total else 0 for count in counts]
+    return render(request, 'ticket_status_pie.html', {
+        'status_labels': json.dumps(statuses),
+        'status_counts': json.dumps(counts),
+        'status_colors': json.dumps(colors),
+        'status_percentages': json.dumps(percentages),
+        'status_total': total,
+    })
 
 
 @admin_required
 def Bar_chart(request):
-    statuses = ['Open', 'In Progress', 'Reopen', 'Resolved', 'Closed', 'Expired']
+    statuses = ['Open', 'In Progress', 'Reopen', 'Resolved', 'Closed']
     counts = [TicketDetail.objects.filter(TICKET_STATUS=s).count() for s in statuses]
-    colors = ['#3B82F6', '#F59E0B', '#F97316', '#10B981', '#64748B', '#EF4444']
+    colors = ['#3B82F6', '#F59E0B', '#F97316', '#10B981', '#64748B']
+    status_labels = ['Open', 'In\nProgress', 'Reopen', 'Resolved', 'Closed']
 
-    fig, ax = plt.subplots(figsize=(13.2, 7.6), dpi=140)
+    fig, ax = plt.subplots(figsize=(13.4, 8.0), dpi=140)
     fig.patch.set_facecolor('#F8FAFC')
     ax.set_facecolor('#F8FAFC')
 
-    bars = ax.bar(statuses, counts, color=colors, edgecolor='white', linewidth=1.0)
+    bars = ax.bar(status_labels, counts, color=colors, edgecolor='white', linewidth=1.0, width=0.62)
     ax.set_title('Ticket Status Count', fontsize=17, color='#0F172A', pad=12, weight='bold')
     ax.set_ylabel('Tickets', color='#334155', fontsize=12, fontweight='bold')
-    ax.tick_params(axis='x', rotation=0, labelsize=11.5, colors='#334155')
+    ax.tick_params(axis='x', rotation=0, labelsize=11.5, colors='#334155', pad=10)
     ax.tick_params(axis='y', labelsize=11, colors='#475569')
     ax.grid(axis='y', color='#E2E8F0', linewidth=1.0, alpha=0.95)
     ax.set_axisbelow(True)
@@ -1932,11 +1954,13 @@ def Bar_chart(request):
         ax.spines[spine].set_visible(False)
     ax.spines['left'].set_color('#CBD5E1')
     ax.spines['bottom'].set_color('#CBD5E1')
+    upper_limit = max(counts + [1])
+    ax.set_ylim(0, upper_limit + max(1, upper_limit * 0.22))
 
     for bar, value in zip(bars, counts):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + max(0.1, max(counts + [1]) * 0.015),
+            bar.get_height() + max(0.12, upper_limit * 0.04),
             str(value),
             ha='center',
             va='bottom',
@@ -2212,7 +2236,7 @@ def department_members(request, dept_id=None):
         'in_progress': dept_tickets.filter(TICKET_STATUS='In Progress').count(),
         'resolved': dept_tickets.filter(TICKET_STATUS__in=['Closed', 'Resolved']).count(),
         'overdue': dept_tickets.filter(TICKET_DUE_DATE__lt=today).exclude(
-            TICKET_STATUS__in=['Closed', 'Resolved', 'Expired']
+            TICKET_STATUS__in=['Closed', 'Resolved']
         ).count(),
     }
 
@@ -2230,7 +2254,7 @@ def department_members(request, dept_id=None):
         overdue_map = {
             row['assigned_to']: row['total']
             for row in scope_tickets.filter(TICKET_DUE_DATE__lt=today)
-            .exclude(TICKET_STATUS__in=['Closed', 'Resolved', 'Expired'])
+            .exclude(TICKET_STATUS__in=['Closed', 'Resolved'])
             .values('assigned_to').annotate(total=Count('id'))
         }
 
@@ -2387,7 +2411,7 @@ def admin_add_member(request, dept_id):
 
             for ticket in TicketDetail.objects.filter(
                 assigned_department=department,
-            ).exclude(TICKET_STATUS__in=['Closed', 'Resolved', 'Expired']):
+            ).exclude(TICKET_STATUS__in=['Closed', 'Resolved']):
                 MyCart.objects.get_or_create(user=user, ticket=ticket)
 
             log_activity(request.user, 'UPDATED',
