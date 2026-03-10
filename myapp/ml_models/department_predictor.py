@@ -1,8 +1,10 @@
 import logging
 import os
 import pickle
+import warnings
 
 from django.conf import settings
+from sklearn.exceptions import InconsistentVersionWarning
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,14 @@ def _get_model():
     _model_load_attempted = True
     try:
         with open(MODEL_PATH, "rb") as f:
-            _model = pickle.load(f)
+            with warnings.catch_warnings(record=True) as captured:
+                warnings.simplefilter("always", InconsistentVersionWarning)
+                _model = pickle.load(f)
+            if any(issubclass(w.category, InconsistentVersionWarning) for w in captured):
+                logger.warning(
+                    "Department model was trained with a different scikit-learn version. "
+                    "Model loaded, but retraining is recommended."
+                )
     except Exception as exc:
         _model_load_error = exc
         logger.warning("Department model load failed: %s", exc)
