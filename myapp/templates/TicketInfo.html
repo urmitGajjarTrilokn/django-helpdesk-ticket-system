@@ -188,35 +188,23 @@
           {% endif %}
 
           {% if not request.GET.from_assigned %}
-          <div class="dropdown">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-              <i class="fas fa-ellipsis-h me-1"></i>More
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end"
-                style="min-width:210px;border-color:var(--slate-200);border-radius:10px;
-                       font-size:13px;padding:6px;">
-              {% if ticketinfos.TICKET_STATUS == 'Closed' or ticketinfos.TICKET_STATUS == 'Resolved' %}
-                {% if ticketinfos.TICKET_CREATED == request.user %}
-                <li>
-                  <a class="dropdown-item rounded py-2" href="{% url 'rate_ticket' ticketinfos.id %}">
-                    <i class="fas fa-star me-2" style="color:var(--warning);width:14px;"></i>Rate Ticket
-                  </a>
-                </li>
-                {% endif %}
+            {% if ticketinfos.TICKET_STATUS == 'Closed' or ticketinfos.TICKET_STATUS == 'Resolved' %}
+              {% if ticketinfos.TICKET_CREATED == request.user %}
+              <a href="{% url 'rate_ticket' ticketinfos.id %}" class="btn btn-sm btn-outline-warning">
+                <i class="fas fa-star me-1"></i>Rate Ticket
+              </a>
               {% endif %}
-              {% if ticketinfos.TICKET_CREATED == request.user or is_admin %}
-              <li><hr class="dropdown-divider my-1"></li>
-              <li>
-                <form method="post" action="{% url 'deleteticket' ticketinfos.id %}" onsubmit="return confirm('Permanently delete this ticket')">
-                  {% csrf_token %}
-                  <button class="dropdown-item rounded py-2 text-danger" type="submit">
-                    <i class="fas fa-trash me-2" style="width:14px;"></i>Delete
-                  </button>
-                </form>
-              </li>
-              {% endif %}
-            </ul>
-          </div>
+            {% endif %}
+            {% if ticketinfos.TICKET_CREATED == request.user or is_admin %}
+            <form method="post" action="{% url 'deleteticket' ticketinfos.id %}"
+                  onsubmit="return confirm('Permanently delete this ticket')"
+                  style="display:inline-block;">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" type="submit">
+                <i class="fas fa-trash me-1"></i>Delete
+              </button>
+            </form>
+            {% endif %}
           {% endif %}
           {% endif %}
 
