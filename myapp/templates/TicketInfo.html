@@ -196,7 +196,7 @@
               {% endif %}
             {% endif %}
             {% if can_admin_reassign_ticket %}
-            <form method="post" action="{% url 'admin_reassign_ticket' ticketinfos.id %}"
+            <form method="post" action="/ticket/{{ ticketinfos.id }}/reassign/"
                   class="d-inline-flex align-items-center gap-2 flex-wrap">
               {% csrf_token %}
               <select name="assigned_to" class="form-select form-select-sm" style="min-width:270px;max-width:360px;">
