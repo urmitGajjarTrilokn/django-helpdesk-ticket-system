@@ -135,6 +135,25 @@
     gap: 12px;
     padding: 14px 18px;
   }
+  .dept-list-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 14px;
+    align-items: stretch;
+  }
+  .dept-inactive-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+  }
+  .dept-inactive-bar .form-select {
+    min-width: 0;
+  }
   .dept-searchbar i { color: var(--slate-400); }
   .dept-searchbar input {
     width: 100%;
@@ -169,6 +188,15 @@
     justify-content: space-between;
     gap: 12px;
   }
+  .dept-heading-btn {
+    display: block;
+    width: 100%;
+    padding: 0;
+    text-align: left;
+    background: none;
+    border: 0;
+    color: inherit;
+  }
   .dept-panel-title {
     display: flex;
     align-items: center;
@@ -197,6 +225,24 @@
     margin: 4px 0 0;
     font-size: 12.5px;
     color: rgba(255, 255, 255, .76);
+  }
+  .dept-state-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .14);
+    color: #fff;
+  }
+  .dept-state-badge.inactive {
+    background: rgba(220, 38, 38, .16);
+    border-color: rgba(254, 202, 202, .22);
   }
   .dept-stat-strip {
     display: grid;
@@ -390,6 +436,40 @@
     border-style: dashed;
     background: linear-gradient(180deg, #fff 0%, #fff8f8 100%);
   }
+  .dept-ticket-groups {
+    display: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .dept-ticket-groups.is-open {
+    display: grid;
+  }
+  .dept-ticket-card {
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--slate-200);
+    background: #fff;
+  }
+  .dept-ticket-list {
+    display: grid;
+    gap: 10px;
+  }
+  .dept-ticket-item {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--slate-50);
+    border: 1px solid var(--slate-200);
+  }
+  .dept-ticket-item-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--slate-900);
+  }
+  .dept-ticket-item-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--slate-500);
+  }
   .dept-empty {
     padding: 54px 22px;
     text-align: center;
@@ -411,12 +491,16 @@
     .dept-topbar {
       grid-template-columns: 1fr;
     }
+    .dept-list-toolbar {
+      grid-template-columns: 1fr;
+    }
   }
   @media (max-width: 767px) {
     .dept-overview,
     .dept-form-grid,
     .dept-stat-strip,
     .dept-member-add,
+    .dept-ticket-groups,
     .dept-grid {
       grid-template-columns: 1fr;
     }
@@ -520,9 +604,27 @@
     </section>
   </div>
 
-  <div class="dept-searchbar">
-    <i class="fas fa-search"></i>
-    <input type="search" id="deptSearch" placeholder="Search department by name or code">
+  <div class="dept-list-toolbar">
+    <div class="dept-inactive-bar">
+      <i class="fas fa-box-archive text-danger"></i>
+      <form method="post" action="/admin-departments/inactive/delete/" class="d-flex gap-2 w-100 align-items-center">
+        {% csrf_token %}
+        <select name="inactive_department_id" class="form-select">
+          <option value="">Inactive departments</option>
+          {% for inactive_dept in inactive_departments %}
+            <option value="{{ inactive_dept.id }}">{{ inactive_dept.name }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline-danger" type="submit" {% if not inactive_departments %}disabled{% endif %}>
+          Delete
+        </button>
+      </form>
+    </div>
+
+    <div class="dept-searchbar">
+      <i class="fas fa-search"></i>
+      <input type="search" id="deptSearch" placeholder="Search department by name or code">
+    </div>
   </div>
 
   {% if dept_data %}
@@ -531,15 +633,20 @@
         <article class="dept-panel js-dept-card" data-dept-name="{{ item.department.name|lower }}" data-dept-code="{{ item.department.code|lower }}">
           <div class="dept-panel-head">
             <div class="dept-panel-top">
-              <div class="dept-panel-title">
-                <div class="dept-panel-icon" style="color:{{ item.department.color }};">
-                  <i class="{{ item.department.icon }}"></i>
+              <button type="button" class="dept-heading-btn js-ticket-toggle" aria-expanded="false">
+                <div class="dept-panel-title">
+                  <div class="dept-panel-icon" style="color:{{ item.department.color }};">
+                    <i class="{{ item.department.icon }}"></i>
+                  </div>
+                  <div>
+                    <h3>{{ item.department.name }}</h3>
+                    <p>{{ item.department.code }}{% if item.department.email %} | {{ item.department.email }}{% endif %}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3>{{ item.department.name }}</h3>
-                  <p>{{ item.department.code }}{% if item.department.email %} | {{ item.department.email }}{% endif %}</p>
-                </div>
-              </div>
+              </button>
+              <span class="dept-state-badge {% if not item.department.is_active %}inactive{% endif %}">
+                {% if item.department.is_active %}Active{% else %}Inactive{% endif %}
+              </span>
             </div>
             <div class="dept-stat-strip">
               <div class="dept-stat">
@@ -562,22 +669,68 @@
           </div>
 
           <div class="dept-panel-body">
+            <section class="dept-ticket-groups js-ticket-groups">
+              <div class="dept-ticket-card">
+                <div class="dept-section-head">
+                  <h4>Created Tickets</h4>
+                  <span>{{ item.created_ticket_count }}</span>
+                </div>
+                <div class="dept-ticket-list">
+                  {% for ticket in item.created_tickets %}
+                    <div class="dept-ticket-item">
+                      <div class="dept-ticket-item-title">#{{ ticket.id }} {{ ticket.TICKET_TITLE }}</div>
+                      <div class="dept-ticket-item-meta">
+                        {{ ticket.TICKET_STATUS }}{% if ticket.assigned_department %} | Assigned: {{ ticket.assigned_department.name }}{% endif %}
+                      </div>
+                    </div>
+                  {% empty %}
+                    <div class="text-muted small">No created tickets found for this department.</div>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="dept-ticket-card">
+                <div class="dept-section-head">
+                  <h4>Assigned Tickets</h4>
+                  <span>{{ item.assigned_ticket_count }}</span>
+                </div>
+                <div class="dept-ticket-list">
+                  {% for ticket in item.assigned_tickets %}
+                    <div class="dept-ticket-item">
+                      <div class="dept-ticket-item-title">#{{ ticket.id }} {{ ticket.TICKET_TITLE }}</div>
+                      <div class="dept-ticket-item-meta">
+                        {{ ticket.TICKET_STATUS }}{% if ticket.TICKET_CREATED %} | Created by: {{ ticket.TICKET_CREATED.username }}{% endif %}
+                      </div>
+                    </div>
+                  {% empty %}
+                    <div class="text-muted small">No assigned tickets found for this department.</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </section>
+
             <section class="dept-section">
               <div class="dept-section-head">
-                <h4>Add or Reactivate Member</h4>
-                <span>Role assignment stays inline.</span>
+                <h4>{% if item.department.is_active %}Add or Reactivate Member{% else %}Department Inactive{% endif %}</h4>
+                <span>{% if item.department.is_active %}Role assignment stays inline.{% else %}Reactivate this department to manage members again.{% endif %}</span>
               </div>
               {% if item.department.description %}
                 <div class="text-muted small mb-3">{{ item.department.description }}</div>
               {% endif %}
-              <form method="post" action="{% url 'admin_add_member' item.department.id %}">
-                {% csrf_token %}
-                <div class="dept-member-add">
-                  <div>{{ item.member_form.user_id }}</div>
-                  <div>{{ item.member_form.role }}</div>
-                  <div><button class="btn btn-primary w-100" type="submit">Add</button></div>
-                </div>
-              </form>
+              {% if item.department.is_active %}
+                <form method="post" action="{% url 'admin_add_member' item.department.id %}">
+                  {% csrf_token %}
+                  <div class="dept-member-add">
+                    <div>{{ item.member_form.user_id }}</div>
+                    <div>{{ item.member_form.role }}</div>
+                    <div><button class="btn btn-primary w-100" type="submit">Add</button></div>
+                  </div>
+                </form>
+              {% else %}
+                <form method="post" action="/admin-departments/{{ item.department.id }}/reactivate/">
+                  {% csrf_token %}
+                  <button class="btn btn-primary" type="submit">Reactivate Department</button>
+                </form>
+              {% endif %}
             </section>
 
             <section class="dept-members-card">
@@ -627,18 +780,18 @@
                             <form method="post" action="/admin-departments/{{ item.department.id }}/members/{{ m.user.id }}/role/">
                               {% csrf_token %}
                               <div class="dept-role-edit">
-                                <select name="role" class="form-select form-select-sm">
+                                <select name="role" class="form-select form-select-sm" {% if not item.department.is_active %}disabled{% endif %}>
                                   <option value="MEMBER" {% if m.role == 'MEMBER' %}selected{% endif %}>Member</option>
                                   <option value="LEAD" {% if m.role == 'LEAD' %}selected{% endif %}>Lead</option>
                                   <option value="MANAGER" {% if m.role == 'MANAGER' %}selected{% endif %}>Manager</option>
                                   <option value="HEAD" {% if m.role == 'HEAD' %}selected{% endif %}>Head</option>
                                 </select>
-                                <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+                                <button class="btn btn-sm btn-outline-primary" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Update</button>
                               </div>
                             </form>
                             <form method="post" action="{% url 'admin_remove_member' item.department.id m.user.id %}">
                               {% csrf_token %}
-                              <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+                              <button class="btn btn-sm btn-outline-danger" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Remove</button>
                             </form>
                           </div>
                         </td>
@@ -659,62 +812,67 @@
                 <h4>Edit Department</h4>
                 <span>Update core details only for this department.</span>
               </div>
-              <form method="post" action="/admin-departments/{{ item.department.id }}/update/" novalidate>
-                {% csrf_token %}
-                <div class="dept-form-grid">
-                  <div class="dept-field">
-                    <label for="{{ item.edit_form.name.id_for_label }}">Department Name</label>
-                    {{ item.edit_form.name }}
-                    {% if item.edit_form.name.errors %}<div class="dept-error">{{ item.edit_form.name.errors.0 }}</div>{% endif %}
+              {% if item.department.is_active %}
+                <form method="post" action="/admin-departments/{{ item.department.id }}/update/" novalidate>
+                  {% csrf_token %}
+                  <div class="dept-form-grid">
+                    <div class="dept-field">
+                      <label for="{{ item.edit_form.name.id_for_label }}">Department Name</label>
+                      {{ item.edit_form.name }}
+                      {% if item.edit_form.name.errors %}<div class="dept-error">{{ item.edit_form.name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="dept-field">
+                      <label for="{{ item.edit_form.code.id_for_label }}">Code</label>
+                      {{ item.edit_form.code }}
+                      {% if item.edit_form.code.errors %}<div class="dept-error">{{ item.edit_form.code.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="dept-field">
+                      <label for="{{ item.edit_form.email.id_for_label }}">Email</label>
+                      {{ item.edit_form.email }}
+                      {% if item.edit_form.email.errors %}<div class="dept-error">{{ item.edit_form.email.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="dept-field">
+                      <label for="{{ item.edit_form.icon.id_for_label }}">Icon</label>
+                      {{ item.edit_form.icon }}
+                      {% if item.edit_form.icon.errors %}<div class="dept-error">{{ item.edit_form.icon.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="dept-field">
+                      <label for="{{ item.edit_form.color.id_for_label }}">Color</label>
+                      {{ item.edit_form.color }}
+                      {% if item.edit_form.color.errors %}<div class="dept-error">{{ item.edit_form.color.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="dept-field dept-field-full">
+                      <label for="{{ item.edit_form.description.id_for_label }}">Description</label>
+                      {{ item.edit_form.description }}
+                      {% if item.edit_form.description.errors %}<div class="dept-error">{{ item.edit_form.description.errors.0 }}</div>{% endif %}
+                      {% if item.edit_form.non_field_errors %}<div class="dept-error">{{ item.edit_form.non_field_errors.0 }}</div>{% endif %}
+                    </div>
                   </div>
-                  <div class="dept-field">
-                    <label for="{{ item.edit_form.code.id_for_label }}">Code</label>
-                    {{ item.edit_form.code }}
-                    {% if item.edit_form.code.errors %}<div class="dept-error">{{ item.edit_form.code.errors.0 }}</div>{% endif %}
-                  </div>
-                  <div class="dept-field">
-                    <label for="{{ item.edit_form.email.id_for_label }}">Email</label>
-                    {{ item.edit_form.email }}
-                    {% if item.edit_form.email.errors %}<div class="dept-error">{{ item.edit_form.email.errors.0 }}</div>{% endif %}
-                  </div>
-                  <div class="dept-field">
-                    <label for="{{ item.edit_form.icon.id_for_label }}">Icon</label>
-                    {{ item.edit_form.icon }}
-                    {% if item.edit_form.icon.errors %}<div class="dept-error">{{ item.edit_form.icon.errors.0 }}</div>{% endif %}
-                  </div>
-                  <div class="dept-field">
-                    <label for="{{ item.edit_form.color.id_for_label }}">Color</label>
-                    {{ item.edit_form.color }}
-                    {% if item.edit_form.color.errors %}<div class="dept-error">{{ item.edit_form.color.errors.0 }}</div>{% endif %}
-                  </div>
-                  <div class="dept-field dept-field-full">
-                    <label for="{{ item.edit_form.description.id_for_label }}">Description</label>
-                    {{ item.edit_form.description }}
-                    {% if item.edit_form.description.errors %}<div class="dept-error">{{ item.edit_form.description.errors.0 }}</div>{% endif %}
-                    {% if item.edit_form.non_field_errors %}<div class="dept-error">{{ item.edit_form.non_field_errors.0 }}</div>{% endif %}
-                  </div>
-                </div>
-                <button class="btn btn-primary" type="submit">Save Changes</button>
-              </form>
+                  <button class="btn btn-primary" type="submit">Save Changes</button>
+                </form>
+              {% else %}
+                <div class="text-muted small">Editing is disabled while the department is inactive. Reactivate it first if you want to change its settings.</div>
+              {% endif %}
             </section>
 
             <section class="dept-delete-card">
               <div class="dept-section-head">
-                <h4>Delete Department</h4>
-                <span>Protected when active tickets still exist.</span>
+                <h4>{% if item.department.is_active %}Inactive Department{% else %}Department Status{% endif %}</h4>
+                <span>{% if item.department.is_active %}Keep the department record and switch it off.{% else %}This department is currently inactive.{% endif %}</span>
               </div>
-              <form method="post" action="/admin-departments/{{ item.department.id }}/delete/">
-                {% csrf_token %}
-                <button class="btn btn-outline-danger" type="submit" {% if not item.can_delete %}disabled{% endif %}>
-                  Delete Department
-                </button>
-              </form>
+              {% if item.department.is_active %}
+                <form method="post" action="/admin-departments/{{ item.department.id }}/delete/">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-danger" type="submit">Mark Inactive</button>
+                </form>
+              {% else %}
+                <form method="post" action="/admin-departments/{{ item.department.id }}/reactivate/">
+                  {% csrf_token %}
+                  <button class="btn btn-outline-primary" type="submit">Reactivate Department</button>
+                </form>
+              {% endif %}
               <div class="text-muted small mt-2">
-                {% if not item.can_delete %}
-                  Delete is available only when this department has no active tickets.
-                {% else %}
-                  Closed and resolved ticket history will remain intact.
-                {% endif %}
+                Tickets tied to inactive departments stay available here in department control, but are hidden from the normal ticket views.
               </div>
             </section>
           </div>
@@ -794,6 +952,17 @@
         if (emptyState) {
           emptyState.style.display = rows.length && visibleCount === 0 ? 'block' : 'none';
         }
+      });
+    });
+
+    cards.forEach((card) => {
+      const toggle = card.querySelector('.js-ticket-toggle');
+      const groups = card.querySelector('.js-ticket-groups');
+      if (!toggle || !groups) return;
+
+      toggle.addEventListener('click', function () {
+        const isOpen = groups.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       });
     });
 

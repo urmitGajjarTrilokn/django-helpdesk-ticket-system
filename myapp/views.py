@@ -414,6 +414,23 @@ def _get_primary_department_id(user):
     return membership.department_id if membership else None
 
 
+def _inactive_department_member_user_ids():
+    return DepartmentMember.objects.filter(
+        department__is_active=False
+    ).values('user_id')
+
+
+def _inactive_department_ticket_q(prefix=''):
+    return (
+        Q(**{f'{prefix}assigned_department__is_active': False}) |
+        Q(**{f'{prefix}TICKET_CREATED_id__in': _inactive_department_member_user_ids()})
+    )
+
+
+def _exclude_inactive_department_tickets(queryset, prefix=''):
+    return queryset.exclude(_inactive_department_ticket_q(prefix))
+
+
 def _get_dashboard_redirect_url(user):
     if user.is_superuser:
         return reverse('base')
@@ -501,7 +518,7 @@ def Basepage(request, dept_id=None):
     elif dept_id is not None and not is_created_view:
         selected_department = get_object_or_404(Department, id=dept_id)
 
-    Ticketdatas = TicketDetail.objects.all()
+    Ticketdatas = _exclude_inactive_department_tickets(TicketDetail.objects.all())
     if is_mine_only_filter:
         Ticketdatas = Ticketdatas.filter(TICKET_CREATED=request.user)
     elif is_created_view and not is_admin_user:
@@ -591,7 +608,9 @@ def Basepage(request, dept_id=None):
         'in_progress': visible_tickets.filter(TICKET_STATUS='In Progress').count(),
         'closed':      visible_tickets.filter(TICKET_STATUS='Closed').count(),
         'resolved':    visible_tickets.filter(TICKET_STATUS='Resolved').count(),
-        'my_tickets':    TicketDetail.objects.filter(TICKET_CREATED=request.user).count(),
+        'my_tickets':    _exclude_inactive_department_tickets(
+            TicketDetail.objects.filter(TICKET_CREATED=request.user)
+        ).count(),
     }
 
     pagination_query = request.GET.copy()
@@ -1603,7 +1622,7 @@ def MyCarts(request):
 
     base_carts = MyCart.objects.filter(user=request.user).select_related(
         'ticket', 'ticket__TICKET_CREATED', 'ticket__assigned_department', 'ticket__category'
-    ).order_by('-accepted_at')
+    ).exclude(_inactive_department_ticket_q('ticket__')).order_by('-accepted_at')
     total_assigned_count = base_carts.count()
     carts = base_carts
 
@@ -1749,9 +1768,9 @@ def activity_log(request):
 
 @login_required
 def resolved_history(request):
-    resolved = TicketDetail.objects.filter(
+    resolved = _exclude_inactive_department_tickets(TicketDetail.objects.filter(
         TICKET_STATUS__in=['Resolved', 'Closed'],
-    )
+    ))
 
     q = request.GET.get('q', '').strip()
     search_by = (request.GET.get('search_by_btn') or request.GET.get('search_by', 'all')).strip().lower()
@@ -1795,7 +1814,9 @@ def resolved_history(request):
         'category', 'assigned_to', 'TICKET_CREATED', 'assigned_department'
     ).order_by('-TICKET_CLOSED_ON')
 
-    full_qs = TicketDetail.objects.filter(TICKET_STATUS__in=['Resolved', 'Closed'])
+    full_qs = _exclude_inactive_department_tickets(
+        TicketDetail.objects.filter(TICKET_STATUS__in=['Resolved', 'Closed'])
+    )
     stats = {
         'total_resolved': full_qs.count(),
         'resolved':       full_qs.filter(TICKET_STATUS='Resolved').count(),
@@ -2141,17 +2162,18 @@ def category_delete(request, pk):
 
 @login_required
 def advanced_dashboard(request):
+    visible_tickets = _exclude_inactive_department_tickets(TicketDetail.objects.all())
     context = {
-        'total_tickets':    TicketDetail.objects.count(),
-        'open_tickets':     TicketDetail.objects.filter(TICKET_STATUS='Open').count(),
-        'in_progress':    TicketDetail.objects.filter(TICKET_STATUS='In Progress').count(),
-        'closed_tickets':   TicketDetail.objects.filter(TICKET_STATUS='Closed').count(),
-        'my_tickets':       TicketDetail.objects.filter(TICKET_CREATED=request.user).count(),
-        'urgent_tickets':   TicketDetail.objects.filter(priority='URGENT').count(),
-        'high_priority':  TicketDetail.objects.filter(priority='HIGH').count(),
-        'medium_priority':TicketDetail.objects.filter(priority='MEDIUM').count(),
-        'low_priority':   TicketDetail.objects.filter(priority='LOW').count(),
-        'recent_tickets':   TicketDetail.objects.order_by('-TICKET_CREATED_ON')[:5],
+        'total_tickets':    visible_tickets.count(),
+        'open_tickets':     visible_tickets.filter(TICKET_STATUS='Open').count(),
+        'in_progress':    visible_tickets.filter(TICKET_STATUS='In Progress').count(),
+        'closed_tickets':   visible_tickets.filter(TICKET_STATUS='Closed').count(),
+        'my_tickets':       visible_tickets.filter(TICKET_CREATED=request.user).count(),
+        'urgent_tickets':   visible_tickets.filter(priority='URGENT').count(),
+        'high_priority':  visible_tickets.filter(priority='HIGH').count(),
+        'medium_priority':visible_tickets.filter(priority='MEDIUM').count(),
+        'low_priority':   visible_tickets.filter(priority='LOW').count(),
+        'recent_tickets':   visible_tickets.order_by('-TICKET_CREATED_ON')[:5],
     }
     return render(request, 'dashboard/advanced.html', context)
 
@@ -2347,7 +2369,8 @@ def admin_department_list(request):
 
 
 def _render_admin_department_list(request, create_form=None, edit_forms=None):
-    departments = Department.objects.filter(is_active=True).order_by('name')
+    departments = Department.objects.all().order_by('-is_active', 'name')
+    inactive_departments = departments.filter(is_active=False)
     all_users = User.objects.filter(is_active=True, is_superuser=False).order_by('username')
     create_form = create_form or DepartmentAdminForm(prefix='create')
     edit_forms = edit_forms or {}
@@ -2360,11 +2383,17 @@ def _render_admin_department_list(request, create_form=None, edit_forms=None):
             department=dept, is_active=True, user__is_superuser=False
         ).select_related('user')
         tickets = TicketDetail.objects.filter(assigned_department=dept)
+        creator_user_ids = DepartmentMember.objects.filter(department=dept).values('user_id')
+        created_tickets = TicketDetail.objects.filter(
+            TICKET_CREATED_id__in=creator_user_ids
+        ).select_related('TICKET_CREATED', 'assigned_department').order_by('-TICKET_CREATED_ON', '-id')
+        assigned_tickets = tickets.select_related('TICKET_CREATED', 'assigned_department').order_by('-TICKET_CREATED_ON', '-id')
         open_tickets = tickets.exclude(TICKET_STATUS__in=['Closed', 'Resolved'])
         member_count = members.count()
         open_count = open_tickets.count()
-        total_members += member_count
-        total_open_tickets += open_count
+        if dept.is_active:
+            total_members += member_count
+            total_open_tickets += open_count
         dept_data.append({
             'department': dept,
             'members':    members,
@@ -2373,9 +2402,12 @@ def _render_admin_department_list(request, create_form=None, edit_forms=None):
             'resolved':   tickets.filter(TICKET_STATUS__in=['Closed', 'Resolved']).count(),
             'member_count': member_count,
             'active_tickets': open_count,
-            'can_delete': open_count == 0,
+            'created_ticket_count': created_tickets.count(),
+            'assigned_ticket_count': assigned_tickets.count(),
+            'created_tickets': created_tickets[:5],
+            'assigned_tickets': assigned_tickets[:5],
             'edit_form': edit_forms.get(dept.id, DepartmentAdminForm(instance=dept, prefix=f'dept-{dept.id}')),
-            'member_form': DepartmentMemberForm(prefix=f'member-{dept.id}'),
+            'member_form': DepartmentMemberForm(prefix=f'member-{dept.id}') if dept.is_active else None,
         })
 
     return render(request, 'admin_department_list.html', {
@@ -2386,6 +2418,7 @@ def _render_admin_department_list(request, create_form=None, edit_forms=None):
         'department_count': departments.count(),
         'member_count': total_members,
         'open_ticket_count': total_open_tickets,
+        'inactive_departments': inactive_departments,
     })
 
 
@@ -2449,16 +2482,6 @@ def admin_delete_department(request, dept_id):
         return redirect('admin_department_list')
 
     department = get_object_or_404(Department, id=dept_id, is_active=True)
-    active_ticket_qs = TicketDetail.objects.filter(
-        assigned_department=department
-    ).exclude(TICKET_STATUS__in=['Closed', 'Resolved'])
-    if active_ticket_qs.exists():
-        messages.error(
-            request,
-            f'{department.name} cannot be deleted while it still has active tickets.'
-        )
-        return redirect('admin_department_list')
-
     member_user_ids = list(
         DepartmentMember.objects.filter(
             department=department,
@@ -2474,8 +2497,40 @@ def admin_delete_department(request, dept_id):
         ).values_list('id', flat=True)
         MyCart.objects.filter(user_id__in=member_user_ids, ticket_id__in=closed_ticket_ids).delete()
 
-    log_activity(request.user, 'DELETED', f'Deleted department: {department.name}')
-    messages.success(request, f'{department.name} department removed successfully.')
+    log_activity(request.user, 'UPDATED', f'Inactivated department: {department.name}')
+    messages.success(request, f'{department.name} department marked inactive successfully.')
+    return redirect('admin_department_list')
+
+
+@admin_required
+def admin_reactivate_department(request, dept_id):
+    if request.method != 'POST':
+        return redirect('admin_department_list')
+
+    department = get_object_or_404(Department, id=dept_id, is_active=False)
+    department.is_active = True
+    department.save(update_fields=['is_active'])
+    log_activity(request.user, 'UPDATED', f'Reactivated department: {department.name}')
+    messages.success(request, f'{department.name} department reactivated successfully.')
+    return redirect('admin_department_list')
+
+
+@admin_required
+def admin_permanently_delete_inactive_department(request):
+    if request.method != 'POST':
+        return redirect('admin_department_list')
+
+    dept_id = request.POST.get('inactive_department_id')
+    if not dept_id:
+        messages.error(request, 'Please select an inactive department to delete.')
+        return redirect('admin_department_list')
+
+    department = get_object_or_404(Department, id=dept_id, is_active=False)
+    DepartmentMember.objects.filter(department=department).delete()
+    department_name = department.name
+    department.delete()
+    log_activity(request.user, 'DELETED', f'Permanently deleted inactive department: {department_name}')
+    messages.success(request, f'{department_name} department deleted successfully.')
     return redirect('admin_department_list')
 
 
@@ -2491,7 +2546,7 @@ def _apply_department_role(membership, role):
 
 @admin_required
 def admin_add_member(request, dept_id):
-    department = get_object_or_404(Department, id=dept_id)
+    department = get_object_or_404(Department, id=dept_id, is_active=True)
 
     if request.method == 'POST':
         form = DepartmentMemberForm(request.POST, prefix=f'member-{dept_id}')

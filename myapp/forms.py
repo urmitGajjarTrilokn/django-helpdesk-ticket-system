@@ -335,6 +335,12 @@ class TicketDetailForm(forms.ModelForm):
             raise ValidationError("Please provide more detail (at least 20 characters).")
         return desc
 
+    def clean_assigned_department(self):
+        department = self.cleaned_data.get('assigned_department')
+        if department and not department.is_active:
+            raise ValidationError("Inactive departments cannot receive tickets.")
+        return department
+
 
 class TicketCreateForm(forms.ModelForm):
     TICKET_TITLE = forms.CharField(
@@ -453,6 +459,12 @@ class TicketUpdateForm(forms.ModelForm):
                 f"Members of {instance.assigned_department.name}"
             )
 
+    def clean_assigned_department(self):
+        department = self.cleaned_data.get('assigned_department')
+        if department and not department.is_active:
+            raise ValidationError("Inactive departments cannot receive tickets.")
+        return department
+
 
 class AdminTicketRoutingForm(forms.ModelForm):
     priority = forms.ChoiceField(
@@ -468,6 +480,12 @@ class AdminTicketRoutingForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-select"}),
         label="Assigned Department",
     )
+
+    def clean_assigned_department(self):
+        department = self.cleaned_data.get('assigned_department')
+        if department and not department.is_active:
+            raise ValidationError("Inactive departments cannot receive tickets.")
+        return department
     extend_due_date = forms.DateField(
         required=False,
         label="Extend Due Date",
