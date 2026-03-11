@@ -15,15 +15,22 @@
   </div>
   <div class="d-flex gap-2 flex-wrap">
     {% if stats.unread > 0 %}
-    <a href="{% url 'mark_all_read' %}" class="btn btn-sm btn-primary">
-      <i class="fas fa-check-double me-1"></i>Mark All as Read
-    </a>
+    <form method="post" action="{% url 'mark_all_read' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'notifications_list' %}?filter={{ filter_type|urlencode }}">
+      <button type="submit" class="btn btn-sm btn-primary">
+        <i class="fas fa-check-double me-1"></i>Mark All as Read
+      </button>
+    </form>
     {% endif %}
     {% if stats.total > 0 %}
-    <a href="{% url 'delete_all_notifications' %}" class="btn btn-sm btn-outline-danger"
-       onclick="return confirm('Delete all notifications');">
-      <i class="fas fa-trash-alt me-1"></i>Delete All
-    </a>
+    <form method="post" action="{% url 'delete_all_notifications' %}" onsubmit="return confirm('Delete all notifications');">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'notifications_list' %}?filter={{ filter_type|urlencode }}">
+      <button type="submit" class="btn btn-sm btn-outline-danger">
+        <i class="fas fa-trash-alt me-1"></i>Delete All
+      </button>
+    </form>
     {% endif %}
   </div>
 </div>
@@ -104,14 +111,17 @@
           <td>
             <div class="d-flex gap-2">
               {% if not notif.is_read %}
-              <a href="{% url 'mark_notification_read' notif.id %}" class="btn btn-sm btn-outline-primary">
-                Mark Read
-              </a>
+              <form method="post" action="{% url 'mark_notification_read' notif.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'notifications_list' %}?filter={{ filter_type|urlencode }}">
+                <button type="submit" class="btn btn-sm btn-outline-primary">Mark Read</button>
+              </form>
               {% endif %}
-              <a href="{% url 'delete_notification' notif.id %}" class="btn btn-sm btn-outline-danger"
-                 onclick="return confirm('Delete this notification');">
-                Delete
-              </a>
+              <form method="post" action="{% url 'delete_notification' notif.id %}" onsubmit="return confirm('Delete this notification');">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'notifications_list' %}?filter={{ filter_type|urlencode }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
             </div>
           </td>
         </tr>

@@ -191,7 +191,7 @@ class DashboardRuntimeFlowTests(TestCase):
         )
 
         self.client.login(username="runtime_member", password="pass12345")
-        response = self.client.get(reverse("delete_all_notifications"))
+        response = self.client.post(reverse("delete_all_notifications"))
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Notification.objects.filter(id=visible_notification.id).exists())

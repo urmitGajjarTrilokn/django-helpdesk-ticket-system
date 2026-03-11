@@ -9,6 +9,26 @@ from django.dispatch import receiver
 def _table_exists(table_name):
     return table_name in connection.introspection.table_names()
 
+
+def get_visible_active_memberships(user):
+    if not user or not getattr(user, 'is_authenticated', False):
+        return DepartmentMember.objects.none()
+    return DepartmentMember.objects.filter(
+        user=user,
+        is_active=True,
+        department__is_active=True,
+    ).select_related('department')
+
+
+def get_visible_active_departments(user):
+    if not user or not getattr(user, 'is_authenticated', False):
+        return Department.objects.none()
+    return Department.objects.filter(
+        departmentmember__user=user,
+        departmentmember__is_active=True,
+        is_active=True,
+    ).distinct()
+
 class Department(models.Model):
     name        = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -103,10 +123,7 @@ class UserProfile(models.Model):
         return f"{self.user.username} profile"
 
     def get_departments(self):
-        return Department.objects.filter(
-            departmentmember__user=self.user,
-            departmentmember__is_active=True
-        ).distinct()
+        return get_visible_active_departments(self.user)
 
 class Category(models.Model):
     name        = models.CharField(max_length=100, unique=True)

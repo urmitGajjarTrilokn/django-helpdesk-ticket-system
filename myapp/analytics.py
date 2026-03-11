@@ -1,11 +1,33 @@
+from datetime import date, datetime, time, timedelta
+
 from django.db.models import Count, F, Q
 from django.utils import timezone
-from datetime import timedelta, date
+
 from .models import TicketDetail, Department, DepartmentMember, ActivityLog, TicketHistory
 from django.contrib.auth.models import User
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_to_dates(start_value, end_value):
+    if isinstance(start_value, datetime):
+        start_value = start_value.date()
+    if isinstance(end_value, datetime):
+        end_value = end_value.date()
+    return start_value, end_value
+
+
+def _coerce_to_aware_datetimes(start_value, end_value):
+    if isinstance(start_value, date) and not isinstance(start_value, datetime):
+        start_value = datetime.combine(start_value, time.min)
+    if isinstance(end_value, date) and not isinstance(end_value, datetime):
+        end_value = datetime.combine(end_value, time.max)
+    if timezone.is_naive(start_value):
+        start_value = timezone.make_aware(start_value, timezone.get_current_timezone())
+    if timezone.is_naive(end_value):
+        end_value = timezone.make_aware(end_value, timezone.get_current_timezone())
+    return start_value, end_value
 
 def get_date_range(range_type='30_days'):
     today = date.today()
@@ -30,6 +52,7 @@ def get_ticket_statistics(start_date=None, end_date=None, department=None):
         tickets = TicketDetail.objects.all()
 
         if start_date and end_date:
+            start_date, end_date = _coerce_to_dates(start_date, end_date)
             tickets = tickets.filter(TICKET_CREATED_ON__range=[start_date, end_date])
         if department:
             tickets = tickets.filter(assigned_department=department)
@@ -77,6 +100,7 @@ def get_tickets_over_time(start_date=None, end_date=None, department=None):
     try:
         tickets = TicketDetail.objects.all()
         if start_date and end_date:
+            start_date, end_date = _coerce_to_dates(start_date, end_date)
             tickets = tickets.filter(TICKET_CREATED_ON__range=[start_date, end_date])
         if department:
             tickets = tickets.filter(assigned_department=department)
@@ -117,6 +141,7 @@ def get_department_statistics(start_date=None, end_date=None):
         for dept in departments:
             tickets = TicketDetail.objects.filter(assigned_department=dept)
             if start_date and end_date:
+                start_date, end_date = _coerce_to_dates(start_date, end_date)
                 tickets = tickets.filter(TICKET_CREATED_ON__range=[start_date, end_date])
 
             total  = tickets.count()
@@ -172,6 +197,7 @@ def get_top_ticket_creators(limit=10, start_date=None, end_date=None, department
     try:
         tickets = TicketDetail.objects.filter(TICKET_CREATED__isnull=False)
         if start_date and end_date:
+            start_date, end_date = _coerce_to_dates(start_date, end_date)
             tickets = tickets.filter(TICKET_CREATED_ON__range=[start_date, end_date])
         if department:
             creator_ids = DepartmentMember.objects.filter(
@@ -210,6 +236,7 @@ def get_top_ticket_resolvers(limit=10, start_date=None, end_date=None, departmen
             ticket__TICKET_CREATED_id=F('changed_by_id')
         )
         if start_date and end_date:
+            start_date, end_date = _coerce_to_aware_datetimes(start_date, end_date)
             resolver_events = resolver_events.filter(changed_at__range=[start_date, end_date])
         if department:
             resolver_ids = DepartmentMember.objects.filter(
@@ -258,6 +285,7 @@ def get_priority_distribution(start_date=None, end_date=None, department=None):
     try:
         tickets = TicketDetail.objects.all()
         if start_date and end_date:
+            start_date, end_date = _coerce_to_dates(start_date, end_date)
             tickets = tickets.filter(TICKET_CREATED_ON__range=[start_date, end_date])
         if department:
             tickets = tickets.filter(assigned_department=department)
@@ -276,6 +304,7 @@ def get_category_distribution(start_date=None, end_date=None):
     try:
         tickets = TicketDetail.objects.filter(category__isnull=False)
         if start_date and end_date:
+            start_date, end_date = _coerce_to_dates(start_date, end_date)
             tickets = tickets.filter(TICKET_CREATED_ON__range=[start_date, end_date])
         cats = tickets.values(
             'category__name', 'category__color', 'category__icon'
@@ -295,6 +324,7 @@ def get_top_active_users(limit=10, start_date=None, end_date=None):
     try:
         logs = ActivityLog.objects.all()
         if start_date and end_date:
+            start_date, end_date = _coerce_to_dates(start_date, end_date)
             logs = logs.filter(timestamp__date__range=[start_date, end_date])
 
         top = logs.values('user__username', 'user__id').annotate(

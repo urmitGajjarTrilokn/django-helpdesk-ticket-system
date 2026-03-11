@@ -27,6 +27,7 @@ from .models import (
     UserComment, Category, Notification, Department, DepartmentMember,
     TicketHistory, TicketRating, AIMLLog,
     CannedResponse,
+    get_visible_active_memberships,
 )
 from .decorators import (
     department_member_required,
@@ -139,6 +140,8 @@ def _is_department_member(user, ticket):
 def _can_view_ticket(user, ticket):
     if _is_admin_user(user):
         return True
+    if ticket.__class__.objects.filter(id=ticket.id).filter(_inactive_department_ticket_q()).exists():
+        return False
     if ticket.TICKET_CREATED_id == user.id:
         return True
     if ticket.assigned_to_id == user.id:
@@ -148,6 +151,8 @@ def _can_view_ticket(user, ticket):
 
 def _can_work_on_ticket(user, ticket):
     if user.is_superuser:
+        return False
+    if ticket.__class__.objects.filter(id=ticket.id).filter(_inactive_department_ticket_q()).exists():
         return False
     if ticket.TICKET_CREATED_id == user.id:
         return True
@@ -187,7 +192,7 @@ def _can_user_close_ticket(user, ticket):
 
 
 def _is_single_member_department_assignment(ticket):
-    if not ticket.assigned_department_id:
+    if not ticket.assigned_department_id or not getattr(ticket.assigned_department, 'is_active', False):
         return False
     active_member_count = DepartmentMember.objects.filter(
         department=ticket.assigned_department,
@@ -199,6 +204,8 @@ def _is_single_member_department_assignment(ticket):
 
 def _auto_assign_single_member_department_ticket(ticket, changed_by=None):
     if not ticket.assigned_department_id or ticket.assigned_to_id:
+        return None
+    if not getattr(ticket.assigned_department, 'is_active', False):
         return None
     memberships = (
         DepartmentMember.objects
@@ -252,7 +259,7 @@ def _sync_mycart_for_user(user):
         return
 
     department_ids = DepartmentMember.objects.filter(
-        user=user, is_active=True
+        user=user, is_active=True, department__is_active=True
     ).values_list('department_id', flat=True)
 
     rejected_ticket_ids = set(
@@ -329,6 +336,8 @@ def _is_non_rejectable_assignment(user, ticket):
 
 def _auto_assign_on_department_rejection(ticket, rejected_by):
     if not ticket.assigned_department_id:
+        return None
+    if not getattr(ticket.assigned_department, 'is_active', False):
         return None
     if ticket.TICKET_STATUS in ['Closed', 'Resolved']:
         return None
@@ -409,7 +418,7 @@ def _auto_assign_on_department_rejection(ticket, rejected_by):
 
 def _get_primary_department_id(user):
     membership = DepartmentMember.objects.filter(
-        user=user, is_active=True
+        user=user, is_active=True, department__is_active=True
     ).order_by('department__name').first()
     return membership.department_id if membership else None
 
@@ -429,6 +438,16 @@ def _inactive_department_ticket_q(prefix=''):
 
 def _exclude_inactive_department_tickets(queryset, prefix=''):
     return queryset.exclude(_inactive_department_ticket_q(prefix))
+
+
+def _user_has_inactive_department_membership(user):
+    if not user or not user.is_authenticated or user.is_superuser:
+        return False
+    return DepartmentMember.objects.filter(
+        user=user,
+        is_active=True,
+        department__is_active=False,
+    ).exists()
 
 
 def _get_dashboard_redirect_url(user):
@@ -478,11 +497,18 @@ def _notifications_for_user(user):
     if _is_admin_user(user):
         return base_qs
 
-    department_ids = DepartmentMember.objects.filter(
-        user=user, is_active=True
-    ).values_list('department_id', flat=True)
+    department_ids = get_visible_active_memberships(user).values_list('department_id', flat=True)
 
     return base_qs.filter(ticket__assigned_department_id__in=department_ids)
+
+
+def _redirect_to_safe_next(request, default_name, **kwargs):
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(next_url)
+    return redirect(default_name, **kwargs) if kwargs else redirect(default_name)
 
 def landing_page(request):
     if request.user.is_authenticated:
@@ -497,7 +523,7 @@ def Basepage(request, dept_id=None):
 
     is_admin_user = _is_admin_user(request.user)
     user_memberships = DepartmentMember.objects.filter(
-        user=request.user, is_active=True
+        user=request.user, is_active=True, department__is_active=True
     ).select_related('department').order_by('department__name')
     user_department_ids = list(user_memberships.values_list('department_id', flat=True))
 
@@ -639,6 +665,13 @@ def Basepage(request, dept_id=None):
 
 @login_required
 def TicketDetails(request):
+    if _user_has_inactive_department_membership(request.user):
+        messages.error(
+            request,
+            "You cannot create tickets while your department is inactive. Contact an administrator."
+        )
+        return redirect(_get_dashboard_redirect_url(request.user))
+
     if request.method == "POST":
         form = TicketCreateForm(request.POST, request.FILES)
         if form.is_valid():
@@ -676,7 +709,8 @@ def TicketDetails(request):
                     )
 
                     department = Department.objects.filter(
-                        name__iexact=predicted_department_name
+                        name__iexact=predicted_department_name,
+                        is_active=True,
                     ).first()
 
                     if department:
@@ -726,12 +760,13 @@ def TicketDetails(request):
                 ticket=ticket,
             )
 
-            if ticket.assigned_department:
+            if ticket.assigned_department and ticket.assigned_department.is_active:
                 notify_ticket_created(ticket)
 
                 for member in DepartmentMember.objects.filter(
                     department=ticket.assigned_department,
                     is_active=True,
+                    department__is_active=True,
                 ):
                     MyCart.objects.get_or_create(user=member.user, ticket=ticket)
 
@@ -1197,6 +1232,16 @@ def updateticket(request, pk):
 @login_required
 def deleteticket(request, pk):
     ticket = get_object_or_404(TicketDetail, id=pk)
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('ticketinfo', pk=pk)
+    inactive_ticket_locked = (
+        not _is_admin_user(request.user)
+        and ticket.__class__.objects.filter(id=ticket.id).filter(_inactive_department_ticket_q()).exists()
+    )
+    if inactive_ticket_locked:
+        messages.error(request, 'You do not have permission to delete this ticket.')
+        return redirect('base')
     can_delete_by_role = user_has_department_permission(
         request.user, ticket.assigned_department, 'can_delete_tickets'
     )
@@ -1616,7 +1661,7 @@ def update_profile(request, pk):
 def MyCarts(request):
     _sync_mycart_for_user(request.user)
     user_memberships = DepartmentMember.objects.filter(
-        user=request.user, is_active=True
+        user=request.user, is_active=True, department__is_active=True
     ).select_related('department').order_by('department__name')
     user_department_ids = list(user_memberships.values_list('department_id', flat=True))
 
@@ -2154,6 +2199,9 @@ def category_edit(request, pk):
 
 @admin_required
 def category_delete(request, pk):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('category_list')
     category = get_object_or_404(Category, id=pk)
     name     = category.name
     category.delete()
@@ -2183,13 +2231,20 @@ def department_dashboard(request, dept_id=None):
     if dept_id:
         department = get_object_or_404(Department, id=dept_id)
         if not request.user.is_superuser:
+            if not department.is_active:
+                messages.error(request, 'This department is inactive.')
+                return redirect('base')
             if not DepartmentMember.objects.filter(
                 user=request.user, department=department, is_active=True
             ).exists():
                 messages.error(request, 'You are not a member of this department.')
                 return redirect('base')
     else:
-        membership = DepartmentMember.objects.filter(user=request.user, is_active=True).first()
+        membership = DepartmentMember.objects.filter(
+            user=request.user,
+            is_active=True,
+            department__is_active=True,
+        ).first()
         if not membership:
             messages.error(request, 'You are not a member of any department.')
             return redirect('base')
@@ -2482,20 +2537,19 @@ def admin_delete_department(request, dept_id):
         return redirect('admin_department_list')
 
     department = get_object_or_404(Department, id=dept_id, is_active=True)
-    member_user_ids = list(
-        DepartmentMember.objects.filter(
-            department=department,
-            is_active=True,
-        ).values_list('user_id', flat=True)
+    affected_tickets = TicketDetail.objects.filter(assigned_department=department)
+    affected_ticket_ids = list(affected_tickets.values_list('id', flat=True))
+    affected_tickets.update(
+        assigned_to=None,
+        TICKET_HOLDER='',
+        assignment_type='UNASSIGNED',
+        assigned_by=None,
+        assigned_at=None,
     )
-    DepartmentMember.objects.filter(department=department).update(is_active=False)
+    if affected_ticket_ids:
+        MyCart.objects.filter(ticket_id__in=affected_ticket_ids).delete()
     department.is_active = False
     department.save(update_fields=['is_active'])
-    if member_user_ids:
-        closed_ticket_ids = TicketDetail.objects.filter(
-            assigned_department=department
-        ).values_list('id', flat=True)
-        MyCart.objects.filter(user_id__in=member_user_ids, ticket_id__in=closed_ticket_ids).delete()
 
     log_activity(request.user, 'UPDATED', f'Inactivated department: {department.name}')
     messages.success(request, f'{department.name} department marked inactive successfully.')
@@ -2532,6 +2586,67 @@ def admin_permanently_delete_inactive_department(request):
     log_activity(request.user, 'DELETED', f'Permanently deleted inactive department: {department_name}')
     messages.success(request, f'{department_name} department deleted successfully.')
     return redirect('admin_department_list')
+
+
+@admin_required
+def admin_department_tickets(request, dept_id):
+    department = get_object_or_404(Department, id=dept_id)
+    ticket_view = (request.GET.get('view') or 'assigned').strip().lower()
+    if ticket_view not in {'assigned', 'created'}:
+        ticket_view = 'assigned'
+
+    member_user_ids = DepartmentMember.objects.filter(
+        department=department
+    ).values_list('user_id', flat=True)
+
+    assigned_qs = TicketDetail.objects.filter(
+        assigned_department=department
+    ).select_related('TICKET_CREATED', 'assigned_department', 'assigned_to', 'category')
+    created_qs = TicketDetail.objects.filter(
+        TICKET_CREATED_id__in=member_user_ids
+    ).select_related('TICKET_CREATED', 'assigned_department', 'assigned_to', 'category')
+
+    q = (request.GET.get('q') or '').strip()
+    if q:
+        assigned_filters = (
+            Q(TICKET_TITLE__icontains=q) |
+            Q(TICKET_DESCRIPTION__icontains=q) |
+            Q(TICKET_CREATED__username__icontains=q)
+        )
+        created_filters = (
+            Q(TICKET_TITLE__icontains=q) |
+            Q(TICKET_DESCRIPTION__icontains=q) |
+            Q(TICKET_CREATED__username__icontains=q)
+        )
+        if q.isdigit():
+            assigned_filters |= Q(id=int(q))
+            created_filters |= Q(id=int(q))
+        assigned_qs = assigned_qs.filter(assigned_filters)
+        created_qs = created_qs.filter(created_filters)
+
+    status = (request.GET.get('status') or '').strip()
+    if status:
+        assigned_qs = assigned_qs.filter(TICKET_STATUS=status)
+        created_qs = created_qs.filter(TICKET_STATUS=status)
+
+    selected_qs = assigned_qs if ticket_view == 'assigned' else created_qs
+    paginator = Paginator(selected_qs.order_by('-TICKET_CREATED_ON', '-id'), 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    query = request.GET.copy()
+    query.pop('page', None)
+
+    return render(request, 'admin_department_tickets.html', {
+        'department': department,
+        'ticket_view': ticket_view,
+        'tickets': page_obj,
+        'assigned_count': assigned_qs.count(),
+        'created_count': created_qs.count(),
+        'search_query': q,
+        'status_filter': status,
+        'pagination_query': query.urlencode(),
+        'status_choices': TicketDetail.choice,
+    })
 
 
 def _apply_department_role(membership, role):
@@ -2662,31 +2777,43 @@ def notifications_list(request):
 
 @login_required
 def mark_notification_read(request, notification_id):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('notifications_list')
     notif    = get_object_or_404(_notifications_for_user(request.user), id=notification_id)
     notif.mark_as_read()
-    return redirect(request.GET.get('next', notif.get_url()))
+    return _redirect_to_safe_next(request, 'notifications_list')
 
 
 @login_required
 def mark_all_read(request):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('notifications_list')
     updated = _notifications_for_user(request.user).filter(is_read=False).update(is_read=True)
     messages.success(request, f'Marked {updated} notifications as read.')
-    return redirect('notifications_list')
+    return _redirect_to_safe_next(request, 'notifications_list')
 
 
 @login_required
 def delete_notification(request, notification_id):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('notifications_list')
     notif = get_object_or_404(_notifications_for_user(request.user), id=notification_id)
     notif.delete()
     messages.success(request, 'Notification deleted.')
-    return redirect('notifications_list')
+    return _redirect_to_safe_next(request, 'notifications_list')
 
 
 @login_required
 def delete_all_notifications(request):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('notifications_list')
     deleted, _ = _notifications_for_user(request.user).delete()
     messages.success(request, f'Deleted {deleted} notifications.')
-    return redirect('notifications_list')
+    return _redirect_to_safe_next(request, 'notifications_list')
 
 
 @login_required
@@ -2707,15 +2834,11 @@ def analytics_dashboard(request):
 
     range_type = request.GET.get('range', '30_days')
     start_date, end_date = get_date_range(range_type)
-    start_dt = datetime.combine(start_date, time.min)
-    end_dt   = datetime.combine(end_date,   time.max)
 
     if range_type == 'custom':
         try:
             start_date = datetime.strptime(request.GET.get('start_date', ''), '%Y-%m-%d').date()
             end_date   = datetime.strptime(request.GET.get('end_date',   ''), '%Y-%m-%d').date()
-            start_dt   = datetime.combine(start_date, time.min)
-            end_dt     = datetime.combine(end_date,   time.max)
         except ValueError:
             messages.error(request, 'Invalid date format.')
             start_date, end_date = get_date_range('30_days')
@@ -2732,13 +2855,13 @@ def analytics_dashboard(request):
         'selected_resolver_department': resolver_department,
         'selected_creator_department': creator_department,
         'departments':          Department.objects.filter(is_active=True),
-        'stats':                get_ticket_statistics(start_dt, end_dt, department),
-        'dept_stats':           get_department_statistics(start_dt, end_dt),
+        'stats':                get_ticket_statistics(start_date, end_date, department),
+        'dept_stats':           get_department_statistics(start_date, end_date),
         'dept_comparison':      get_department_comparison(),
-        'top_creators':         get_top_ticket_creators(5, start_dt, end_dt, creator_department),
-        'top_resolvers':        get_top_ticket_resolvers(5, start_dt, end_dt, resolver_department),
-        'priority_dist':        get_priority_distribution(start_dt, end_dt, department),
-        'category_dist':        get_category_distribution(start_dt, end_dt),
+        'top_creators':         get_top_ticket_creators(5, start_date, end_date, creator_department),
+        'top_resolvers':        get_top_ticket_resolvers(5, start_date, end_date, resolver_department),
+        'priority_dist':        get_priority_distribution(start_date, end_date, department),
+        'category_dist':        get_category_distribution(start_date, end_date),
     }
     return render(request, 'analytics_dashboard.html', context)
 
@@ -2753,8 +2876,8 @@ def api_tickets_over_time(request):
         data             = get_tickets_over_time(start_date, end_date, department)
         return JsonResponse({'labels': [i['date'] for i in data], 'data': [i['count'] for i in data]})
     except Exception as e:
-        import traceback
-        return JsonResponse({'error': str(e), 'traceback': traceback.format_exc(), 'labels': [], 'data': []}, status=500)
+        logger.exception("Failed to build tickets-over-time API response.")
+        return JsonResponse({'error': 'Unable to load chart data right now.', 'labels': [], 'data': []}, status=500)
 
 
 @admin_required
@@ -2762,8 +2885,8 @@ def api_department_comparison(request):
     try:
         return JsonResponse(get_department_comparison())
     except Exception as e:
-        import traceback
-        return JsonResponse({'error': str(e), 'traceback': traceback.format_exc()}, status=500)
+        logger.exception("Failed to build department comparison API response.")
+        return JsonResponse({'error': 'Unable to load comparison data right now.'}, status=500)
 
 
 @admin_required
@@ -2778,8 +2901,8 @@ def api_priority_distribution(request):
             'colors': ['#ef4444','#f59e0b','#3b82f6','#94a3b8'],
         })
     except Exception as e:
-        import traceback
-        return JsonResponse({'error': str(e), 'traceback': traceback.format_exc()}, status=500)
+        logger.exception("Failed to build priority distribution API response.")
+        return JsonResponse({'error': 'Unable to load priority data right now.'}, status=500)
 
 
 @admin_required
@@ -2796,8 +2919,8 @@ def api_category_distribution(request):
             'colors': [i['color'] for i in data],
         })
     except Exception as e:
-        import traceback
-        return JsonResponse({'error': str(e), 'traceback': traceback.format_exc()}, status=500)
+        logger.exception("Failed to build category distribution API response.")
+        return JsonResponse({'error': 'Unable to load category data right now.'}, status=500)
 
 
 @admin_required
@@ -2816,14 +2939,12 @@ def export_analytics_excel(request):
 
     range_type       = request.GET.get('range', '30_days')
     start_date, end_date = get_date_range(range_type)
-    start_dt = datetime.combine(start_date, time.min)
-    end_dt   = datetime.combine(end_date,   time.max)
     department = _department_from_query('department')
     resolver_department = _department_from_query('resolver_department') or department
     creator_department = _department_from_query('creator_department') or department
     data     = prepare_export_data(
-        start_dt,
-        end_dt,
+        start_date,
+        end_date,
         department=department,
         resolver_department=resolver_department,
         creator_department=creator_department,
@@ -2834,7 +2955,7 @@ def export_analytics_excel(request):
     ws1.title = "Summary"
     ws1['A1'] = "Helpdesk Analytics Report"
     ws1['A1'].font = Font(size=16, bold=True)
-    ws1['A2'] = f"Period: {start_dt} to {end_dt}"
+    ws1['A2'] = f"Period: {start_date} to {end_date}"
     ws1['A3'] = f"Generated: {data['generated_at'].strftime('%Y-%m-%d %H:%M')}"
     rows = [
         ('Total Tickets', data['statistics']['total']),
@@ -2852,7 +2973,7 @@ def export_analytics_excel(request):
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = f'attachment; filename=analytics_{start_dt}_{end_dt}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename=analytics_{start_date}_{end_date}.xlsx'
     wb.save(response)
     return response
 
@@ -2887,6 +3008,9 @@ def ticket_history(request, pk):
         })
 
     ticket = get_object_or_404(TicketDetail, id=pk)
+    if not _can_view_ticket(request.user, ticket):
+        messages.error(request, 'You do not have permission to view this ticket history.')
+        return redirect('base')
     history = (
         TicketHistory.objects
         .filter(ticket=ticket)
@@ -3061,6 +3185,18 @@ def reply_overdue_note(request, pk):
 @login_required
 def department_analytics(request, dept_id):
     department = get_object_or_404(Department, id=dept_id)
+    if not request.user.is_superuser:
+        if not department.is_active:
+            messages.error(request, 'This department is inactive.')
+            return redirect('base')
+        if not DepartmentMember.objects.filter(
+            user=request.user,
+            department=department,
+            is_active=True,
+            department__is_active=True,
+        ).exists():
+            messages.error(request, 'You are not allowed to view analytics for this department.')
+            return redirect('base')
 
     range_type           = request.GET.get('range', '30_days')
     start_date, end_date = get_date_range(range_type)
@@ -3072,18 +3208,15 @@ def department_analytics(request, dept_id):
 
     member_stats = []
     for member in members:
-        start_datetime = timezone.make_aware(datetime.combine(start_date, time.min))
-        end_datetime   = timezone.make_aware(datetime.combine(end_date,   time.max))
-
         tickets_created  = TicketDetail.objects.filter(
             TICKET_CREATED=member.user,
-            TICKET_CREATED_ON__range=(start_datetime, end_datetime)
+            TICKET_CREATED_ON__range=(start_date, end_date)
         ).count()
 
         tickets_resolved = TicketDetail.objects.filter(
             assigned_to=member.user,
             TICKET_STATUS__in=['Closed', 'Resolved'],
-            TICKET_CLOSED_ON__range=(start_datetime, end_datetime)
+            TICKET_CLOSED_ON__range=(start_date, end_date)
         ).count()
 
         active_tickets = TicketDetail.objects.filter(
@@ -3129,14 +3262,12 @@ def export_analytics_pdf(request):
 
     range_type           = request.GET.get('range', '30_days')
     start_date, end_date = get_date_range(range_type)
-    start_dt = datetime.combine(start_date, time.min)
-    end_dt   = datetime.combine(end_date,   time.max)
     department = _department_from_query('department')
     resolver_department = _department_from_query('resolver_department') or department
     creator_department = _department_from_query('creator_department') or department
     data     = prepare_export_data(
-        start_dt,
-        end_dt,
+        start_date,
+        end_date,
         department=department,
         resolver_department=resolver_department,
         creator_department=creator_department,
@@ -3157,7 +3288,7 @@ def export_analytics_pdf(request):
     elements = [
         Paragraph("Helpdesk Analytics Report", title_style),
         Paragraph(
-            f"Period: {start_dt} to {end_dt}<br/>"
+            f"Period: {start_date} to {end_date}<br/>"
             f"Generated: {data['generated_at'].strftime('%Y-%m-%d %H:%M')}",
             styles['Normal']
         ),

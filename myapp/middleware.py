@@ -1,5 +1,5 @@
 from django.urls import resolve
-from .models import DepartmentMember
+from .models import get_visible_active_memberships
 
 
 class DepartmentAccessMiddleware:                                                          
@@ -57,10 +57,7 @@ class DepartmentAccessMiddleware:
             return self.get_response(request)
 
                                                                         
-        request.user_departments = DepartmentMember.objects.filter(
-            user=request.user,
-            is_active=True,
-        ).select_related('department')
+        request.user_departments = get_visible_active_memberships(request.user)
 
         return self.get_response(request)
 

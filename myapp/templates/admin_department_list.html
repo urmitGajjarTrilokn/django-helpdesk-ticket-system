@@ -196,6 +196,7 @@
     background: none;
     border: 0;
     color: inherit;
+    text-decoration: none;
   }
   .dept-panel-title {
     display: flex;
@@ -436,39 +437,27 @@
     border-style: dashed;
     background: linear-gradient(180deg, #fff 0%, #fff8f8 100%);
   }
-  .dept-ticket-groups {
-    display: none;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-  .dept-ticket-groups.is-open {
-    display: grid;
-  }
-  .dept-ticket-card {
-    padding: 14px;
-    border-radius: 16px;
-    border: 1px solid var(--slate-200);
-    background: #fff;
-  }
-  .dept-ticket-list {
-    display: grid;
-    gap: 10px;
-  }
-  .dept-ticket-item {
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: var(--slate-50);
-    border: 1px solid var(--slate-200);
-  }
-  .dept-ticket-item-title {
-    font-size: 13px;
+  .dept-btn-warning {
+    background: var(--warning-bg);
+    border-color: var(--warning-border);
+    color: var(--warning);
     font-weight: 700;
-    color: var(--slate-900);
   }
-  .dept-ticket-item-meta {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--slate-500);
+  .dept-btn-warning:hover {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #b45309;
+  }
+  .dept-btn-success {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+    color: var(--success);
+    font-weight: 700;
+  }
+  .dept-btn-success:hover {
+    background: #d1fae5;
+    border-color: #34d399;
+    color: #047857;
   }
   .dept-empty {
     padding: 54px 22px;
@@ -479,6 +468,89 @@
     padding: 32px 18px;
   }
   .dept-hidden { display: none !important; }
+  .dept-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .58);
+    backdrop-filter: blur(6px);
+  }
+  .dept-modal-backdrop.show {
+    display: flex;
+  }
+  .dept-modal {
+    width: min(100%, 520px);
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, .24);
+    border-radius: 24px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .24);
+    overflow: hidden;
+  }
+  .dept-modal-head {
+    padding: 20px 22px 14px;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .dept-modal-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, .12);
+    color: #b45309;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .dept-modal-head h3 {
+    margin: 14px 0 6px;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--slate-900);
+  }
+  .dept-modal-head p {
+    margin: 0;
+    color: var(--slate-500);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .dept-modal-body {
+    padding: 18px 22px;
+  }
+  .dept-modal-note {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid var(--slate-200);
+    color: var(--slate-600);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .dept-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 18px 22px 22px;
+    border-top: 1px solid var(--slate-200);
+    background: #f8fafc;
+  }
+  .dept-modal-danger {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    color: #fff;
+  }
+  .dept-modal-danger:hover,
+  .dept-modal-danger:focus {
+    background: #991b1b;
+    border-color: #991b1b;
+    color: #fff;
+  }
   @media (min-width: 992px) {
     .dept-grid > .dept-panel:only-child {
       grid-column: 1 / -1;
@@ -500,7 +572,6 @@
     .dept-form-grid,
     .dept-stat-strip,
     .dept-member-add,
-    .dept-ticket-groups,
     .dept-grid {
       grid-template-columns: 1fr;
     }
@@ -607,15 +678,15 @@
   <div class="dept-list-toolbar">
     <div class="dept-inactive-bar">
       <i class="fas fa-box-archive text-danger"></i>
-      <form method="post" action="/admin-departments/inactive/delete/" class="d-flex gap-2 w-100 align-items-center">
+      <form method="post" action="/admin-departments/inactive/delete/" class="d-flex gap-2 w-100 align-items-center js-inactive-delete-form">
         {% csrf_token %}
-        <select name="inactive_department_id" class="form-select">
+        <select name="inactive_department_id" class="form-select js-inactive-delete-select">
           <option value="">Inactive departments</option>
           {% for inactive_dept in inactive_departments %}
             <option value="{{ inactive_dept.id }}">{{ inactive_dept.name }}</option>
           {% endfor %}
         </select>
-        <button class="btn btn-outline-danger" type="submit" {% if not inactive_departments %}disabled{% endif %}>
+        <button class="btn btn-outline-danger js-open-delete-modal" type="button" {% if not inactive_departments %}disabled{% endif %}>
           Delete
         </button>
       </form>
@@ -633,7 +704,7 @@
         <article class="dept-panel js-dept-card" data-dept-name="{{ item.department.name|lower }}" data-dept-code="{{ item.department.code|lower }}">
           <div class="dept-panel-head">
             <div class="dept-panel-top">
-              <button type="button" class="dept-heading-btn js-ticket-toggle" aria-expanded="false">
+              <a href="{% url 'admin_department_tickets' item.department.id %}" class="dept-heading-btn">
                 <div class="dept-panel-title">
                   <div class="dept-panel-icon" style="color:{{ item.department.color }};">
                     <i class="{{ item.department.icon }}"></i>
@@ -643,7 +714,7 @@
                     <p>{{ item.department.code }}{% if item.department.email %} | {{ item.department.email }}{% endif %}</p>
                   </div>
                 </div>
-              </button>
+              </a>
               <span class="dept-state-badge {% if not item.department.is_active %}inactive{% endif %}">
                 {% if item.department.is_active %}Active{% else %}Inactive{% endif %}
               </span>
@@ -654,8 +725,8 @@
                 <div class="dept-stat-value">{{ item.member_count }}</div>
               </div>
               <div class="dept-stat">
-                <div class="dept-stat-label">Open</div>
-                <div class="dept-stat-value">{{ item.open }}</div>
+                <div class="dept-stat-label">Created</div>
+                <div class="dept-stat-value">{{ item.created_ticket_count }}</div>
               </div>
               <div class="dept-stat">
                 <div class="dept-stat-label">Active</div>
@@ -669,45 +740,6 @@
           </div>
 
           <div class="dept-panel-body">
-            <section class="dept-ticket-groups js-ticket-groups">
-              <div class="dept-ticket-card">
-                <div class="dept-section-head">
-                  <h4>Created Tickets</h4>
-                  <span>{{ item.created_ticket_count }}</span>
-                </div>
-                <div class="dept-ticket-list">
-                  {% for ticket in item.created_tickets %}
-                    <div class="dept-ticket-item">
-                      <div class="dept-ticket-item-title">#{{ ticket.id }} {{ ticket.TICKET_TITLE }}</div>
-                      <div class="dept-ticket-item-meta">
-                        {{ ticket.TICKET_STATUS }}{% if ticket.assigned_department %} | Assigned: {{ ticket.assigned_department.name }}{% endif %}
-                      </div>
-                    </div>
-                  {% empty %}
-                    <div class="text-muted small">No created tickets found for this department.</div>
-                  {% endfor %}
-                </div>
-              </div>
-              <div class="dept-ticket-card">
-                <div class="dept-section-head">
-                  <h4>Assigned Tickets</h4>
-                  <span>{{ item.assigned_ticket_count }}</span>
-                </div>
-                <div class="dept-ticket-list">
-                  {% for ticket in item.assigned_tickets %}
-                    <div class="dept-ticket-item">
-                      <div class="dept-ticket-item-title">#{{ ticket.id }} {{ ticket.TICKET_TITLE }}</div>
-                      <div class="dept-ticket-item-meta">
-                        {{ ticket.TICKET_STATUS }}{% if ticket.TICKET_CREATED %} | Created by: {{ ticket.TICKET_CREATED.username }}{% endif %}
-                      </div>
-                    </div>
-                  {% empty %}
-                    <div class="text-muted small">No assigned tickets found for this department.</div>
-                  {% endfor %}
-                </div>
-              </div>
-            </section>
-
             <section class="dept-section">
               <div class="dept-section-head">
                 <h4>{% if item.department.is_active %}Add or Reactivate Member{% else %}Department Inactive{% endif %}</h4>
@@ -726,10 +758,7 @@
                   </div>
                 </form>
               {% else %}
-                <form method="post" action="/admin-departments/{{ item.department.id }}/reactivate/">
-                  {% csrf_token %}
-                  <button class="btn btn-primary" type="submit">Reactivate Department</button>
-                </form>
+                <div class="text-muted small">This department is inactive. Use the status action below to reactivate it.</div>
               {% endif %}
             </section>
 
@@ -861,14 +890,14 @@
                 <span>{% if item.department.is_active %}Keep the department record and switch it off.{% else %}This department is currently inactive.{% endif %}</span>
               </div>
               {% if item.department.is_active %}
-                <form method="post" action="/admin-departments/{{ item.department.id }}/delete/">
+                <form method="post" action="/admin-departments/{{ item.department.id }}/delete/" class="js-inactivate-form">
                   {% csrf_token %}
-                  <button class="btn btn-outline-danger" type="submit">Mark Inactive</button>
+                  <button class="btn dept-btn-warning js-open-inactivate-modal" type="button" data-department-name="{{ item.department.name }}">Mark Inactive</button>
                 </form>
               {% else %}
                 <form method="post" action="/admin-departments/{{ item.department.id }}/reactivate/">
                   {% csrf_token %}
-                  <button class="btn btn-outline-primary" type="submit">Reactivate Department</button>
+                  <button class="btn dept-btn-success" type="submit">Reactivate Department</button>
                 </form>
               {% endif %}
               <div class="text-muted small mt-2">
@@ -888,6 +917,23 @@
     </div>
   {% endif %}
 </div>
+
+<div class="dept-modal-backdrop" id="deptConfirmModal" aria-hidden="true">
+  <div class="dept-modal" role="dialog" aria-modal="true" aria-labelledby="deptConfirmTitle">
+    <div class="dept-modal-head">
+      <span class="dept-modal-eyebrow" id="deptConfirmEyebrow"><i class="fas fa-circle-info"></i>Confirm action</span>
+      <h3 id="deptConfirmTitle">Please confirm this action</h3>
+      <p id="deptConfirmMessage">Review the action before continuing.</p>
+    </div>
+    <div class="dept-modal-body">
+      <p class="dept-modal-note" id="deptConfirmNote">This change only affects the selected department.</p>
+    </div>
+    <div class="dept-modal-actions">
+      <button type="button" class="btn btn-outline-secondary" id="deptConfirmCancel">Cancel</button>
+      <button type="button" class="btn" id="deptConfirmSubmit">Continue</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -896,6 +942,16 @@
     const searchInput = document.getElementById('deptSearch');
     const cards = Array.from(document.querySelectorAll('.js-dept-card'));
     const memberSearchInputs = Array.from(document.querySelectorAll('.js-member-search'));
+    const confirmModal = document.getElementById('deptConfirmModal');
+    const confirmCancel = document.getElementById('deptConfirmCancel');
+    const confirmSubmit = document.getElementById('deptConfirmSubmit');
+    const confirmTitle = document.getElementById('deptConfirmTitle');
+    const confirmMessage = document.getElementById('deptConfirmMessage');
+    const confirmNote = document.getElementById('deptConfirmNote');
+    const confirmEyebrow = document.getElementById('deptConfirmEyebrow');
+    const inactiveDeleteForm = document.querySelector('.js-inactive-delete-form');
+    const inactiveDeleteSelect = document.querySelector('.js-inactive-delete-select');
+    let pendingForm = null;
     const deptBackgrounds = {
       hr: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80',
       'human resources': 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80',
@@ -955,15 +1011,90 @@
       });
     });
 
-    cards.forEach((card) => {
-      const toggle = card.querySelector('.js-ticket-toggle');
-      const groups = card.querySelector('.js-ticket-groups');
-      if (!toggle || !groups) return;
+    function closeConfirmModal() {
+      if (!confirmModal) return;
+      confirmModal.classList.remove('show');
+      confirmModal.setAttribute('aria-hidden', 'true');
+      pendingForm = null;
+    }
 
-      toggle.addEventListener('click', function () {
-        const isOpen = groups.classList.toggle('is-open');
-        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    function openConfirmModal(config) {
+      if (!confirmModal || !confirmSubmit) return;
+      pendingForm = config.form || null;
+      confirmTitle.textContent = config.title || 'Please confirm this action';
+      confirmMessage.textContent = config.message || 'Review the action before continuing.';
+      confirmNote.textContent = config.note || 'This change only affects the selected department.';
+      confirmEyebrow.innerHTML = config.eyebrow || '<i class="fas fa-circle-info"></i>Confirm action';
+      confirmSubmit.className = `btn ${config.confirmClass || 'btn-primary'}`;
+      confirmSubmit.textContent = config.confirmLabel || 'Continue';
+      confirmModal.classList.add('show');
+      confirmModal.setAttribute('aria-hidden', 'false');
+    }
+
+    document.querySelectorAll('.js-open-inactivate-modal').forEach((button) => {
+      button.addEventListener('click', function () {
+        const form = this.closest('form');
+        const departmentName = this.getAttribute('data-department-name') || 'This department';
+        openConfirmModal({
+          form,
+          eyebrow: '<i class="fas fa-triangle-exclamation"></i>Mark inactive',
+          title: `Mark ${departmentName} inactive?`,
+          message: `${departmentName} will stop accepting ticket creation and department assignment until it is reactivated.`,
+          note: 'Members stay attached to the department. Admins can still inspect department tickets and reactivate it later.',
+          confirmLabel: 'Mark Inactive',
+          confirmClass: 'dept-btn-warning',
+        });
       });
+    });
+
+    if (inactiveDeleteForm && inactiveDeleteSelect) {
+      const deleteTrigger = inactiveDeleteForm.querySelector('.js-open-delete-modal');
+      if (deleteTrigger) {
+        deleteTrigger.addEventListener('click', function () {
+          const selectedOption = inactiveDeleteSelect.options[inactiveDeleteSelect.selectedIndex];
+          const departmentName = selectedOption && selectedOption.value ? selectedOption.text : '';
+          if (!departmentName) {
+            inactiveDeleteForm.requestSubmit();
+            return;
+          }
+          openConfirmModal({
+            form: inactiveDeleteForm,
+            eyebrow: '<i class="fas fa-trash"></i>Permanently delete',
+            title: `Delete ${departmentName}?`,
+            message: `${departmentName} will be permanently removed from the system.`,
+            note: 'Use this only when the inactive department should no longer exist at all. This action cannot be undone.',
+            confirmLabel: 'Delete Department',
+            confirmClass: 'dept-modal-danger',
+          });
+        });
+      }
+    }
+
+    if (confirmCancel) {
+      confirmCancel.addEventListener('click', closeConfirmModal);
+    }
+
+    if (confirmSubmit) {
+      confirmSubmit.addEventListener('click', function () {
+        if (pendingForm) {
+          pendingForm.submit();
+        }
+        closeConfirmModal();
+      });
+    }
+
+    if (confirmModal) {
+      confirmModal.addEventListener('click', function (event) {
+        if (event.target === confirmModal) {
+          closeConfirmModal();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        closeConfirmModal();
+      }
     });
 
     if (!searchInput) return;

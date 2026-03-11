@@ -1,3 +1,5 @@
+import logging
+
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -5,6 +7,9 @@ from django.utils.html import strip_tags
 from django.utils import timezone
 
 from .models import Notification, DepartmentMember
+
+
+logger = logging.getLogger(__name__)
 
 def create_notification(user, notification_type, title, message, ticket=None, extra_data=None):
     notification = Notification.objects.create(
@@ -32,20 +37,24 @@ def send_notification_email(notification):
         html_message  = render_to_string('notification.html', context)
         plain_message = strip_tags(html_message)
 
-        send_mail(
+        sent_count = send_mail(
             subject      = notification.title or 'Helpdesk Notification',
             message      = plain_message,
             from_email   = settings.DEFAULT_FROM_EMAIL,
             recipient_list = [notification.user.email],
             html_message = html_message,
-            fail_silently = True,
+            fail_silently = False,
         )
 
-        notification.email_sent    = True
-        notification.email_sent_at = timezone.now()
-        notification.save(update_fields=['email_sent', 'email_sent_at'])
-        return True
+        if sent_count > 0:
+            notification.email_sent = True
+            notification.email_sent_at = timezone.now()
+            notification.save(update_fields=['email_sent', 'email_sent_at'])
+            return True
+        logger.warning("Notification email backend reported zero emails sent for notification %s.", notification.id)
+        return False
     except Exception:
+        logger.exception("Failed to send notification email for notification %s.", notification.id)
         return False
 
 

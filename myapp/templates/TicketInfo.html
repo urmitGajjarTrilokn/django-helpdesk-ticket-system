@@ -207,11 +207,12 @@
               {% if ticketinfos.TICKET_CREATED == request.user or is_admin %}
               <li><hr class="dropdown-divider my-1"></li>
               <li>
-                <a class="dropdown-item rounded py-2 text-danger"
-                   href="{% url 'deleteticket' ticketinfos.id %}"
-                   onclick="return confirm('Permanently delete this ticket')">
-                  <i class="fas fa-trash me-2" style="width:14px;"></i>Delete
-                </a>
+                <form method="post" action="{% url 'deleteticket' ticketinfos.id %}" onsubmit="return confirm('Permanently delete this ticket')">
+                  {% csrf_token %}
+                  <button class="dropdown-item rounded py-2 text-danger" type="submit">
+                    <i class="fas fa-trash me-2" style="width:14px;"></i>Delete
+                  </button>
+                </form>
               </li>
               {% endif %}
             </ul>

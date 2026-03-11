@@ -100,7 +100,7 @@ class RolePermissionBehaviorTests(TestCase):
         ticket = self._create_open_ticket()
         self.client.login(username="member1", password="pass12345")
 
-        response = self.client.get(reverse("deleteticket", kwargs={"pk": ticket.id}))
+        response = self.client.post(reverse("deleteticket", kwargs={"pk": ticket.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue(TicketDetail.objects.filter(id=ticket.id).exists())
 
@@ -108,7 +108,7 @@ class RolePermissionBehaviorTests(TestCase):
         ticket = self._create_open_ticket()
         self.client.login(username="manager1", password="pass12345")
 
-        response = self.client.get(reverse("deleteticket", kwargs={"pk": ticket.id}))
+        response = self.client.post(reverse("deleteticket", kwargs={"pk": ticket.id}))
         self.assertEqual(response.status_code, 302)
         self.assertFalse(TicketDetail.objects.filter(id=ticket.id).exists())
 

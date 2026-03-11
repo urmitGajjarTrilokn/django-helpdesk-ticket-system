@@ -563,10 +563,13 @@
   </div>
   <div class="notif-drawer-footer">
     {% if unread_notifications > 0 %}
-    <a href="{% url 'mark_all_read' %}?next=base"
-       class="btn btn-sm btn-outline-secondary flex-fill text-center">
-      <i class="fas fa-check-double"></i> Mark All Read
-    </a>
+    <form method="post" action="{% url 'mark_all_read' %}" class="flex-fill">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'base' %}">
+      <button type="submit" class="btn btn-sm btn-outline-secondary w-100 text-center">
+        <i class="fas fa-check-double"></i> Mark All Read
+      </button>
+    </form>
     {% endif %}
     <a href="{% url 'notifications_list' %}" class="btn btn-sm btn-primary flex-fill text-center">
       View All

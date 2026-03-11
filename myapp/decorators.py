@@ -3,7 +3,13 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import DepartmentMember, Department, TicketDetail
+from .models import (
+    DepartmentMember,
+    Department,
+    TicketDetail,
+    get_visible_active_departments,
+    get_visible_active_memberships,
+)
 
 ROLE_PERMISSION_MATRIX = {
     'MEMBER': {
@@ -65,12 +71,7 @@ def user_has_department_permission(user, department, permission_type):
 def get_user_departments(user):
     if not user.is_authenticated or user.is_superuser:
         return Department.objects.none()
-
-    return Department.objects.filter(
-        departmentmember__user=user,
-        departmentmember__is_active=True,
-        is_active=True,
-    ).distinct()
+    return get_visible_active_departments(user)
     
 def is_department_lead_or_higher(user, department):
     role = user_department_role(user, department)
@@ -162,12 +163,14 @@ def get_user_department_context(user):
 
     user_depts = get_user_departments(user)
 
-    is_lead = DepartmentMember.objects.filter(
-        user=user, role__in=['LEAD', 'MANAGER', 'HEAD'], is_active=True
+    memberships = get_visible_active_memberships(user)
+
+    is_lead = memberships.filter(
+        role__in=['LEAD', 'MANAGER', 'HEAD']
     ).exists()
 
-    is_manager = DepartmentMember.objects.filter(
-        user=user, role__in=['MANAGER', 'HEAD'], is_active=True
+    is_manager = memberships.filter(
+        role__in=['MANAGER', 'HEAD']
     ).exists()
 
     dept_open_tickets  = TicketDetail.objects.filter(

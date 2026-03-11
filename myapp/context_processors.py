@@ -1,4 +1,11 @@
-from myapp.models import Notification, TicketDetail, Department, DepartmentMember, MyCart
+from myapp.models import (
+    Notification,
+    TicketDetail,
+    Department,
+    DepartmentMember,
+    MyCart,
+    get_visible_active_memberships,
+)
 from django.db.models import Q
 from django.urls import reverse
 from .decorators import get_user_department_context
@@ -37,9 +44,7 @@ def ticket_count(request):
     user_role = 'ADMIN' if is_admin else 'USER'
 
                                                                                 
-    memberships = DepartmentMember.objects.filter(
-        user=user, is_active=True
-    ).select_related('department').order_by('department__name')
+    memberships = get_visible_active_memberships(user).order_by('department__name')
 
     department_ids = [m.department_id for m in memberships]
 
