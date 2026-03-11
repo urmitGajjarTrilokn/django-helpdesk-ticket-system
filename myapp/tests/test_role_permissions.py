@@ -222,6 +222,82 @@ class RolePermissionBehaviorTests(TestCase):
         self.assertEqual(ticket.priority, "URGENT")
         self.assertEqual(ticket.assigned_department_id, other_department.id)
 
+    def test_admin_can_open_ticketinfo_for_assigned_department_ticket(self):
+        ticket = self._create_open_ticket()
+        ticket.assigned_to = self.member
+        ticket.TICKET_HOLDER = self.member.username
+        ticket.assignment_type = "MANUAL"
+        ticket.save(update_fields=["assigned_to", "TICKET_HOLDER", "assignment_type"])
+
+        self.client.login(username="admin1", password="pass12345")
+        response = self.client.get(reverse("ticketinfo", kwargs={"pk": ticket.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Reassign by Workload")
+
+    def test_admin_can_reassign_ticket_by_workload_to_previously_rejected_member(self):
+        ticket = self._create_open_ticket()
+        ticket.assigned_to = self.lead
+        ticket.TICKET_HOLDER = self.lead.username
+        ticket.assignment_type = "MANUAL"
+        ticket.save(update_fields=["assigned_to", "TICKET_HOLDER", "assignment_type"])
+        MyCart.objects.get_or_create(user=self.lead, ticket=ticket)
+
+        TicketHistory.objects.create(
+            ticket=ticket,
+            changed_by=self.member,
+            action_type="REJECTED",
+            description="Ticket rejected by member1. Reason: Too many tickets.",
+        )
+        for idx in range(3):
+            TicketDetail.objects.create(
+                TICKET_TITLE=f"Lead workload {idx}",
+                TICKET_CREATED=self.creator,
+                TICKET_DUE_DATE=timezone.now().date() + timedelta(days=2),
+                TICKET_DESCRIPTION="Load balancing ticket.",
+                TICKET_HOLDER=self.lead.username,
+                TICKET_STATUS="Open",
+                priority="MEDIUM",
+                assigned_department=self.department,
+                assigned_to=self.lead,
+                assignment_type="MANUAL",
+            )
+
+        self.client.login(username="admin1", password="pass12345")
+        response = self.client.post(
+            reverse("admin_reassign_ticket", kwargs={"pk": ticket.id}),
+            data={"assigned_to": str(self.member.id)},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.assigned_to_id, self.member.id)
+        self.assertEqual(ticket.assigned_by_id, self.admin.id)
+        self.assertTrue(MyCart.objects.filter(user=self.member, ticket=ticket).exists())
+        self.assertFalse(MyCart.objects.filter(user=self.lead, ticket=ticket).exists())
+        self.assertTrue(
+            TicketHistory.objects.filter(
+                ticket=ticket,
+                action_type="ASSIGNED",
+                new_value=self.member.username,
+                description__icontains="workload review",
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.member,
+                ticket=ticket,
+                notification_type="TICKET_ASSIGNED",
+            ).exists()
+        )
+
+        self.client.logout()
+        self.client.login(username="member1", password="pass12345")
+        close_response = self.client.get(reverse("closeticket", kwargs={"pk": ticket.id}))
+        self.assertEqual(close_response.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.TICKET_STATUS, "Closed")
+
     def test_admin_same_department_no_change_shows_error(self):
         ticket = self._create_open_ticket()
         self.client.login(username="admin1", password="pass12345")

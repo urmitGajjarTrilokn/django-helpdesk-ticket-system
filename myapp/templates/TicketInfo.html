@@ -195,6 +195,26 @@
               </a>
               {% endif %}
             {% endif %}
+            {% if can_admin_reassign_ticket %}
+            <form method="post" action="{% url 'admin_reassign_ticket' ticketinfos.id %}"
+                  class="d-inline-flex align-items-center gap-2 flex-wrap">
+              {% csrf_token %}
+              <select name="assigned_to" class="form-select form-select-sm" style="min-width:270px;max-width:360px;">
+                {% for option in admin_reassignment_options %}
+                  {% if not option.is_current_assignee %}
+                  <option value="{{ option.user.id }}">
+                    {{ option.user.get_full_name|default:option.user.username }}
+                    · {{ option.same_department_open_count }} dept / {{ option.total_open_count }} total
+                    {% if option.has_rejected_ticket %} · Rejected earlier{% endif %}
+                  </option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <button class="btn btn-sm btn-outline-primary" type="submit">
+                <i class="fas fa-random me-1"></i>Reassign by Workload
+              </button>
+            </form>
+            {% endif %}
             {% if ticketinfos.TICKET_CREATED == request.user or is_admin %}
             <form method="post" action="{% url 'deleteticket' ticketinfos.id %}"
                   onsubmit="return confirm('Permanently delete this ticket')"

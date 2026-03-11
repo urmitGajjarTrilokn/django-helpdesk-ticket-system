@@ -20,6 +20,7 @@ urlpatterns = [
     path('ticket/new/',            views.TicketDetails,        name='ticketdetail'),
     path('ticket/<int:pk>/',       views.TicketInfo,            name='ticketinfo'),
     path('ticket/<int:pk>/edit/',  views.updateticket,         name='updateticket'),
+    path('ticket/<int:pk>/reassign/', views.admin_reassign_ticket, name='admin_reassign_ticket'),
     path('ticket/<int:pk>/delete/',views.deleteticket,         name='deleteticket'),
     path('tickets/bulk-delete/',   views.bulk_delete_tickets, name='bulk_delete_tickets'),
     path('ticket/<int:pk>/reject/',views.RemoveTicket,         name='removeticket'),

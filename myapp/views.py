@@ -174,14 +174,13 @@ def _is_close_locked_by_rejection(user, ticket):
     if not latest_rejection:
         return False
 
-    auto_reassigned_after_rejection = TicketHistory.objects.filter(
+    reassigned_after_rejection = TicketHistory.objects.filter(
         ticket=ticket,
         action_type='ASSIGNED',
         new_value=user.username,
-        description__icontains='Auto-assigned to',
         changed_at__gt=latest_rejection.changed_at,
     ).exists()
-    return not auto_reassigned_after_rejection
+    return not reassigned_after_rejection
 
 
 def _can_user_close_ticket(user, ticket):
@@ -490,6 +489,89 @@ def _auto_assign_on_department_rejection(ticket, rejected_by):
         },
     )
     return assignee
+
+
+def _department_member_workload_rows(ticket):
+    if not ticket.assigned_department_id or not getattr(ticket.assigned_department, 'is_active', False):
+        return []
+
+    memberships = list(
+        DepartmentMember.objects
+        .filter(
+            department=ticket.assigned_department,
+            is_active=True,
+            department__is_active=True,
+            user__is_active=True,
+        )
+        .exclude(user_id=ticket.TICKET_CREATED_id)
+        .select_related('user')
+        .order_by('user__username')
+    )
+    if not memberships:
+        return []
+
+    user_ids = [membership.user_id for membership in memberships]
+    active_tickets = TicketDetail.objects.exclude(TICKET_STATUS__in=['Closed', 'Resolved'])
+
+    total_counts = {
+        row['assigned_to']: row['total']
+        for row in active_tickets.filter(assigned_to_id__in=user_ids)
+        .values('assigned_to')
+        .annotate(total=Count('id'))
+    }
+    department_counts = {
+        row['assigned_to']: row['total']
+        for row in active_tickets.filter(
+            assigned_to_id__in=user_ids,
+            assigned_department=ticket.assigned_department,
+        )
+        .values('assigned_to')
+        .annotate(total=Count('id'))
+    }
+    rejected_user_ids = set(
+        TicketHistory.objects.filter(
+            ticket=ticket,
+            action_type='REJECTED',
+            changed_by_id__in=user_ids,
+        ).values_list('changed_by_id', flat=True)
+    )
+
+    rows = []
+    for membership in memberships:
+        rows.append({
+            'user': membership.user,
+            'role': membership.get_role_display(),
+            'same_department_open_count': department_counts.get(membership.user_id, 0),
+            'total_open_count': total_counts.get(membership.user_id, 0),
+            'has_rejected_ticket': membership.user_id in rejected_user_ids,
+            'is_current_assignee': membership.user_id == ticket.assigned_to_id,
+        })
+
+    rows.sort(
+        key=lambda row: (
+            row['is_current_assignee'],
+            row['same_department_open_count'],
+            row['total_open_count'],
+            row['user'].username.lower(),
+        )
+    )
+    return rows
+
+
+def _eligible_reassignment_memberships(ticket):
+    if not ticket.assigned_department_id or not getattr(ticket.assigned_department, 'is_active', False):
+        return DepartmentMember.objects.none()
+    return (
+        DepartmentMember.objects
+        .filter(
+            department=ticket.assigned_department,
+            is_active=True,
+            department__is_active=True,
+            user__is_active=True,
+        )
+        .exclude(user_id=ticket.TICKET_CREATED_id)
+        .select_related('user')
+    )
 
 
 def _get_primary_department_id(user):
@@ -991,6 +1073,14 @@ def TicketInfo(request, pk):
             reason_text = reason_text.split('Reason:', 1)[1].strip()
         latest_rejection_reason = reason_text
         latest_rejection_by = latest_rejection.changed_by.username if latest_rejection.changed_by_id else ''
+    admin_reassignment_options = _department_member_workload_rows(ticketinfos) if is_admin else []
+    can_admin_reassign_ticket = bool(
+        is_admin
+        and ticketinfos.assigned_department_id
+        and ticketinfos.assigned_to_id
+        and ticketinfos.TICKET_STATUS not in ['Closed', 'Resolved']
+        and any(not row['is_current_assignee'] for row in admin_reassignment_options)
+    )
 
     return render(request, 'TicketInfo.html', {
         'ticketinfos':            ticketinfos,
@@ -1012,6 +1102,8 @@ def TicketInfo(request, pk):
         'can_view_admin_note_thread': can_view_admin_note_thread,
         'overdue_note_thread': overdue_note_thread,
         'can_reply_admin_overdue_note': can_reply_admin_overdue_note,
+        'admin_reassignment_options': admin_reassignment_options,
+        'can_admin_reassign_ticket': can_admin_reassign_ticket,
     })
 
 
@@ -1316,6 +1408,82 @@ def updateticket(request, pk):
     else:
         form = TicketUpdateForm(instance=ticket)
     return render(request, 'Updateticket.html', {'form': form, 'ticket': ticket})
+
+
+@admin_required
+def admin_reassign_ticket(request, pk):
+    ticket = get_object_or_404(TicketDetail, id=pk)
+    if request.method != 'POST':
+        return redirect('ticketinfo', pk=pk)
+
+    if ticket.TICKET_STATUS in ['Closed', 'Resolved']:
+        messages.error(request, 'Only unresolved tickets can be reassigned.')
+        return redirect('ticketinfo', pk=pk)
+
+    if not ticket.assigned_department_id or not getattr(ticket.assigned_department, 'is_active', False):
+        messages.error(request, 'Only active department tickets can be reassigned.')
+        return redirect('ticketinfo', pk=pk)
+
+    if not ticket.assigned_to_id:
+        messages.error(request, 'This ticket must already be assigned before workload reassignment can be used.')
+        return redirect('ticketinfo', pk=pk)
+
+    target_user_id = request.POST.get('assigned_to')
+    if not target_user_id:
+        messages.error(request, 'Select a department member for reassignment.')
+        return redirect('ticketinfo', pk=pk)
+
+    target_membership = _eligible_reassignment_memberships(ticket).filter(user_id=target_user_id).first()
+    if not target_membership:
+        messages.error(request, 'Selected user is not an active member of this department.')
+        return redirect('ticketinfo', pk=pk)
+
+    if target_membership.user_id == ticket.assigned_to_id:
+        messages.error(request, 'That user is already assigned to this ticket.')
+        return redirect('ticketinfo', pk=pk)
+
+    old_assignee = ticket.assigned_to
+    ticket.assigned_to = target_membership.user
+    ticket.TICKET_HOLDER = target_membership.user.username
+    ticket.assignment_type = 'MANUAL'
+    ticket.assigned_by = request.user
+    ticket.assigned_at = timezone.now()
+    ticket.save(update_fields=['assigned_to', 'TICKET_HOLDER', 'assignment_type', 'assigned_by', 'assigned_at'])
+
+    dept_member_ids = _eligible_reassignment_memberships(ticket).values_list('user_id', flat=True)
+    MyCart.objects.filter(ticket=ticket, user_id__in=dept_member_ids).exclude(user=target_membership.user).delete()
+    MyCart.objects.get_or_create(user=target_membership.user, ticket=ticket)
+
+    TicketHistory.objects.create(
+        ticket=ticket,
+        changed_by=request.user,
+        action_type='ASSIGNED',
+        field_name='assigned_to',
+        old_value=old_assignee.username if old_assignee else 'Unassigned',
+        new_value=target_membership.user.username,
+        description=(
+            f'Admin reassigned ticket to {target_membership.user.username} '
+            f'based on workload review in {ticket.assigned_department.name}.'
+        ),
+    )
+    create_notification(
+        user=target_membership.user,
+        notification_type='TICKET_ASSIGNED',
+        title=f'Ticket reassigned #{ticket.id}',
+        message=f'{request.user.username} reassigned "{ticket.TICKET_TITLE}" to you.',
+        ticket=ticket,
+        extra_data={
+            'assigned_by': request.user.username,
+            'department': ticket.assigned_department.name,
+            'manual_workload_reassignment': True,
+        },
+    )
+
+    messages.success(
+        request,
+        f'Ticket reassigned to {target_membership.user.get_full_name() or target_membership.user.username}.'
+    )
+    return redirect('ticketinfo', pk=pk)
 
 
 @login_required
