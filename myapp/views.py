@@ -498,7 +498,9 @@ def _get_primary_department_id(user):
 
 def _inactive_department_member_user_ids():
     return DepartmentMember.objects.filter(
-        department__is_active=False
+        is_active=True,
+        user__is_active=True,
+        department__is_active=False,
     ).values('user_id')
 
 
@@ -781,8 +783,10 @@ def TicketDetails(request):
                         description=ticket.TICKET_DESCRIPTION,
                     )
 
+                    normalized_prediction = (predicted_department_name or '').strip()
                     predicted_department = Department.objects.filter(
-                        name__iexact=predicted_department_name,
+                        Q(name__iexact=normalized_prediction) |
+                        Q(code__iexact=normalized_prediction)
                     ).first()
 
                     if predicted_department and not predicted_department.is_active:

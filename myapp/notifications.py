@@ -12,6 +12,10 @@ from .models import Notification, DepartmentMember
 logger = logging.getLogger(__name__)
 
 
+def _is_inactive_department_ticket(ticket):
+    return bool(ticket and ticket.assigned_department_id and not getattr(ticket.assigned_department, 'is_active', False))
+
+
 def _active_department_members(department):
     if not department or not department.is_active:
         return DepartmentMember.objects.none()
@@ -25,6 +29,8 @@ def _active_department_members(department):
 
 def _can_receive_department_ticket_notification(user, ticket):
     if not user or not getattr(user, 'is_active', False):
+        return False
+    if _is_inactive_department_ticket(ticket):
         return False
     if getattr(user, 'is_superuser', False):
         return True
@@ -87,7 +93,7 @@ def send_notification_email(notification):
 def notify_ticket_created(ticket):
     notifications = []
 
-    if not ticket.assigned_department:
+    if not ticket.assigned_department or _is_inactive_department_ticket(ticket):
         return notifications
 
     members = _active_department_members(ticket.assigned_department).exclude(
@@ -108,6 +114,8 @@ def notify_ticket_created(ticket):
 
 
 def notify_ticket_assigned(ticket, assigned_to, assigned_by):
+    if _is_inactive_department_ticket(ticket):
+        return None
     if assigned_to == assigned_by:
         return None
     if not _can_receive_department_ticket_notification(assigned_to, ticket):
@@ -124,6 +132,8 @@ def notify_ticket_assigned(ticket, assigned_to, assigned_by):
 
 
 def notify_ticket_accepted(ticket, accepted_by):
+    if _is_inactive_department_ticket(ticket):
+        return None
     if ticket.TICKET_CREATED == accepted_by:
         return None
 
@@ -138,6 +148,8 @@ def notify_ticket_accepted(ticket, accepted_by):
 
 
 def notify_ticket_updated(ticket, updated_by, changes=None):
+    if _is_inactive_department_ticket(ticket):
+        return None
     if ticket.TICKET_CREATED == updated_by:
         return None
 
@@ -152,6 +164,8 @@ def notify_ticket_updated(ticket, updated_by, changes=None):
 
 
 def notify_ticket_due_date_extended(ticket, updated_by, old_due_date, new_due_date):
+    if _is_inactive_department_ticket(ticket):
+        return []
     recipients = set()
     if ticket.TICKET_CREATED:
         recipients.add(ticket.TICKET_CREATED)
@@ -188,6 +202,8 @@ def notify_ticket_due_date_extended(ticket, updated_by, old_due_date, new_due_da
 
 
 def notify_ticket_closed(ticket, closed_by):
+    if _is_inactive_department_ticket(ticket):
+        return None
     if ticket.TICKET_CREATED == closed_by:
         return None
 
@@ -202,6 +218,8 @@ def notify_ticket_closed(ticket, closed_by):
 
 
 def notify_ticket_resolved(ticket, resolved_by):
+    if _is_inactive_department_ticket(ticket):
+        return None
     if ticket.TICKET_CREATED == resolved_by:
         return None
 
@@ -216,6 +234,8 @@ def notify_ticket_resolved(ticket, resolved_by):
 
 
 def notify_ticket_reopened(ticket, reopened_by, reason=None):
+    if _is_inactive_department_ticket(ticket):
+        return None
     if not ticket.TICKET_CLOSED or ticket.TICKET_CLOSED == reopened_by:
         return None
 
@@ -230,6 +250,8 @@ def notify_ticket_reopened(ticket, reopened_by, reason=None):
 
 
 def notify_ticket_commented(ticket, commenter, comment_text=''):
+    if _is_inactive_department_ticket(ticket):
+        return []
     notifications = []
     notified_users = set()
 
@@ -260,6 +282,8 @@ def notify_ticket_commented(ticket, commenter, comment_text=''):
 
 
 def notify_ticket_rated(ticket, rating):
+    if _is_inactive_department_ticket(ticket):
+        return None
     if not ticket.assigned_to:
         return None
     if not _can_receive_department_ticket_notification(ticket.assigned_to, ticket):

@@ -345,7 +345,7 @@ class RolePermissionBehaviorTests(TestCase):
                 notification_type="TICKET_COMMENTED",
             ).exists()
         )
-        self.assertTrue(
+        self.assertFalse(
             Notification.objects.filter(
                 user=self.creator,
                 ticket=ticket,

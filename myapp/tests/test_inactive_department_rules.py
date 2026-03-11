@@ -6,7 +6,18 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from myapp.models import Department, DepartmentMember, MyCart, TicketDetail
+from myapp.models import Department, DepartmentMember, MyCart, Notification, TicketDetail, TicketRating
+from myapp.notifications import (
+    notify_ticket_accepted,
+    notify_ticket_closed,
+    notify_ticket_commented,
+    notify_ticket_due_date_extended,
+    notify_ticket_reopened,
+    notify_ticket_resolved,
+    notify_ticket_rated,
+    notify_ticket_updated,
+)
+from myapp.views import _inactive_department_ticket_q
 
 
 class InactiveDepartmentRuleTests(TestCase):
@@ -94,7 +105,7 @@ class InactiveDepartmentRuleTests(TestCase):
 
     @patch("myapp.views.predict_department")
     def test_ai_cannot_create_ticket_when_predicted_department_is_inactive(self, mock_predict_department):
-        mock_predict_department.return_value = self.inactive_department.name
+        mock_predict_department.return_value = self.inactive_department.code
         self.client.login(username="inactive_other", password="pass12345")
         before_count = TicketDetail.objects.count()
 
@@ -112,6 +123,66 @@ class InactiveDepartmentRuleTests(TestCase):
         self.assertEqual(TicketDetail.objects.count(), before_count)
         messages = [message.message for message in response.context["messages"]]
         self.assertIn("Department is inactive.", messages)
+
+    def test_removed_membership_from_inactive_department_does_not_hide_user_tickets(self):
+        former_department = Department.objects.create(
+            name="Former Desk",
+            code="FDESK",
+            description="Former inactive department",
+            color="#64748b",
+            icon="fas fa-archive",
+            is_active=False,
+        )
+        DepartmentMember.objects.create(
+            user=self.member,
+            department=former_department,
+            role="MEMBER",
+            is_active=False,
+        )
+        visible_ticket = self._create_ticket(
+            self.active_department,
+            creator=self.member,
+        )
+
+        self.assertFalse(
+            TicketDetail.objects.filter(id=visible_ticket.id).filter(_inactive_department_ticket_q()).exists()
+        )
+
+    def test_inactive_department_ticket_suppresses_all_notifications(self):
+        inactive_ticket = self._create_ticket(
+            self.inactive_department,
+            creator=self.creator,
+            assigned_to=self.creator,
+            TICKET_HOLDER=self.creator.username,
+            assignment_type="MANUAL",
+        )
+        rating = TicketRating.objects.create(
+            ticket=inactive_ticket,
+            rated_by=self.other_member,
+            rating=5,
+            feedback="Excellent resolution.",
+        )
+
+        self.assertIsNone(notify_ticket_accepted(inactive_ticket, self.other_member))
+        self.assertIsNone(notify_ticket_updated(inactive_ticket, self.other_member, changes=["priority"]))
+        self.assertEqual(
+            notify_ticket_due_date_extended(
+                inactive_ticket,
+                self.other_member,
+                inactive_ticket.TICKET_DUE_DATE,
+                inactive_ticket.TICKET_DUE_DATE + timedelta(days=1),
+            ),
+            [],
+        )
+        self.assertIsNone(notify_ticket_closed(inactive_ticket, self.other_member))
+        self.assertIsNone(notify_ticket_resolved(inactive_ticket, self.other_member))
+        self.assertIsNone(notify_ticket_reopened(inactive_ticket, self.other_member))
+        self.assertEqual(
+            notify_ticket_commented(inactive_ticket, self.other_member, "Still blocked."),
+            [],
+        )
+        self.assertIsNone(notify_ticket_rated(inactive_ticket, rating))
+        self.assertEqual(Notification.objects.count(), 0)
 
     def test_admin_cannot_assign_ticket_to_inactive_department(self):
         ticket = self._create_ticket(self.active_department, creator=self.other_member)
