@@ -254,6 +254,79 @@ def _is_creator_only_member_of_department(user, department):
     return active_memberships.count() == 1 and active_memberships.filter(user=user).exists()
 
 
+def _restore_department_ticket_assignments(department, changed_by=None):
+    if not department or not department.is_active:
+        return 0
+
+    restored_count = 0
+    tickets = TicketDetail.objects.filter(
+        assigned_department=department,
+        assigned_to__isnull=True,
+    ).select_related('assigned_department')
+
+    for ticket in tickets:
+        history_entry = (
+            TicketHistory.objects.filter(
+                ticket=ticket,
+                field_name='department_inactivation_assignee',
+            )
+            .exclude(old_value='')
+            .order_by('-changed_at')
+            .first()
+        )
+        if not history_entry:
+            _auto_assign_single_member_department_ticket(ticket, changed_by=changed_by)
+            continue
+
+        try:
+            previous_assignee_id = int(history_entry.old_value)
+        except (TypeError, ValueError):
+            previous_assignee_id = None
+
+        if not previous_assignee_id:
+            _auto_assign_single_member_department_ticket(ticket, changed_by=changed_by)
+            continue
+
+        membership = (
+            DepartmentMember.objects.filter(
+                user_id=previous_assignee_id,
+                department=department,
+                is_active=True,
+                department__is_active=True,
+                user__is_active=True,
+            )
+            .select_related('user')
+            .first()
+        )
+        if not membership:
+            _auto_assign_single_member_department_ticket(ticket, changed_by=changed_by)
+            continue
+
+        ticket.assigned_to = membership.user
+        ticket.TICKET_HOLDER = membership.user.username
+        ticket.assignment_type = 'MANUAL'
+        ticket.assigned_by = changed_by
+        ticket.assigned_at = timezone.now()
+        ticket.save(update_fields=['assigned_to', 'TICKET_HOLDER', 'assignment_type', 'assigned_by', 'assigned_at'])
+        MyCart.objects.get_or_create(user=membership.user, ticket=ticket)
+
+        TicketHistory.objects.create(
+            ticket=ticket,
+            changed_by=changed_by,
+            action_type='ASSIGNED',
+            field_name='assigned_to',
+            old_value='Unassigned',
+            new_value=membership.user.username,
+            description=(
+                f'Assignment restored to {membership.user.username} after '
+                f'{department.name} department was reactivated.'
+            ),
+        )
+        restored_count += 1
+
+    return restored_count
+
+
 def _sync_mycart_for_user(user):
     if not user.is_authenticated or user.is_superuser:
         return
@@ -708,13 +781,16 @@ def TicketDetails(request):
                         description=ticket.TICKET_DESCRIPTION,
                     )
 
-                    department = Department.objects.filter(
+                    predicted_department = Department.objects.filter(
                         name__iexact=predicted_department_name,
-                        is_active=True,
                     ).first()
 
-                    if department:
-                        ticket.assigned_department = department
+                    if predicted_department and not predicted_department.is_active:
+                        messages.error(request, "Department is inactive.")
+                        return render(request, "TicketDetail.html", {"form": form})
+
+                    if predicted_department and predicted_department.is_active:
+                        ticket.assigned_department = predicted_department
                         ticket.assignment_type = "AI"
                         ticket.assigned_at = timezone.now()
 
@@ -767,15 +843,9 @@ def TicketDetails(request):
                     department=ticket.assigned_department,
                     is_active=True,
                     department__is_active=True,
+                    user__is_active=True,
                 ):
                     MyCart.objects.get_or_create(user=member.user, ticket=ticket)
-
-                    Notification.objects.create(
-                        user=member.user,
-                        ticket=ticket,
-                        notification_type="TICKET_CREATED",
-                        message=f'New ticket "{ticket.TICKET_TITLE}" in {ticket.assigned_department.name}',
-                    )
 
             messages.success(request, "Ticket created successfully!")
             return redirect(_get_dashboard_redirect_url(request.user))
@@ -990,14 +1060,18 @@ def updateticket(request, pk):
                     updated_ticket.assigned_by = request.user
                     updated_ticket.assigned_at = timezone.now()
                     new_members = DepartmentMember.objects.filter(
-                        department=updated_ticket.assigned_department, is_active=True
+                        department=updated_ticket.assigned_department,
+                        is_active=True,
+                        department__is_active=True,
+                        user__is_active=True,
                     )
                     for member in new_members:
                         MyCart.objects.get_or_create(user=member.user, ticket=updated_ticket)
-                        Notification.objects.create(
+                        create_notification(
                             user=member.user, ticket=updated_ticket,
                             notification_type='TICKET_ASSIGNED',
-                                message=f'Ticket "{updated_ticket.TICKET_TITLE}" reassigned to {updated_ticket.assigned_department.name}',
+                            title='Ticket reassigned',
+                            message=f'Ticket "{updated_ticket.TICKET_TITLE}" reassigned to {updated_ticket.assigned_department.name}',
                         )
 
                 updated_ticket.save()
@@ -1102,13 +1176,17 @@ def updateticket(request, pk):
                 updated_ticket.assigned_by = request.user
                 updated_ticket.assigned_at = timezone.now()
                 new_members = DepartmentMember.objects.filter(
-                    department=updated_ticket.assigned_department, is_active=True
+                    department=updated_ticket.assigned_department,
+                    is_active=True,
+                    department__is_active=True,
+                    user__is_active=True,
                 )
                 for member in new_members:
                     MyCart.objects.get_or_create(user=member.user, ticket=updated_ticket)
-                    Notification.objects.create(
+                    create_notification(
                         user=member.user, ticket=updated_ticket,
                         notification_type='TICKET_ASSIGNED',
+                        title='Ticket reassigned',
                         message=f'Ticket "{updated_ticket.TICKET_TITLE}" reassigned to {updated_ticket.assigned_department.name}',
                     )
 
@@ -1170,13 +1248,17 @@ def updateticket(request, pk):
                 updated_ticket.assigned_by     = request.user
                 updated_ticket.assigned_at     = timezone.now()
                 new_members = DepartmentMember.objects.filter(
-                    department=updated_ticket.assigned_department, is_active=True
+                    department=updated_ticket.assigned_department,
+                    is_active=True,
+                    department__is_active=True,
+                    user__is_active=True,
                 )
                 for member in new_members:
                     MyCart.objects.get_or_create(user=member.user, ticket=updated_ticket)
-                    Notification.objects.create(
+                    create_notification(
                         user=member.user, ticket=updated_ticket,
                         notification_type='TICKET_ASSIGNED',
+                        title='Ticket reassigned',
                         message=f'Ticket "{updated_ticket.TICKET_TITLE}" reassigned to {updated_ticket.assigned_department.name}',
                     )
             if 'assigned_to' in changed_fields and updated_ticket.assigned_to:
@@ -2498,6 +2580,7 @@ def admin_create_department(request):
         department.is_active = True
     department.save()
     if reactivated_department:
+        _restore_department_ticket_assignments(department, changed_by=request.user)
         log_activity(request.user, 'UPDATED', f'Reactivated department: {department.name}')
         messages.success(request, f'{department.name} department created successfully.')
     else:
@@ -2531,6 +2614,22 @@ def admin_delete_department(request, dept_id):
     department = get_object_or_404(Department, id=dept_id, is_active=True)
     affected_tickets = TicketDetail.objects.filter(assigned_department=department)
     affected_ticket_ids = list(affected_tickets.values_list('id', flat=True))
+    assigned_ticket_rows = list(
+        affected_tickets.filter(assigned_to__isnull=False).values_list('id', 'assigned_to_id', 'assigned_to__username')
+    )
+    for ticket_id, assigned_to_id, assigned_to_username in assigned_ticket_rows:
+        TicketHistory.objects.create(
+            ticket_id=ticket_id,
+            changed_by=request.user,
+            action_type='UPDATED',
+            field_name='department_inactivation_assignee',
+            old_value=str(assigned_to_id or ''),
+            new_value='',
+            description=(
+                f'Stored {assigned_to_username or "previous assignee"} before '
+                f'{department.name} department was marked inactive.'
+            ),
+        )
     affected_tickets.update(
         assigned_to=None,
         TICKET_HOLDER='',
@@ -2556,6 +2655,7 @@ def admin_reactivate_department(request, dept_id):
     department = get_object_or_404(Department, id=dept_id, is_active=False)
     department.is_active = True
     department.save(update_fields=['is_active'])
+    _restore_department_ticket_assignments(department, changed_by=request.user)
     log_activity(request.user, 'UPDATED', f'Reactivated department: {department.name}')
     messages.success(request, f'{department.name} department reactivated successfully.')
     return redirect('admin_department_list')

@@ -324,6 +324,14 @@ class LoginRoleAuthorization:
         else:
             if user.is_superuser:
                 return "Superuser accounts must log in via the Admin login page."
+            has_inactive_department_membership = DepartmentMember.objects.filter(
+                user=user,
+                is_active=True,
+                department__is_active=False,
+            ).exists()
+            has_active_department_membership = get_visible_active_memberships(user).exists()
+            if has_inactive_department_membership and not has_active_department_membership:
+                return "Department is not active."
         return ""
 
     @classmethod

@@ -1,11 +1,12 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from myapp.models import Department, DepartmentMember, TicketDetail
+from myapp.models import Department, DepartmentMember, MyCart, TicketDetail
 
 
 class InactiveDepartmentRuleTests(TestCase):
@@ -91,6 +92,27 @@ class InactiveDepartmentRuleTests(TestCase):
             messages,
         )
 
+    @patch("myapp.views.predict_department")
+    def test_ai_cannot_create_ticket_when_predicted_department_is_inactive(self, mock_predict_department):
+        mock_predict_department.return_value = self.inactive_department.name
+        self.client.login(username="inactive_other", password="pass12345")
+        before_count = TicketDetail.objects.count()
+
+        response = self.client.post(
+            reverse("ticketdetail"),
+            data={
+                "TICKET_TITLE": "AI inactive department routing",
+                "TICKET_DESCRIPTION": "This ticket should be blocked because AI selected an inactive department.",
+                "TICKET_DUE_DATE": (timezone.now().date() + timedelta(days=2)).isoformat(),
+                "category": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(TicketDetail.objects.count(), before_count)
+        messages = [message.message for message in response.context["messages"]]
+        self.assertIn("Department is inactive.", messages)
+
     def test_admin_cannot_assign_ticket_to_inactive_department(self):
         ticket = self._create_ticket(self.active_department, creator=self.other_member)
 
@@ -150,6 +172,14 @@ class InactiveDepartmentRuleTests(TestCase):
             role="MANAGER",
             is_active=True,
         )
+        assigned_ticket = self._create_ticket(
+            managed_department,
+            creator=self.other_member,
+            assigned_to=self.member,
+            TICKET_HOLDER=self.member.username,
+            assignment_type="MANUAL",
+        )
+        MyCart.objects.create(user=self.member, ticket=assigned_ticket)
 
         self.client.login(username="inactive_admin", password="pass12345")
 
@@ -159,10 +189,14 @@ class InactiveDepartmentRuleTests(TestCase):
         self.assertEqual(inactive_response.status_code, 302)
         managed_department.refresh_from_db()
         self.assertFalse(managed_department.is_active)
+        assigned_ticket.refresh_from_db()
         self.assertEqual(
             DepartmentMember.objects.filter(department=managed_department, is_active=True).count(),
             2,
         )
+        self.assertIsNone(assigned_ticket.assigned_to)
+        self.assertEqual(assigned_ticket.TICKET_HOLDER, "")
+        self.assertFalse(MyCart.objects.filter(user=self.member, ticket=assigned_ticket).exists())
 
         reactivate_response = self.client.post(
             reverse("admin_reactivate_department", kwargs={"dept_id": managed_department.id})
@@ -170,7 +204,29 @@ class InactiveDepartmentRuleTests(TestCase):
         self.assertEqual(reactivate_response.status_code, 302)
         managed_department.refresh_from_db()
         self.assertTrue(managed_department.is_active)
+        assigned_ticket.refresh_from_db()
         self.assertEqual(
             DepartmentMember.objects.filter(department=managed_department, is_active=True).count(),
             2,
         )
+        self.assertEqual(assigned_ticket.assigned_to_id, self.member.id)
+        self.assertEqual(assigned_ticket.TICKET_HOLDER, self.member.username)
+        self.assertTrue(MyCart.objects.filter(user=self.member, ticket=assigned_ticket).exists())
+
+        self.client.logout()
+        login_response = self.client.post(
+            reverse("login"),
+            data={
+                "username": "inactive_member",
+                "password": "pass12345",
+                "login_as": "user",
+            },
+            follow=True,
+        )
+        self.assertEqual(login_response.status_code, 200)
+        self.assertTrue(login_response.context["user"].is_authenticated)
+
+        dashboard_response = self.client.get(reverse("base"))
+        self.assertEqual(dashboard_response.status_code, 200)
+        visible_ticket_ids = {item.id for item in dashboard_response.context["Ticketdatas"].object_list}
+        self.assertIn(assigned_ticket.id, visible_ticket_ids)

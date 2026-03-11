@@ -11,6 +11,32 @@ from .models import Notification, DepartmentMember
 
 logger = logging.getLogger(__name__)
 
+
+def _active_department_members(department):
+    if not department or not department.is_active:
+        return DepartmentMember.objects.none()
+    return DepartmentMember.objects.filter(
+        department=department,
+        is_active=True,
+        department__is_active=True,
+        user__is_active=True,
+    ).select_related('user')
+
+
+def _can_receive_department_ticket_notification(user, ticket):
+    if not user or not getattr(user, 'is_active', False):
+        return False
+    if getattr(user, 'is_superuser', False):
+        return True
+    if not ticket or not ticket.assigned_department_id:
+        return True
+    return DepartmentMember.objects.filter(
+        user=user,
+        department=ticket.assigned_department,
+        is_active=True,
+        department__is_active=True,
+    ).exists()
+
 def create_notification(user, notification_type, title, message, ticket=None, extra_data=None):
     notification = Notification.objects.create(
         user=user,
@@ -64,10 +90,9 @@ def notify_ticket_created(ticket):
     if not ticket.assigned_department:
         return notifications
 
-    members = DepartmentMember.objects.filter(
-        department=ticket.assigned_department,
-        is_active=True,
-    ).exclude(user=ticket.TICKET_CREATED)
+    members = _active_department_members(ticket.assigned_department).exclude(
+        user=ticket.TICKET_CREATED
+    )
 
     for member in members:
         notifications.append(create_notification(
@@ -84,6 +109,8 @@ def notify_ticket_created(ticket):
 
 def notify_ticket_assigned(ticket, assigned_to, assigned_by):
     if assigned_to == assigned_by:
+        return None
+    if not _can_receive_department_ticket_notification(assigned_to, ticket):
         return None
 
     return create_notification(
@@ -128,13 +155,10 @@ def notify_ticket_due_date_extended(ticket, updated_by, old_due_date, new_due_da
     recipients = set()
     if ticket.TICKET_CREATED:
         recipients.add(ticket.TICKET_CREATED)
-    if ticket.assigned_to:
+    if ticket.assigned_to and _can_receive_department_ticket_notification(ticket.assigned_to, ticket):
         recipients.add(ticket.assigned_to)
     if ticket.assigned_department_id:
-        dept_members = DepartmentMember.objects.filter(
-            department=ticket.assigned_department,
-            is_active=True,
-        ).select_related('user')
+        dept_members = _active_department_members(ticket.assigned_department)
         for member in dept_members:
             recipients.add(member.user)
 
@@ -212,7 +236,11 @@ def notify_ticket_commented(ticket, commenter, comment_text=''):
     recipients = []
     if ticket.TICKET_CREATED and ticket.TICKET_CREATED != commenter:
         recipients.append(ticket.TICKET_CREATED)
-    if ticket.assigned_to and ticket.assigned_to != commenter:
+    if (
+        ticket.assigned_to
+        and ticket.assigned_to != commenter
+        and _can_receive_department_ticket_notification(ticket.assigned_to, ticket)
+    ):
         recipients.append(ticket.assigned_to)
 
     for user in recipients:
@@ -233,6 +261,8 @@ def notify_ticket_commented(ticket, commenter, comment_text=''):
 
 def notify_ticket_rated(ticket, rating):
     if not ticket.assigned_to:
+        return None
+    if not _can_receive_department_ticket_notification(ticket.assigned_to, ticket):
         return None
 
     stars  = '⭐' * rating.rating

@@ -6,7 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from myapp.models import Department, DepartmentMember, MyCart, TicketDetail, TicketHistory, Notification
+from myapp.models import Department, DepartmentMember, MyCart, TicketDetail, TicketHistory, Notification, TicketRating
+from myapp.notifications import notify_ticket_commented, notify_ticket_rated
 
 
 class RolePermissionBehaviorTests(TestCase):
@@ -326,6 +327,58 @@ class RolePermissionBehaviorTests(TestCase):
         self.assertContains(response, "Extended due date must be later than the current due date.")
         ticket.refresh_from_db()
         self.assertEqual(ticket.TICKET_DUE_DATE, old_due_date)
+
+    def test_inactive_department_assignee_does_not_receive_comment_notifications(self):
+        ticket = self._create_open_ticket()
+        ticket.assigned_to = self.member
+        ticket.TICKET_HOLDER = self.member.username
+        ticket.save(update_fields=["assigned_to", "TICKET_HOLDER"])
+        self.department.is_active = False
+        self.department.save(update_fields=["is_active"])
+
+        notify_ticket_commented(ticket, self.admin, "Please review the latest update.")
+
+        self.assertFalse(
+            Notification.objects.filter(
+                user=self.member,
+                ticket=ticket,
+                notification_type="TICKET_COMMENTED",
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.creator,
+                ticket=ticket,
+                notification_type="TICKET_COMMENTED",
+            ).exists()
+        )
+
+    def test_inactive_department_assignee_does_not_receive_rating_notifications(self):
+        ticket = self._create_open_ticket()
+        ticket.assigned_to = self.member
+        ticket.TICKET_HOLDER = self.member.username
+        ticket.TICKET_STATUS = "Closed"
+        ticket.save(update_fields=["assigned_to", "TICKET_HOLDER", "TICKET_STATUS"])
+        self.department.is_active = False
+        self.department.save(update_fields=["is_active"])
+
+        rating = TicketRating.objects.create(
+            ticket=ticket,
+            rated_by=self.creator,
+            rating=4,
+            feedback="Resolved well.",
+        )
+
+        result = notify_ticket_rated(ticket, rating)
+
+        self.assertIsNone(result)
+        self.assertFalse(
+            Notification.objects.filter(
+                user=self.member,
+                ticket=ticket,
+                notification_type="SYSTEM",
+            ).exists()
+        )
 
     def test_admin_can_extend_due_date_before_overdue(self):
         ticket = self._create_open_ticket()
