@@ -55,6 +55,7 @@ from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TicketDetailForm, TicketCreateForm,
     UserCommentForm, TicketUpdateForm, TicketFilterForm, CategoryForm,
     AccountSettingsForm, UsernameEmailPasswordResetForm, AdminTicketRoutingForm,
+    DepartmentMemberForm, DepartmentAdminForm,
 )
 
 
@@ -2342,26 +2343,150 @@ def department_members(request, dept_id=None):
 
 @admin_required
 def admin_department_list(request):
+    return _render_admin_department_list(request)
+
+
+def _render_admin_department_list(request, create_form=None, edit_forms=None):
     departments = Department.objects.filter(is_active=True).order_by('name')
+    all_users = User.objects.filter(is_active=True, is_superuser=False).order_by('username')
+    create_form = create_form or DepartmentAdminForm(prefix='create')
+    edit_forms = edit_forms or {}
     dept_data = []
+    total_members = 0
+    total_open_tickets = 0
+
     for dept in departments:
         members = DepartmentMember.objects.filter(
             department=dept, is_active=True, user__is_superuser=False
         ).select_related('user')
         tickets = TicketDetail.objects.filter(assigned_department=dept)
+        open_tickets = tickets.exclude(TICKET_STATUS__in=['Closed', 'Resolved'])
+        member_count = members.count()
+        open_count = open_tickets.count()
+        total_members += member_count
+        total_open_tickets += open_count
         dept_data.append({
             'department': dept,
             'members':    members,
             'total':      tickets.count(),
             'open':       tickets.filter(TICKET_STATUS='Open').count(),
             'resolved':   tickets.filter(TICKET_STATUS__in=['Closed', 'Resolved']).count(),
+            'member_count': member_count,
+            'active_tickets': open_count,
+            'can_delete': open_count == 0,
+            'edit_form': edit_forms.get(dept.id, DepartmentAdminForm(instance=dept, prefix=f'dept-{dept.id}')),
+            'member_form': DepartmentMemberForm(prefix=f'member-{dept.id}'),
         })
 
     return render(request, 'admin_department_list.html', {
         'dept_data':    dept_data,
-        'all_users':    User.objects.filter(is_active=True, is_superuser=False).order_by('username'),
+        'all_users':    all_users,
         'departments':  departments,
+        'create_form':  create_form,
+        'department_count': departments.count(),
+        'member_count': total_members,
+        'open_ticket_count': total_open_tickets,
     })
+
+
+@admin_required
+def admin_create_department(request):
+    if request.method != 'POST':
+        return redirect('admin_department_list')
+
+    raw_name = (request.POST.get('create-name') or '').strip()
+    raw_code = (request.POST.get('create-code') or '').strip().upper()
+    inactive_name_match = Department.objects.filter(is_active=False, name__iexact=raw_name).first() if raw_name else None
+    inactive_code_match = Department.objects.filter(is_active=False, code__iexact=raw_code).first() if raw_code else None
+
+    if inactive_name_match and inactive_code_match and inactive_name_match.id != inactive_code_match.id:
+        form = DepartmentAdminForm(request.POST, prefix='create')
+        form.add_error(None, 'That department name and code belong to different deleted departments. Use the original pair or edit an existing department.')
+        messages.error(request, 'Please correct the new department details below.')
+        return _render_admin_department_list(request, create_form=form)
+
+    reactivated_department = inactive_name_match or inactive_code_match
+    form = DepartmentAdminForm(request.POST, instance=reactivated_department, prefix='create')
+    if not form.is_valid():
+        messages.error(request, 'Please correct the new department details below.')
+        return _render_admin_department_list(request, create_form=form)
+
+    department = form.save(commit=False)
+    if not department.created_by_id:
+        department.created_by = request.user
+    if reactivated_department:
+        department.is_active = True
+    department.save()
+    if reactivated_department:
+        log_activity(request.user, 'UPDATED', f'Reactivated department: {department.name}')
+        messages.success(request, f'{department.name} department created successfully.')
+    else:
+        log_activity(request.user, 'CREATED', f'Created department: {department.name}')
+        messages.success(request, f'{department.name} department created successfully.')
+    return redirect('admin_department_list')
+
+
+@admin_required
+def admin_update_department(request, dept_id):
+    if request.method != 'POST':
+        return redirect('admin_department_list')
+
+    department = get_object_or_404(Department, id=dept_id, is_active=True)
+    form = DepartmentAdminForm(request.POST, instance=department, prefix=f'dept-{dept_id}')
+    if not form.is_valid():
+        messages.error(request, f'Please correct the details for {department.name}.')
+        return _render_admin_department_list(request, edit_forms={dept_id: form})
+
+    updated_department = form.save()
+    log_activity(request.user, 'UPDATED', f'Updated department: {updated_department.name}')
+    messages.success(request, f'{updated_department.name} updated successfully.')
+    return redirect('admin_department_list')
+
+
+@admin_required
+def admin_delete_department(request, dept_id):
+    if request.method != 'POST':
+        return redirect('admin_department_list')
+
+    department = get_object_or_404(Department, id=dept_id, is_active=True)
+    active_ticket_qs = TicketDetail.objects.filter(
+        assigned_department=department
+    ).exclude(TICKET_STATUS__in=['Closed', 'Resolved'])
+    if active_ticket_qs.exists():
+        messages.error(
+            request,
+            f'{department.name} cannot be deleted while it still has active tickets.'
+        )
+        return redirect('admin_department_list')
+
+    member_user_ids = list(
+        DepartmentMember.objects.filter(
+            department=department,
+            is_active=True,
+        ).values_list('user_id', flat=True)
+    )
+    DepartmentMember.objects.filter(department=department).update(is_active=False)
+    department.is_active = False
+    department.save(update_fields=['is_active'])
+    if member_user_ids:
+        closed_ticket_ids = TicketDetail.objects.filter(
+            assigned_department=department
+        ).values_list('id', flat=True)
+        MyCart.objects.filter(user_id__in=member_user_ids, ticket_id__in=closed_ticket_ids).delete()
+
+    log_activity(request.user, 'DELETED', f'Deleted department: {department.name}')
+    messages.success(request, f'{department.name} department removed successfully.')
+    return redirect('admin_department_list')
+
+
+def _apply_department_role(membership, role):
+    role_permissions = ROLE_PERMISSION_MATRIX.get(role, ROLE_PERMISSION_MATRIX['MEMBER'])
+    membership.role = role
+    membership.is_active = True
+    membership.can_close_tickets = role_permissions['can_close_tickets']
+    membership.can_assign_tickets = role_permissions['can_assign_tickets']
+    membership.can_delete_tickets = role_permissions['can_delete_tickets']
+    return membership
 
 
 @admin_required
@@ -2369,64 +2494,76 @@ def admin_add_member(request, dept_id):
     department = get_object_or_404(Department, id=dept_id)
 
     if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        role    = request.POST.get('role', 'MEMBER')
-        if role not in ROLE_PERMISSION_MATRIX:
-            role = 'MEMBER'
-        try:
-            user = User.objects.get(id=user_id)
-            if user.is_superuser:
-                messages.error(request, 'Admin users cannot be added to departments.')
-                return redirect('admin_department_list')
-            role_permissions = ROLE_PERMISSION_MATRIX.get(role, ROLE_PERMISSION_MATRIX['MEMBER'])
-            membership, created = DepartmentMember.objects.get_or_create(
-                user=user, department=department,
-                defaults={
-                    'role':               role,
-                    'added_by':           request.user,
-                    'can_close_tickets':  role_permissions['can_close_tickets'],
-                    'can_assign_tickets': role_permissions['can_assign_tickets'],
-                    'can_delete_tickets': role_permissions['can_delete_tickets'],
-                }
-            )
-            status_message = ''
-            already_active_unchanged = False
-            if not created:
-                was_active = membership.is_active
-                role_changed = membership.role != role
-                membership.role = role
-                membership.is_active = True
-                membership.can_close_tickets = role_permissions['can_close_tickets']
-                membership.can_assign_tickets = role_permissions['can_assign_tickets']
-                membership.can_delete_tickets = role_permissions['can_delete_tickets']
-                membership.save(update_fields=[
-                    'role', 'is_active',
-                    'can_close_tickets', 'can_assign_tickets', 'can_delete_tickets',
-                ])
-                if was_active and not role_changed:
-                    status_message = f'{user.username} is already in {department.name}.'
-                    already_active_unchanged = True
-                elif was_active and role_changed:
-                    status_message = f'{user.username} role updated in {department.name}.'
-                else:
-                    status_message = f'{user.username} re-activated in {department.name}.'
+        form = DepartmentMemberForm(request.POST, prefix=f'member-{dept_id}')
+        if not form.is_valid():
+            messages.error(request, 'Please select a valid user and role.')
+            return redirect('admin_department_list')
+
+        user = form.cleaned_data['user_id']
+        role = form.cleaned_data['role']
+        membership, created = DepartmentMember.objects.get_or_create(
+            user=user,
+            department=department,
+            defaults={'added_by': request.user},
+        )
+        previous_role = membership.role
+        was_active = membership.is_active if not created else False
+        _apply_department_role(membership, role)
+        if created:
+            membership.added_by = request.user
+            membership.save()
+            status_message = f'{user.username} added to {department.name}.'
+            level = 'success'
+        else:
+            membership.save(update_fields=[
+                'role', 'is_active', 'can_close_tickets',
+                'can_assign_tickets', 'can_delete_tickets',
+            ])
+            if was_active and previous_role == role:
+                status_message = f'{user.username} is already in {department.name}.'
+                level = 'info'
+            elif was_active:
+                status_message = f'{user.username} role updated in {department.name}.'
+                level = 'success'
             else:
-                status_message = f'{user.username} added to {department.name}.'
+                status_message = f'{user.username} added to {department.name} successfully.'
+                level = 'success'
 
-            for ticket in TicketDetail.objects.filter(
-                assigned_department=department,
-            ).exclude(TICKET_STATUS__in=['Closed', 'Resolved']):
-                MyCart.objects.get_or_create(user=user, ticket=ticket)
+        for ticket in TicketDetail.objects.filter(
+            assigned_department=department,
+        ).exclude(TICKET_STATUS__in=['Closed', 'Resolved']):
+            MyCart.objects.get_or_create(user=user, ticket=ticket)
 
-            log_activity(request.user, 'UPDATED',
-                         f'Added {user.username} to {department.name} as {role}')
-            if already_active_unchanged:
-                messages.info(request, status_message)
-            else:
-                messages.success(request, status_message)
-        except User.DoesNotExist:
-            messages.error(request, 'User not found.')
+        log_activity(
+            request.user,
+            'UPDATED',
+            f'Added {user.username} to {department.name} as {role}'
+        )
+        getattr(messages, level)(request, status_message)
 
+    return redirect('admin_department_list')
+
+
+@admin_required
+def admin_update_member_role(request, dept_id, user_id):
+    if request.method != 'POST':
+        return redirect('admin_department_list')
+
+    department = get_object_or_404(Department, id=dept_id, is_active=True)
+    user = get_object_or_404(User, id=user_id, is_superuser=False)
+    membership = get_object_or_404(DepartmentMember, department=department, user=user)
+    role = request.POST.get('role', membership.role)
+    if role not in ROLE_PERMISSION_MATRIX:
+        messages.error(request, 'Invalid department role selected.')
+        return redirect('admin_department_list')
+
+    _apply_department_role(membership, role)
+    membership.save(update_fields=[
+        'role', 'is_active', 'can_close_tickets',
+        'can_assign_tickets', 'can_delete_tickets',
+    ])
+    log_activity(request.user, 'UPDATED', f'Updated {user.username} role in {department.name} to {role}')
+    messages.success(request, f'{user.username} is now {membership.get_role_display()} in {department.name}.')
     return redirect('admin_department_list')
 
 

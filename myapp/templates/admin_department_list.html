@@ -8,136 +8,736 @@
 
 {% block extra_css %}
 <style>
-  .adm-hero {
-    position: relative;
-    min-height: 110px;
-    border-bottom: 1px solid var(--slate-200);
-    background: linear-gradient(135deg, rgba(15,23,42,.56) 0%, rgba(30,41,100,.42) 100%);
-    color: #fff;
-    padding: 16px 18px;
+  .dept-page {
+    display: grid;
+    gap: 18px;
+  }
+  .dept-topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, .95fr);
+    gap: 18px;
+  }
+  .dept-hero,
+  .dept-create-card,
+  .dept-searchbar,
+  .dept-panel,
+  .dept-members-card,
+  .dept-edit-card,
+  .dept-delete-card {
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, .22);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+  }
+  .dept-hero {
+    padding: 24px;
+    background:
+      radial-gradient(circle at top right, rgba(15, 118, 110, .18), transparent 34%),
+      linear-gradient(180deg, #ffffff 0%, #f8fbfb 100%);
+  }
+  .dept-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--brand-light);
+    color: var(--brand);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .dept-hero h2 {
+    margin: 16px 0 8px;
+    font-size: 28px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: var(--slate-900);
+  }
+  .dept-hero p {
+    margin: 0;
+    max-width: 720px;
+    font-size: 14px;
+    color: var(--slate-500);
+  }
+  .dept-overview {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .dept-kpi {
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(248, 250, 252, .9);
+    border: 1px solid var(--slate-200);
+  }
+  .dept-kpi-label {
+    font-size: 11px;
+    color: var(--slate-400);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+  }
+  .dept-kpi-value {
+    margin-top: 6px;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 800;
+    color: var(--slate-900);
+  }
+  .dept-create-card {
+    padding: 22px;
+    background:
+      linear-gradient(180deg, rgba(240, 253, 250, .88) 0%, #ffffff 100%);
+  }
+  .dept-card-head {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .dept-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--slate-900);
+  }
+  .dept-card-sub {
+    font-size: 12.5px;
+    color: var(--slate-500);
+  }
+  .dept-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .dept-field { margin-bottom: 12px; }
+  .dept-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .dept-field-full { grid-column: 1 / -1; }
+  .dept-error {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--danger);
+  }
+  .dept-searchbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+  }
+  .dept-searchbar i { color: var(--slate-400); }
+  .dept-searchbar input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--slate-800);
+  }
+  .dept-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 18px;
+  }
+  .dept-panel {
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .dept-panel-head {
+    padding: 20px 22px 18px;
+    background:
+      linear-gradient(135deg, rgba(15, 23, 42, .84), rgba(30, 41, 59, .52));
     background-size: cover;
     background-position: center;
+    color: #fff;
   }
-  .adm-hero::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(15,23,42,.55) 0%, rgba(30,41,100,.35) 100%);
-    pointer-events: none;
+  .dept-panel-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
   }
-  .adm-hero-title {
-    position: relative;
-    z-index: 1;
+  .dept-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .dept-panel-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .dept-panel-title h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .dept-panel-title p {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, .76);
+  }
+  .dept-stat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .dept-stat {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .14);
+  }
+  .dept-stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, .68);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .dept-stat-value {
+    margin-top: 5px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+  .dept-panel-body {
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
+    flex: 1;
+    align-content: start;
+  }
+  .dept-section {
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--slate-200);
+    background: #fff;
+  }
+  .dept-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .dept-section-head h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--slate-900);
+  }
+  .dept-section-head span {
+    font-size: 12px;
+    color: var(--slate-500);
+  }
+  .dept-member-add {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) 130px 92px;
+    gap: 10px;
+  }
+  .dept-members-card {
+    overflow: hidden;
+    min-height: 386px;
+    display: flex;
+    flex-direction: column;
+  }
+  .dept-members-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--slate-100);
+    background: #f8fafc;
+  }
+  .dept-members-search {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: -.2px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    background: #fff;
   }
-
+  .dept-members-search i {
+    color: var(--slate-400);
+    font-size: 12px;
+  }
+  .dept-members-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--slate-800);
+    font-size: 13px;
+  }
+  .dept-members-empty {
+    display: none;
+    padding: 20px 14px;
+    text-align: center;
+    color: var(--slate-500);
+    font-size: 13px;
+    border-top: 1px solid var(--slate-100);
+    background: #fff;
+  }
+  .dept-members-scroll {
+    max-height: 320px;
+    overflow: auto;
+    flex: 1;
+  }
+  .dept-members-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .dept-members-table th,
+  .dept-members-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--slate-100);
+    vertical-align: middle;
+  }
+  .dept-members-table th {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--slate-500);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: #f8fafc;
+  }
+  .dept-members-table tr:last-child td { border-bottom: 0; }
   .adm-user {
-    display: flex; align-items: center; gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .adm-avatar {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: #E2E8F0; color: #334155;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; overflow: hidden; flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #E2E8F0;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    overflow: hidden;
+    flex-shrink: 0;
     border: 1px solid #CBD5E1;
   }
-  .adm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .adm-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .role-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--brand-light);
+    color: var(--brand);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .dept-row-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .dept-row-actions form {
+    margin: 0;
+  }
+  .dept-role-edit {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .dept-edit-card,
+  .dept-delete-card {
+    padding: 16px;
+  }
+  .dept-delete-card {
+    border-style: dashed;
+    background: linear-gradient(180deg, #fff 0%, #fff8f8 100%);
+  }
+  .dept-empty {
+    padding: 54px 22px;
+    text-align: center;
+    color: var(--slate-500);
+  }
+  .dept-members-card .dept-empty {
+    padding: 32px 18px;
+  }
+  .dept-hidden { display: none !important; }
+  @media (min-width: 992px) {
+    .dept-grid > .dept-panel:only-child {
+      grid-column: 1 / -1;
+    }
+    .dept-grid > .dept-panel:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 1199px) {
+    .dept-topbar {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 767px) {
+    .dept-overview,
+    .dept-form-grid,
+    .dept-stat-strip,
+    .dept-member-add,
+    .dept-grid {
+      grid-template-columns: 1fr;
+    }
+    .dept-grid {
+      grid-auto-rows: auto;
+    }
+    .dept-members-card {
+      min-height: 0;
+    }
+    .dept-panel-top,
+    .dept-section-head,
+    .dept-row-actions {
+      align-items: stretch;
+    }
+    .dept-role-edit {
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .dept-row-actions form,
+    .dept-row-actions .btn,
+    .dept-role-edit .form-select,
+    .dept-role-edit .btn {
+      width: 100%;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row g-3">
-  {% for item in dept_data %}
-  <div class="col-12 col-xl-6">
-    <div class="hd-card h-100 adm-dept-card"
-         data-dept-name="{{ item.department.name|lower|escapejs }}"
-         data-dept-code="{{ item.department.code|lower|escapejs }}">
-      <div class="adm-hero">
-        <div class="adm-hero-title">
-          <i class="{{ item.department.icon }}" style="color:{{ item.department.color }};"></i>
-          {{ item.department.name }}
+<div class="dept-page">
+  <div class="dept-topbar">
+    <section class="dept-hero">
+      <span class="dept-eyebrow"><i class="fas fa-sitemap"></i>Department Control</span>
+      <h2>Manage departments with a clearer control surface</h2>
+      <p>All department actions stay here, but the layout is cleaner: overview first, creation second, then focused cards for staffing and maintenance.</p>
+
+      <div class="dept-overview">
+        <div class="dept-kpi">
+          <div class="dept-kpi-label">Departments</div>
+          <div class="dept-kpi-value">{{ department_count }}</div>
+        </div>
+        <div class="dept-kpi">
+          <div class="dept-kpi-label">Active Members</div>
+          <div class="dept-kpi-value">{{ member_count }}</div>
+        </div>
+        <div class="dept-kpi">
+          <div class="dept-kpi-label">Open Tickets</div>
+          <div class="dept-kpi-value">{{ open_ticket_count }}</div>
         </div>
       </div>
-      <div class="hd-card-body">
-        <div class="row g-2 mb-3">
-          <div class="col-4"><div class="stat-card"><div><div class="stat-label">Total</div><div class="stat-value">{{ item.total }}</div></div></div></div>
-          <div class="col-4"><div class="stat-card"><div><div class="stat-label">Open</div><div class="stat-value">{{ item.open }}</div></div></div></div>
-          <div class="col-4"><div class="stat-card"><div><div class="stat-label">Resolved</div><div class="stat-value">{{ item.resolved }}</div></div></div></div>
+    </section>
+
+    <section class="dept-create-card">
+      <div class="dept-card-head">
+        <div>
+          <div class="dept-card-title">Create Department</div>
+          <div class="dept-card-sub">Add a new team without leaving this page.</div>
         </div>
+      </div>
 
-        <form method="post" action="{% url 'admin_add_member' item.department.id %}" class="row g-2 mb-3 js-admin-member-form" novalidate>
-          {% csrf_token %}
-          <div class="col-12 col-md-6">
-            <select name="user_id" class="form-select" required>
-              <option value="">Select User</option>
-              {% for u in all_users %}
-              <option value="{{ u.id }}">{{ u.username }}</option>
-              {% endfor %}
-            </select>
+      <form method="post" action="/admin-departments/create/" novalidate>
+        {% csrf_token %}
+        <div class="dept-form-grid">
+          <div class="dept-field">
+            <label for="{{ create_form.name.id_for_label }}">Department Name</label>
+            {{ create_form.name }}
+            {% if create_form.name.errors %}<div class="dept-error">{{ create_form.name.errors.0 }}</div>{% endif %}
           </div>
-          <div class="col-8 col-md-4">
-            <select name="role" class="form-select">
-              <option value="MEMBER">Member</option>
-              <option value="LEAD">Lead</option>
-              <option value="MANAGER">Manager</option>
-              <option value="HEAD">Head</option>
-            </select>
+          <div class="dept-field">
+            <label for="{{ create_form.code.id_for_label }}">Code</label>
+            {{ create_form.code }}
+            {% if create_form.code.errors %}<div class="dept-error">{{ create_form.code.errors.0 }}</div>{% endif %}
           </div>
-          <div class="col-4 col-md-2">
-            <button class="btn btn-primary w-100" type="submit">Add</button>
+          <div class="dept-field">
+            <label for="{{ create_form.email.id_for_label }}">Email</label>
+            {{ create_form.email }}
+            {% if create_form.email.errors %}<div class="dept-error">{{ create_form.email.errors.0 }}</div>{% endif %}
           </div>
-        </form>
+          <div class="dept-field">
+            <label for="{{ create_form.icon.id_for_label }}">Icon</label>
+            {{ create_form.icon }}
+            {% if create_form.icon.errors %}<div class="dept-error">{{ create_form.icon.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="dept-field">
+            <label for="{{ create_form.color.id_for_label }}">Color</label>
+            {{ create_form.color }}
+            {% if create_form.color.errors %}<div class="dept-error">{{ create_form.color.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="dept-field dept-field-full">
+            <label for="{{ create_form.description.id_for_label }}">Description</label>
+            {{ create_form.description }}
+            {% if create_form.description.errors %}<div class="dept-error">{{ create_form.description.errors.0 }}</div>{% endif %}
+            {% if create_form.non_field_errors %}<div class="dept-error">{{ create_form.non_field_errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">
+          <i class="fas fa-plus me-2"></i>Create Department
+        </button>
+      </form>
+    </section>
+  </div>
 
-        <div class="table-responsive">
-          <table class="hd-table">
-            <thead>
-              <tr><th>User</th><th>Role</th><th></th></tr>
-            </thead>
-            <tbody>
-              {% for m in item.members %}
-              <tr>
-                <td>
-                  <div class="adm-user">
-                    <div class="adm-avatar">
-                      {% with avatar=m.user|avatar_url %}
-                        {% if avatar %}
-                          <img src="{{ avatar }}" alt="{{ m.user.username }}">
-                        {% else %}
-                          {{ m.user|avatar_initial }}
-                        {% endif %}
-                      {% endwith %}
-                    </div>
-                    <span>{{ m.user.username }}</span>
+  <div class="dept-searchbar">
+    <i class="fas fa-search"></i>
+    <input type="search" id="deptSearch" placeholder="Search department by name or code">
+  </div>
+
+  {% if dept_data %}
+    <div class="dept-grid">
+      {% for item in dept_data %}
+        <article class="dept-panel js-dept-card" data-dept-name="{{ item.department.name|lower }}" data-dept-code="{{ item.department.code|lower }}">
+          <div class="dept-panel-head">
+            <div class="dept-panel-top">
+              <div class="dept-panel-title">
+                <div class="dept-panel-icon" style="color:{{ item.department.color }};">
+                  <i class="{{ item.department.icon }}"></i>
+                </div>
+                <div>
+                  <h3>{{ item.department.name }}</h3>
+                  <p>{{ item.department.code }}{% if item.department.email %} | {{ item.department.email }}{% endif %}</p>
+                </div>
+              </div>
+            </div>
+            <div class="dept-stat-strip">
+              <div class="dept-stat">
+                <div class="dept-stat-label">Members</div>
+                <div class="dept-stat-value">{{ item.member_count }}</div>
+              </div>
+              <div class="dept-stat">
+                <div class="dept-stat-label">Open</div>
+                <div class="dept-stat-value">{{ item.open }}</div>
+              </div>
+              <div class="dept-stat">
+                <div class="dept-stat-label">Active</div>
+                <div class="dept-stat-value">{{ item.active_tickets }}</div>
+              </div>
+              <div class="dept-stat">
+                <div class="dept-stat-label">Resolved</div>
+                <div class="dept-stat-value">{{ item.resolved }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dept-panel-body">
+            <section class="dept-section">
+              <div class="dept-section-head">
+                <h4>Add or Reactivate Member</h4>
+                <span>Role assignment stays inline.</span>
+              </div>
+              {% if item.department.description %}
+                <div class="text-muted small mb-3">{{ item.department.description }}</div>
+              {% endif %}
+              <form method="post" action="{% url 'admin_add_member' item.department.id %}">
+                {% csrf_token %}
+                <div class="dept-member-add">
+                  <div>{{ item.member_form.user_id }}</div>
+                  <div>{{ item.member_form.role }}</div>
+                  <div><button class="btn btn-primary w-100" type="submit">Add</button></div>
+                </div>
+              </form>
+            </section>
+
+            <section class="dept-members-card">
+              <div class="dept-members-toolbar">
+                <div class="dept-members-search">
+                  <i class="fas fa-search"></i>
+                  <input
+                    type="search"
+                    class="js-member-search"
+                    placeholder="Find user by username"
+                    data-department-id="{{ item.department.id }}"
+                  >
+                </div>
+              </div>
+              <div class="dept-members-scroll">
+                <table class="dept-members-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Role</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for m in item.members %}
+                    <tr class="js-member-row" data-member-username="{{ m.user.username|lower }}">
+                      <td>
+                        <div class="adm-user">
+                            <div class="adm-avatar">
+                              {% with avatar=m.user|avatar_url %}
+                                {% if avatar %}
+                                  <img src="{{ avatar }}" alt="{{ m.user.username }}">
+                                {% else %}
+                                  {{ m.user|avatar_initial }}
+                                {% endif %}
+                              {% endwith %}
+                            </div>
+                            <div>
+                              <div class="fw-semibold text-dark">{{ m.user.username }}</div>
+                              <div class="text-muted small">{{ m.user.email|default:"No email" }}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td><span class="role-pill">{{ m.get_role_display }}</span></td>
+                        <td class="text-end">
+                          <div class="dept-row-actions">
+                            <form method="post" action="/admin-departments/{{ item.department.id }}/members/{{ m.user.id }}/role/">
+                              {% csrf_token %}
+                              <div class="dept-role-edit">
+                                <select name="role" class="form-select form-select-sm">
+                                  <option value="MEMBER" {% if m.role == 'MEMBER' %}selected{% endif %}>Member</option>
+                                  <option value="LEAD" {% if m.role == 'LEAD' %}selected{% endif %}>Lead</option>
+                                  <option value="MANAGER" {% if m.role == 'MANAGER' %}selected{% endif %}>Manager</option>
+                                  <option value="HEAD" {% if m.role == 'HEAD' %}selected{% endif %}>Head</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+                              </div>
+                            </form>
+                            <form method="post" action="{% url 'admin_remove_member' item.department.id m.user.id %}">
+                              {% csrf_token %}
+                              <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="3" class="dept-empty">No active members yet.</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="dept-members-empty js-member-empty">No matching users found in this department.</div>
+            </section>
+
+            <section class="dept-edit-card">
+              <div class="dept-section-head">
+                <h4>Edit Department</h4>
+                <span>Update core details only for this department.</span>
+              </div>
+              <form method="post" action="/admin-departments/{{ item.department.id }}/update/" novalidate>
+                {% csrf_token %}
+                <div class="dept-form-grid">
+                  <div class="dept-field">
+                    <label for="{{ item.edit_form.name.id_for_label }}">Department Name</label>
+                    {{ item.edit_form.name }}
+                    {% if item.edit_form.name.errors %}<div class="dept-error">{{ item.edit_form.name.errors.0 }}</div>{% endif %}
                   </div>
-                </td>
-                <td>{{ m.get_role_display }}</td>
-                <td class="text-end">
-                  <a class="btn btn-sm btn-outline-danger" href="{% url 'admin_remove_member' item.department.id m.user.id %}">Remove</a>
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="3" class="text-center text-muted py-3">No members.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+                  <div class="dept-field">
+                    <label for="{{ item.edit_form.code.id_for_label }}">Code</label>
+                    {{ item.edit_form.code }}
+                    {% if item.edit_form.code.errors %}<div class="dept-error">{{ item.edit_form.code.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="dept-field">
+                    <label for="{{ item.edit_form.email.id_for_label }}">Email</label>
+                    {{ item.edit_form.email }}
+                    {% if item.edit_form.email.errors %}<div class="dept-error">{{ item.edit_form.email.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="dept-field">
+                    <label for="{{ item.edit_form.icon.id_for_label }}">Icon</label>
+                    {{ item.edit_form.icon }}
+                    {% if item.edit_form.icon.errors %}<div class="dept-error">{{ item.edit_form.icon.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="dept-field">
+                    <label for="{{ item.edit_form.color.id_for_label }}">Color</label>
+                    {{ item.edit_form.color }}
+                    {% if item.edit_form.color.errors %}<div class="dept-error">{{ item.edit_form.color.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="dept-field dept-field-full">
+                    <label for="{{ item.edit_form.description.id_for_label }}">Description</label>
+                    {{ item.edit_form.description }}
+                    {% if item.edit_form.description.errors %}<div class="dept-error">{{ item.edit_form.description.errors.0 }}</div>{% endif %}
+                    {% if item.edit_form.non_field_errors %}<div class="dept-error">{{ item.edit_form.non_field_errors.0 }}</div>{% endif %}
+                  </div>
+                </div>
+                <button class="btn btn-primary" type="submit">Save Changes</button>
+              </form>
+            </section>
+
+            <section class="dept-delete-card">
+              <div class="dept-section-head">
+                <h4>Delete Department</h4>
+                <span>Protected when active tickets still exist.</span>
+              </div>
+              <form method="post" action="/admin-departments/{{ item.department.id }}/delete/">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger" type="submit" {% if not item.can_delete %}disabled{% endif %}>
+                  Delete Department
+                </button>
+              </form>
+              <div class="text-muted small mt-2">
+                {% if not item.can_delete %}
+                  Delete is available only when this department has no active tickets.
+                {% else %}
+                  Closed and resolved ticket history will remain intact.
+                {% endif %}
+              </div>
+            </section>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="dept-panel">
+      <div class="dept-empty">
+        <h3 class="mb-2">No departments available</h3>
+        <p class="mb-0">Create the first department using the form above.</p>
       </div>
     </div>
-  </div>
-  {% endfor %}
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
   (function () {
+    const searchInput = document.getElementById('deptSearch');
+    const cards = Array.from(document.querySelectorAll('.js-dept-card'));
+    const memberSearchInputs = Array.from(document.querySelectorAll('.js-member-search'));
     const deptBackgrounds = {
       hr: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80',
       'human resources': 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1400&q=80',
@@ -153,9 +753,9 @@
     };
     const fallbackBg = 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1400&q=80';
 
-    document.querySelectorAll('.adm-dept-card').forEach(card => {
-      const hero = card.querySelector('.adm-hero');
-      if (!hero) return;
+    cards.forEach((card) => {
+      const head = card.querySelector('.dept-panel-head');
+      if (!head) return;
 
       const deptName = (card.getAttribute('data-dept-name') || '').trim();
       const deptCode = (card.getAttribute('data-dept-code') || '').trim();
@@ -169,28 +769,43 @@
           }
         }
       }
-      hero.style.backgroundImage =
-        `linear-gradient(135deg, rgba(15,23,42,.56) 0%, rgba(30,41,100,.42) 100%), url('${bg || fallbackBg}')`;
+
+      head.style.backgroundImage =
+        `linear-gradient(135deg, rgba(15,23,42,.84), rgba(30,41,59,.52)), url('${bg || fallbackBg}')`;
     });
 
-    document.querySelectorAll('.js-admin-member-form').forEach(form => {
-      const userSelect = form.querySelector('select[name="user_id"]');
-      if (!userSelect) return;
+    memberSearchInputs.forEach((input) => {
+      input.addEventListener('input', function () {
+        const card = this.closest('.js-dept-card');
+        if (!card) return;
 
-      form.addEventListener('submit', function (e) {
-        const existing = form.querySelector('.js-invalid-feedback');
-        if (existing) existing.remove();
-        userSelect.classList.remove('is-invalid');
+        const term = this.value.trim().toLowerCase();
+        const rows = Array.from(card.querySelectorAll('.js-member-row'));
+        const emptyState = card.querySelector('.js-member-empty');
+        let visibleCount = 0;
 
-        if (!userSelect.value) {
-          e.preventDefault();
-          userSelect.classList.add('is-invalid');
-          const err = document.createElement('div');
-          err.className = 'js-invalid-feedback';
-          err.textContent = 'Please select a user to add.';
-          userSelect.insertAdjacentElement('afterend', err);
-          userSelect.focus();
+        rows.forEach((row) => {
+          const username = row.getAttribute('data-member-username') || '';
+          const matches = !term || username.includes(term);
+          row.classList.toggle('dept-hidden', !matches);
+          if (matches) visibleCount += 1;
+        });
+
+        if (emptyState) {
+          emptyState.style.display = rows.length && visibleCount === 0 ? 'block' : 'none';
         }
+      });
+    });
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function () {
+      const term = this.value.trim().toLowerCase();
+      cards.forEach((card) => {
+        const name = card.getAttribute('data-dept-name') || '';
+        const code = card.getAttribute('data-dept-code') || '';
+        const matches = !term || name.includes(term) || code.includes(term);
+        card.classList.toggle('dept-hidden', !matches);
       });
     });
   })();

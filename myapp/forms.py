@@ -232,7 +232,7 @@ class DepartmentMemberForm(forms.Form):
     ]
 
     user_id = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True).order_by('username'),
+        queryset=User.objects.filter(is_active=True, is_superuser=False).order_by('username'),
         label="Select User",
         empty_label="- Choose a user -",
         widget=forms.Select(attrs={"class": "form-select"}),
@@ -244,6 +244,32 @@ class DepartmentMemberForm(forms.Form):
         label="Department Role",
         widget=forms.Select(attrs={"class": "form-select"}),
     )
+
+
+class DepartmentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Department
+        fields = ['name', 'code', 'email', 'icon', 'color', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Department name'}),
+            'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Short code, e.g. IT'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'department@example.com'}),
+            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'fas fa-building'}),
+            'color': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '#3b82f6'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Short department description'}),
+        }
+
+    def clean_code(self):
+        code = (self.cleaned_data.get('code') or '').strip().upper()
+        if not code:
+            raise ValidationError("Department code is required.")
+        return code
+
+    def clean_color(self):
+        color = (self.cleaned_data.get('color') or '').strip()
+        if color and not color.startswith('#'):
+            raise ValidationError("Use a hex color like #3b82f6.")
+        return color
 
 
 class TicketDetailForm(forms.ModelForm):
