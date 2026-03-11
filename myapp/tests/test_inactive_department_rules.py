@@ -184,6 +184,54 @@ class InactiveDepartmentRuleTests(TestCase):
         self.assertIsNone(notify_ticket_rated(inactive_ticket, rating))
         self.assertEqual(Notification.objects.count(), 0)
 
+    def test_admin_cannot_send_overdue_note_for_inactive_department_ticket(self):
+        inactive_ticket = self._create_ticket(
+            self.inactive_department,
+            creator=self.creator,
+            assigned_to=self.creator,
+            TICKET_HOLDER=self.creator.username,
+            TICKET_DUE_DATE=timezone.now().date() - timedelta(days=1),
+        )
+
+        self.client.login(username="inactive_admin", password="pass12345")
+        response = self.client.post(
+            reverse("send_overdue_note", kwargs={"pk": inactive_ticket.id}),
+            data={"overdue_note": "Please resolve this immediately."},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        messages = [message.message for message in response.context["messages"]]
+        self.assertIn("Overdue notes cannot be sent for inactive-department tickets.", messages)
+        self.assertEqual(Notification.objects.count(), 0)
+
+    def test_member_cannot_reply_to_overdue_note_for_inactive_department_ticket(self):
+        active_membership = DepartmentMember.objects.create(
+            user=self.other_member,
+            department=self.inactive_department,
+            role="LEAD",
+            is_active=True,
+        )
+        inactive_ticket = self._create_ticket(
+            self.inactive_department,
+            creator=self.creator,
+            assigned_to=self.other_member,
+            TICKET_HOLDER=self.other_member.username,
+        )
+
+        self.client.login(username="inactive_other", password="pass12345")
+        response = self.client.post(
+            reverse("reply_overdue_note", kwargs={"pk": inactive_ticket.id}),
+            data={"overdue_note_reply": "Working on it."},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        messages = [message.message for message in response.context["messages"]]
+        self.assertIn("Overdue note replies are not allowed for inactive-department tickets.", messages)
+        self.assertEqual(Notification.objects.count(), 0)
+        self.assertTrue(active_membership.is_active)
+
     def test_admin_cannot_assign_ticket_to_inactive_department(self):
         ticket = self._create_ticket(self.active_department, creator=self.other_member)
 

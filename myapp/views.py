@@ -133,7 +133,10 @@ def _is_department_member(user, ticket):
     if not ticket.assigned_department:
         return False
     return DepartmentMember.objects.filter(
-        user=user, department=ticket.assigned_department, is_active=True
+        user=user,
+        department=ticket.assigned_department,
+        is_active=True,
+        department__is_active=True,
     ).exists()
 
 
@@ -3159,6 +3162,10 @@ def send_overdue_note(request, pk):
     if request.method != 'POST':
         return redirect('ticketinfo', pk=pk)
 
+    if ticket.assigned_department_id and not getattr(ticket.assigned_department, 'is_active', False):
+        messages.error(request, 'Overdue notes cannot be sent for inactive-department tickets.')
+        return redirect('ticketinfo', pk=pk)
+
     if ticket.TICKET_STATUS in ['Closed', 'Resolved']:
         messages.error(request, 'This ticket is already completed.')
         return redirect('ticketinfo', pk=pk)
@@ -3227,6 +3234,10 @@ def send_overdue_note(request, pk):
 def reply_overdue_note(request, pk):
     ticket = get_object_or_404(TicketDetail, id=pk)
     if request.method != 'POST':
+        return redirect('ticketinfo', pk=pk)
+
+    if ticket.assigned_department_id and not getattr(ticket.assigned_department, 'is_active', False):
+        messages.error(request, 'Overdue note replies are not allowed for inactive-department tickets.')
         return redirect('ticketinfo', pk=pk)
 
     if _is_admin_user(request.user):
