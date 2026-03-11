@@ -7,6 +7,27 @@
   <strong>Notifications</strong>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+  .notif-row-actions {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .notif-row-actions form {
+    margin: 0;
+  }
+  .notif-row-btn {
+    min-width: 92px;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
   <div>
@@ -109,18 +130,18 @@
             {% endif %}
           </td>
           <td>
-            <div class="d-flex gap-2">
+            <div class="notif-row-actions">
               {% if not notif.is_read %}
               <form method="post" action="{% url 'mark_notification_read' notif.id %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'notifications_list' %}?filter={{ filter_type|urlencode }}">
-                <button type="submit" class="btn btn-sm btn-outline-primary">Mark Read</button>
+                <button type="submit" class="btn btn-sm btn-outline-primary notif-row-btn">Mark Read</button>
               </form>
               {% endif %}
               <form method="post" action="{% url 'delete_notification' notif.id %}" onsubmit="return confirm('Delete this notification');">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'notifications_list' %}?filter={{ filter_type|urlencode }}">
-                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                <button type="submit" class="btn btn-sm btn-outline-danger notif-row-btn">Delete</button>
               </form>
             </div>
           </td>

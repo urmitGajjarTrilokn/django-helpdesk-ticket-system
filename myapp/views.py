@@ -968,6 +968,8 @@ def TicketInfo(request, pk):
         return redirect('base')
 
     is_admin         = _is_admin_user(request.user)
+    if request.method == 'POST' and is_admin and request.POST.get('action') == 'admin_reassign':
+        return _handle_admin_reassign_ticket(request, ticketinfos)
 
     is_department_member = False
     is_senior_dept_member = False
@@ -1074,6 +1076,7 @@ def TicketInfo(request, pk):
         latest_rejection_reason = reason_text
         latest_rejection_by = latest_rejection.changed_by.username if latest_rejection.changed_by_id else ''
     admin_reassignment_options = _department_member_workload_rows(ticketinfos) if is_admin else []
+    admin_reassignment_member_count = len(admin_reassignment_options)
     can_admin_reassign_ticket = bool(
         is_admin
         and ticketinfos.assigned_department_id
@@ -1103,8 +1106,81 @@ def TicketInfo(request, pk):
         'overdue_note_thread': overdue_note_thread,
         'can_reply_admin_overdue_note': can_reply_admin_overdue_note,
         'admin_reassignment_options': admin_reassignment_options,
+        'admin_reassignment_member_count': admin_reassignment_member_count,
         'can_admin_reassign_ticket': can_admin_reassign_ticket,
     })
+
+
+def _handle_admin_reassign_ticket(request, ticket):
+    if ticket.TICKET_STATUS in ['Closed', 'Resolved']:
+        messages.error(request, 'Only unresolved tickets can be reassigned.')
+        return redirect('ticketinfo', pk=ticket.id)
+
+    if not ticket.assigned_department_id or not getattr(ticket.assigned_department, 'is_active', False):
+        messages.error(request, 'Only active department tickets can be reassigned.')
+        return redirect('ticketinfo', pk=ticket.id)
+
+    if not ticket.assigned_to_id:
+        messages.error(request, 'This ticket must already be assigned before workload reassignment can be used.')
+        return redirect('ticketinfo', pk=ticket.id)
+
+    target_user_id = request.POST.get('assigned_to')
+    if not target_user_id:
+        messages.error(request, 'Select a department member for reassignment.')
+        return redirect('ticketinfo', pk=ticket.id)
+
+    eligible_memberships = _eligible_reassignment_memberships(ticket)
+    target_membership = eligible_memberships.filter(user_id=target_user_id).first()
+    if not target_membership:
+        messages.error(request, 'Selected user is not an active member of this department.')
+        return redirect('ticketinfo', pk=ticket.id)
+
+    if target_membership.user_id == ticket.assigned_to_id:
+        messages.error(request, 'That user is already assigned to this ticket.')
+        return redirect('ticketinfo', pk=ticket.id)
+
+    old_assignee = ticket.assigned_to
+    ticket.assigned_to = target_membership.user
+    ticket.TICKET_HOLDER = target_membership.user.username
+    ticket.assignment_type = 'MANUAL'
+    ticket.assigned_by = request.user
+    ticket.assigned_at = timezone.now()
+    ticket.save(update_fields=['assigned_to', 'TICKET_HOLDER', 'assignment_type', 'assigned_by', 'assigned_at'])
+
+    dept_member_ids = eligible_memberships.values_list('user_id', flat=True)
+    MyCart.objects.filter(ticket=ticket, user_id__in=dept_member_ids).exclude(user=target_membership.user).delete()
+    MyCart.objects.get_or_create(user=target_membership.user, ticket=ticket)
+
+    TicketHistory.objects.create(
+        ticket=ticket,
+        changed_by=request.user,
+        action_type='ASSIGNED',
+        field_name='assigned_to',
+        old_value=old_assignee.username if old_assignee else 'Unassigned',
+        new_value=target_membership.user.username,
+        description=(
+            f'Admin reassigned ticket to {target_membership.user.username} '
+            f'based on workload review in {ticket.assigned_department.name}.'
+        ),
+    )
+    create_notification(
+        user=target_membership.user,
+        notification_type='TICKET_ASSIGNED',
+        title=f'Ticket reassigned #{ticket.id}',
+        message=f'{request.user.username} reassigned "{ticket.TICKET_TITLE}" to you.',
+        ticket=ticket,
+        extra_data={
+            'assigned_by': request.user.username,
+            'department': ticket.assigned_department.name,
+            'manual_workload_reassignment': True,
+        },
+    )
+
+    messages.success(
+        request,
+        f'Ticket reassigned to {target_membership.user.get_full_name() or target_membership.user.username}.'
+    )
+    return redirect('ticketinfo', pk=ticket.id)
 
 
 @login_required
@@ -1415,75 +1491,7 @@ def admin_reassign_ticket(request, pk):
     ticket = get_object_or_404(TicketDetail, id=pk)
     if request.method != 'POST':
         return redirect('ticketinfo', pk=pk)
-
-    if ticket.TICKET_STATUS in ['Closed', 'Resolved']:
-        messages.error(request, 'Only unresolved tickets can be reassigned.')
-        return redirect('ticketinfo', pk=pk)
-
-    if not ticket.assigned_department_id or not getattr(ticket.assigned_department, 'is_active', False):
-        messages.error(request, 'Only active department tickets can be reassigned.')
-        return redirect('ticketinfo', pk=pk)
-
-    if not ticket.assigned_to_id:
-        messages.error(request, 'This ticket must already be assigned before workload reassignment can be used.')
-        return redirect('ticketinfo', pk=pk)
-
-    target_user_id = request.POST.get('assigned_to')
-    if not target_user_id:
-        messages.error(request, 'Select a department member for reassignment.')
-        return redirect('ticketinfo', pk=pk)
-
-    target_membership = _eligible_reassignment_memberships(ticket).filter(user_id=target_user_id).first()
-    if not target_membership:
-        messages.error(request, 'Selected user is not an active member of this department.')
-        return redirect('ticketinfo', pk=pk)
-
-    if target_membership.user_id == ticket.assigned_to_id:
-        messages.error(request, 'That user is already assigned to this ticket.')
-        return redirect('ticketinfo', pk=pk)
-
-    old_assignee = ticket.assigned_to
-    ticket.assigned_to = target_membership.user
-    ticket.TICKET_HOLDER = target_membership.user.username
-    ticket.assignment_type = 'MANUAL'
-    ticket.assigned_by = request.user
-    ticket.assigned_at = timezone.now()
-    ticket.save(update_fields=['assigned_to', 'TICKET_HOLDER', 'assignment_type', 'assigned_by', 'assigned_at'])
-
-    dept_member_ids = _eligible_reassignment_memberships(ticket).values_list('user_id', flat=True)
-    MyCart.objects.filter(ticket=ticket, user_id__in=dept_member_ids).exclude(user=target_membership.user).delete()
-    MyCart.objects.get_or_create(user=target_membership.user, ticket=ticket)
-
-    TicketHistory.objects.create(
-        ticket=ticket,
-        changed_by=request.user,
-        action_type='ASSIGNED',
-        field_name='assigned_to',
-        old_value=old_assignee.username if old_assignee else 'Unassigned',
-        new_value=target_membership.user.username,
-        description=(
-            f'Admin reassigned ticket to {target_membership.user.username} '
-            f'based on workload review in {ticket.assigned_department.name}.'
-        ),
-    )
-    create_notification(
-        user=target_membership.user,
-        notification_type='TICKET_ASSIGNED',
-        title=f'Ticket reassigned #{ticket.id}',
-        message=f'{request.user.username} reassigned "{ticket.TICKET_TITLE}" to you.',
-        ticket=ticket,
-        extra_data={
-            'assigned_by': request.user.username,
-            'department': ticket.assigned_department.name,
-            'manual_workload_reassignment': True,
-        },
-    )
-
-    messages.success(
-        request,
-        f'Ticket reassigned to {target_membership.user.get_full_name() or target_membership.user.username}.'
-    )
-    return redirect('ticketinfo', pk=pk)
+    return _handle_admin_reassign_ticket(request, ticket)
 
 
 @login_required
