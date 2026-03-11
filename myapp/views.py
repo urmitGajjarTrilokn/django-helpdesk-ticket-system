@@ -2347,14 +2347,6 @@ def department_members(request, dept_id=None):
             overdue = overdue_map.get(m.user_id, 0)
             total_worked = resolved + active
             completion_rate = int((resolved / total_worked) * 100) if total_worked > 0 else 0
-            profile_image = ''
-            try:
-                if getattr(m.user, 'userprofile', None) and m.user.userprofile.Profile_Image:
-                    image = m.user.userprofile.Profile_Image
-                    if image.name and image.storage.exists(image.name):
-                        profile_image = image.url
-            except Exception:
-                profile_image = ''
 
             stats.append({
                 'membership':      m,
@@ -2362,7 +2354,7 @@ def department_members(request, dept_id=None):
                 'active':          active,
                 'overdue':         overdue,
                 'completion_rate': completion_rate,
-                'profile_image':   profile_image,
+                'profile_image':   '',
                 'is_current_user': m.user_id == request.user.id,
             })
         stats.sort(key=lambda x: (-x['resolved'], x['active'], x['membership'].user.username))

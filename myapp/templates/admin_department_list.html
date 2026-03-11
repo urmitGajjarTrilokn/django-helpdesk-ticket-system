@@ -789,13 +789,7 @@
                       <td>
                         <div class="adm-user">
                             <div class="adm-avatar">
-                              {% with avatar=m.user|avatar_url %}
-                                {% if avatar %}
-                                  <img src="{{ avatar }}" alt="{{ m.user.username }}">
-                                {% else %}
-                                  {{ m.user|avatar_initial }}
-                                {% endif %}
-                              {% endwith %}
+                              {{ m.user|avatar_initial }}
                             </div>
                             <div>
                               <div class="fw-semibold text-dark">{{ m.user.username }}</div>
