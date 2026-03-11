@@ -80,7 +80,7 @@
     </div>
   </div>
 
-  <form method="POST" enctype="multipart/form-data" id="registerForm" novalidate>
+  <form method="POST" id="registerForm" novalidate>
     {% csrf_token %}
 
     <div class="hd-card mb-4">
@@ -186,9 +186,6 @@
                 <div class="field-error">{{ Register_form.password2.errors.0 }}</div>
               {% endif %}
               <div class="field-error" id="err_password2" style="display:none;"></div>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>
@@ -243,14 +240,6 @@
                 <i class="fi fas fa-map-marker-alt"></i>
                 {{ UserProfile_form.State }}
               </div>
-            </div>
-          </div>
-
-          <div class="col-sm-6">
-            <div class="f-group">
-              <label class="form-label">Profile Photo</label>
-              {{ UserProfile_form.Profile_Image }}
-              <div class="form-text">JPG, PNG or GIF — max 5MB</div>
             </div>
           </div>
 

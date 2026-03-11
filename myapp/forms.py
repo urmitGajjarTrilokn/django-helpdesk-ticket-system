@@ -137,10 +137,13 @@ class UserProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.require_phone = kwargs.pop('require_phone', False)
+        self.include_profile_image = kwargs.pop('include_profile_image', True)
         super().__init__(*args, **kwargs)
         if self.require_phone:
             self.fields['phone'].required = True
             self.fields['country_code'].required = True
+        if not self.include_profile_image:
+            self.fields.pop('Profile_Image', None)
 
     def clean_Profile_Image(self):
         image = self.cleaned_data.get('Profile_Image')
