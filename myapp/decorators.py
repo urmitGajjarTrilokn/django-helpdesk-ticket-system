@@ -17,26 +17,6 @@ ROLE_PERMISSION_MATRIX = {
         'can_close_tickets': False,
         'can_delete_tickets': False,
     },
-    'ADMIN': {
-        'can_assign_tickets': False,
-        'can_close_tickets': False,
-        'can_delete_tickets': False,
-    },
-    'LEAD': {
-        'can_assign_tickets': False,
-        'can_close_tickets': False,
-        'can_delete_tickets': False,
-    },
-    'MANAGER': {
-        'can_assign_tickets': False,
-        'can_close_tickets': False,
-        'can_delete_tickets': False,
-    },
-    'HEAD': {
-        'can_assign_tickets': False,
-        'can_close_tickets': False,
-        'can_delete_tickets': False,
-    },
 }
 
 
@@ -244,7 +224,7 @@ def department_lead_required(view_func):
     def wrapper(request, *args, **kwargs):
         if request.user.is_superuser:
             return view_func(request, *args, **kwargs)
-        messages.error(request, 'Access denied. Department leadership role required.')
+        messages.error(request, 'Access denied.')
         return redirect('base')
     return wrapper
 

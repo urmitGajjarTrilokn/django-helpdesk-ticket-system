@@ -743,7 +743,7 @@
             <section class="dept-section">
               <div class="dept-section-head">
                 <h4>{% if item.department.is_active %}Add or Reactivate Member{% else %}Department Inactive{% endif %}</h4>
-                <span>{% if item.department.is_active %}Role assignment stays inline.{% else %}Reactivate this department to manage members again.{% endif %}</span>
+                <span>{% if item.department.is_active %}Members are added with the standard member role.{% else %}Reactivate this department to manage members again.{% endif %}</span>
               </div>
               {% if item.department.description %}
                 <div class="text-muted small mb-3">{{ item.department.description }}</div>
@@ -753,7 +753,7 @@
                   {% csrf_token %}
                   <div class="dept-member-add">
                     <div>{{ item.member_form.user_id }}</div>
-                    <div>{{ item.member_form.role }}</div>
+                    <input type="hidden" name="{{ item.member_form.role.html_name }}" value="MEMBER">
                     <div><button class="btn btn-primary w-100" type="submit">Add</button></div>
                   </div>
                 </form>
@@ -800,15 +800,6 @@
                         <td><span class="role-pill">{{ m.display_role }}</span></td>
                         <td class="text-end">
                           <div class="dept-row-actions">
-                            <form method="post" action="/admin-departments/{{ item.department.id }}/members/{{ m.user.id }}/role/">
-                              {% csrf_token %}
-                              <div class="dept-role-edit">
-                                <select name="role" class="form-select form-select-sm" {% if not item.department.is_active %}disabled{% endif %}>
-                                  <option value="MEMBER" selected>Member</option>
-                                </select>
-                                <button class="btn btn-sm btn-outline-primary" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Update</button>
-                              </div>
-                            </form>
                             <form method="post" action="{% url 'admin_remove_member' item.department.id m.user.id %}">
                               {% csrf_token %}
                               <button class="btn btn-sm btn-outline-danger" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Remove</button>

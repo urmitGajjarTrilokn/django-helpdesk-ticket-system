@@ -540,7 +540,7 @@ def _department_member_workload_rows(ticket):
     for membership in memberships:
         rows.append({
             'user': membership.user,
-            'role': membership.get_role_display(),
+            'role': membership.display_role,
             'same_department_open_count': department_counts.get(membership.user_id, 0),
             'total_open_count': total_counts.get(membership.user_id, 0),
             'has_rejected_ticket': membership.user_id in rejected_user_ids,
@@ -3000,7 +3000,7 @@ def admin_update_member_role(request, dept_id, user_id):
         'can_assign_tickets', 'can_delete_tickets',
     ])
     log_activity(request.user, 'UPDATED', f'Updated {user.username} role in {department.name} to {role}')
-    messages.success(request, f'{user.username} is now {membership.get_role_display()} in {department.name}.')
+    messages.success(request, f'{user.username} is now {membership.display_role} in {department.name}.')
     return redirect('admin_department_list')
 
 

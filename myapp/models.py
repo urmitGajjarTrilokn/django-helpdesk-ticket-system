@@ -62,10 +62,6 @@ class Department(models.Model):
 class DepartmentMember(models.Model):
     ROLE_CHOICES = [
         ('MEMBER',  'Member'),
-        ('ADMIN',   'Member'),
-        ('LEAD',    'Member'),
-        ('MANAGER', 'Member'),
-        ('HEAD',    'Member'),
     ]
 
     user                = models.ForeignKey(User, on_delete=models.CASCADE,

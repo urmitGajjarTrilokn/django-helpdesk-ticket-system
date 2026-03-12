@@ -83,7 +83,7 @@ class DepartmentMemberAdmin(admin.ModelAdmin):
     department_badge.short_description = 'Department'
 
     def role_badge(self, obj):
-        colors = {'MEMBER':'#94a3b8','ADMIN':'#94a3b8','LEAD':'#94a3b8','MANAGER':'#94a3b8','HEAD':'#94a3b8'}
+        colors = {'MEMBER':'#94a3b8'}
         return format_html(
             '<span style="background:{};color:white;padding:4px 12px;border-radius:6px;font-weight:600;">{}</span>',
             colors.get(obj.role, '#94a3b8'), obj.display_role
