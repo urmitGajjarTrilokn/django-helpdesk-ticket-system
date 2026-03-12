@@ -630,12 +630,6 @@
          class="nav-item {% if request.resolver_match.url_name == 'resolved_history' %}active{% endif %}">
         <i class="nav-icon fas fa-history"></i> Resolved History
       </a>
-      {% if my_department_url %}
-      <a href="{{ my_department_url }}"
-         class="nav-item {% if request.resolver_match.url_name == 'department_members' or request.resolver_match.url_name == 'department_members_id' %}active{% endif %}">
-        <i class="nav-icon fas fa-building"></i> My Department
-      </a>
-      {% endif %}
       {% endif %}
 
       <div class="nav-section">Account</div>

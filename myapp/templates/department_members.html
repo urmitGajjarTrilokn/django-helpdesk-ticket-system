@@ -263,9 +263,13 @@
   
   .dept-grid {
     display: grid;
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 1fr 1fr;
     gap: 18px;
-    align-items: start;
+    align-items: stretch;
+  }
+  .dept-grid > .hd-card,
+  .dept-grid > .sidebar-stack {
+    height: 100%;
   }
 
   
@@ -482,7 +486,15 @@
   .completion-badge.danger { color: #dc2626; }
 
   
-  .sidebar-stack { display: grid; gap: 16px; }
+  .sidebar-stack { display: grid; gap: 16px; height: 100%; }
+  .sidebar-stack .hd-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-stack .hd-card-body {
+    flex: 1;
+  }
 
   .role-list { display: grid; gap: 8px; }
   .role-row {
@@ -755,28 +767,6 @@
       </div>
 
       <div class="sidebar-stack">
-
-        <div class="hd-card">
-          <div class="hd-card-header">
-            <div class="hd-card-title">
-              <i class="fas fa-id-badge"></i> Role Distribution
-            </div>
-            <span class="hd-card-badge">{{ section.total_members }} members</span>
-          </div>
-          <div class="hd-card-body">
-            <div class="role-list">
-              {% for role, count in section.role_counts.items %}
-              <div class="role-row">
-                <span class="role-name"><i class="fas fa-circle me-2" style="font-size:7px;color:var(--slate-300);"></i>{{ role }}</span>
-                <span class="role-count">{{ count }}</span>
-              </div>
-              {% empty %}
-              <div class="empty-state"><i class="fas fa-id-badge"></i>No roles found.</div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
         <div class="hd-card">
           <div class="hd-card-header">
             <div class="hd-card-title">
@@ -926,28 +916,6 @@
 
     
     <div class="sidebar-stack">
-
-      <div class="hd-card">
-        <div class="hd-card-header">
-          <div class="hd-card-title">
-            <i class="fas fa-id-badge"></i> Role Distribution
-          </div>
-          <span class="hd-card-badge">{{ total_members }} members</span>
-        </div>
-        <div class="hd-card-body">
-          <div class="role-list">
-            {% for role, count in role_counts.items %}
-            <div class="role-row">
-              <span class="role-name"><i class="fas fa-circle me-2" style="font-size:7px;color:var(--slate-300);"></i>{{ role }}</span>
-              <span class="role-count">{{ count }}</span>
-            </div>
-            {% empty %}
-            <div class="empty-state"><i class="fas fa-id-badge"></i>No roles found.</div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
       <div class="hd-card">
         <div class="hd-card-header">
           <div class="hd-card-title">
