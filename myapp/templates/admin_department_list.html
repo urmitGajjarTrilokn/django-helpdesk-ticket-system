@@ -874,7 +874,7 @@
               {% if item.department.is_active %}
                 <form method="post" action="/admin-departments/{{ item.department.id }}/delete/" class="js-inactivate-form">
                   {% csrf_token %}
-                  <button class="btn dept-btn-warning js-open-inactivate-modal" type="button" data-department-name="{{ item.department.name }}">Mark Inactive</button>
+                  <button class="btn dept-btn-warning js-open-inactivate-modal" type="button" data-department-name="{{ item.department.name }}">Mark as Inactive</button>
                 </form>
               {% else %}
                 <form method="post" action="/admin-departments/{{ item.department.id }}/reactivate/">
@@ -1019,11 +1019,11 @@
         const departmentName = this.getAttribute('data-department-name') || 'This department';
         openConfirmModal({
           form,
-          eyebrow: '<i class="fas fa-triangle-exclamation"></i>Mark inactive',
-          title: `Mark ${departmentName} inactive?`,
+          eyebrow: '<i class="fas fa-triangle-exclamation"></i>Mark as inactive',
+          title: `Mark ${departmentName} as inactive?`,
           message: `${departmentName} will stop accepting ticket creation and department assignment until it is reactivated.`,
           note: 'Members stay attached to the department. Admins can still inspect department tickets and reactivate it later.',
-          confirmLabel: 'Mark Inactive',
+          confirmLabel: 'Mark as Inactive',
           confirmClass: 'dept-btn-warning',
         });
       });

@@ -135,7 +135,7 @@
               <form method="post" action="{% url 'mark_notification_read' notif.id %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'notifications_list' %}?filter={{ filter_type|urlencode }}">
-                <button type="submit" class="btn btn-sm btn-outline-primary notif-row-btn">Mark Read</button>
+                <button type="submit" class="btn btn-sm btn-outline-primary notif-row-btn">Mark as Read</button>
               </form>
               {% endif %}
               <form method="post" action="{% url 'delete_notification' notif.id %}" onsubmit="return confirm('Delete this notification');">

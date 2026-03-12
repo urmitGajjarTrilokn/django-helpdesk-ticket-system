@@ -409,6 +409,24 @@ def _is_non_rejectable_assignment(user, ticket):
     return False
 
 
+def _overdue_note_thread_qs(ticket):
+    return (
+        TicketHistory.objects
+        .filter(
+            ticket=ticket,
+            field_name__in=['admin_overdue_note', 'admin_overdue_note_reply'],
+        )
+        .select_related('changed_by')
+        .order_by('changed_at')
+    )
+
+
+def _ticketinfo_overdue_redirect(ticket):
+    paginator = Paginator(_overdue_note_thread_qs(ticket), 4)
+    page_number = paginator.num_pages or 1
+    return redirect(f"{reverse('ticketinfo', kwargs={'pk': ticket.id})}?overdue_page={page_number}#overdue-note-thread")
+
+
 def _auto_assign_on_department_rejection(ticket, rejected_by):
     if not ticket.assigned_department_id:
         return None
@@ -1027,21 +1045,14 @@ def TicketInfo(request, pk):
     )
     normalized_description = " ".join((ticketinfos.TICKET_DESCRIPTION or "").split())
     can_view_admin_note_thread = bool(
-        is_admin
-        or ticketinfos.assigned_to_id == request.user.id
-        or is_department_member
+        is_admin or ticketinfos.assigned_to_id == request.user.id
     )
-    overdue_note_thread = TicketHistory.objects.none()
+    overdue_note_thread = None
     if can_view_admin_note_thread:
-        overdue_note_thread = (
-            TicketHistory.objects
-            .filter(
-                ticket=ticketinfos,
-                field_name__in=['admin_overdue_note', 'admin_overdue_note_reply'],
-            )
-            .select_related('changed_by')
-            .order_by('changed_at')
-        )
+        overdue_note_paginator = Paginator(_overdue_note_thread_qs(ticketinfos), 4)
+        requested_overdue_page = request.GET.get('overdue_page')
+        overdue_page_number = requested_overdue_page or overdue_note_paginator.num_pages or 1
+        overdue_note_thread = overdue_note_paginator.get_page(overdue_page_number)
     can_reply_admin_overdue_note = (
         can_view_admin_note_thread
         and not is_admin
@@ -3347,18 +3358,7 @@ def send_overdue_note(request, pk):
         messages.error(request, 'Please enter a note before sending.')
         return redirect('ticketinfo', pk=pk)
 
-    recipient_ids = set()
-    if ticket.assigned_to_id:
-        recipient_ids.add(ticket.assigned_to_id)
-    if ticket.assigned_department_id:
-        dept_member_ids = DepartmentMember.objects.filter(
-            department=ticket.assigned_department,
-            is_active=True
-        ).values_list('user_id', flat=True)
-        recipient_ids.update(dept_member_ids)
-
-    recipient_ids.discard(request.user.id)
-    recipients = User.objects.filter(id__in=recipient_ids, is_active=True)
+    recipients = User.objects.filter(id=ticket.assigned_to_id, is_active=True)
 
     sent_count = 0
     for recipient in recipients:
@@ -3395,7 +3395,7 @@ def send_overdue_note(request, pk):
     else:
         messages.warning(request, 'No eligible recipients found for this ticket.')
 
-    return redirect('ticketinfo', pk=pk)
+    return _ticketinfo_overdue_redirect(ticket)
 
 
 @login_required
@@ -3412,10 +3412,7 @@ def reply_overdue_note(request, pk):
         messages.error(request, 'Admin should use overdue note instead of member reply.')
         return redirect('ticketinfo', pk=pk)
 
-    can_reply = (
-        ticket.assigned_to_id == request.user.id
-        or _is_department_member(request.user, ticket)
-    )
+    can_reply = ticket.assigned_to_id == request.user.id
     if not can_reply:
         messages.error(request, 'You are not allowed to reply to this overdue note.')
         return redirect('ticketinfo', pk=pk)
@@ -3446,7 +3443,7 @@ def reply_overdue_note(request, pk):
             user=admin_user,
             notification_type='TICKET_COMMENTED',
             title=f'Overdue note reply: #{ticket.id} {ticket.TICKET_TITLE}',
-            message=reply_text,
+            message=f'{request.user.username} wrote the overdue note for the ticket #{ticket.id}.',
             ticket=ticket,
             extra_data={
                 'sent_by': request.user.username,
@@ -3455,7 +3452,7 @@ def reply_overdue_note(request, pk):
         )
 
     messages.success(request, 'Your reply was sent to admin.')
-    return redirect('ticketinfo', pk=pk)
+    return _ticketinfo_overdue_redirect(ticket)
 
 @login_required
 def department_analytics(request, dept_id):
