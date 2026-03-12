@@ -25,8 +25,6 @@ def ticket_count(request):
             'user_departments':        Department.objects.none(),
             'user_department_count':   0,
             'department_open_tickets':   0,
-            'is_department_lead':      False,
-            'is_department_manager':   False,
             'is_department_member':    False,
             'recent_notifications':    [],
             'department_count':        0,

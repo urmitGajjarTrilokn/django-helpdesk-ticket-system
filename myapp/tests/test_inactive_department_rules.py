@@ -62,7 +62,7 @@ class InactiveDepartmentRuleTests(TestCase):
         DepartmentMember.objects.create(
             user=self.other_member,
             department=self.active_department,
-            role="LEAD",
+            role="MEMBER",
             is_active=True,
         )
 
@@ -209,7 +209,7 @@ class InactiveDepartmentRuleTests(TestCase):
         active_membership = DepartmentMember.objects.create(
             user=self.other_member,
             department=self.inactive_department,
-            role="LEAD",
+            role="MEMBER",
             is_active=True,
         )
         inactive_ticket = self._create_ticket(
@@ -288,7 +288,7 @@ class InactiveDepartmentRuleTests(TestCase):
         DepartmentMember.objects.create(
             user=self.other_member,
             department=managed_department,
-            role="MANAGER",
+            role="MEMBER",
             is_active=True,
         )
         assigned_ticket = self._create_ticket(

@@ -33,9 +33,6 @@ urlpatterns = [
     path('ticket/<int:pk>/overdue-note-reply/', views.reply_overdue_note, name='reply_overdue_note'),
 
                                                 
-    path('reject/<int:pk>/',       views.RemoveTicket,         name='reject_ticket'),
-
-                                                                               
     path('my-tickets/',            views.MyCarts,            name='mycart'),
 
                                                                                
@@ -88,14 +85,10 @@ urlpatterns = [
 
                                                                                
     path('pie-chart/',     views.pie_chart,    name='pie_chart'),
-    path('dashboard-pie/', views.dashboard_pie, name='dashboard_pie'),
     path('bar-chart/',     views.Bar_chart,    name='bar_chart'),
-                                          
-    path('status-pie/',    views.dashboard_pie, name='status_pie'),
-    path('status-bar/',    views.Bar_chart,     name='status_bar'),
 
-                                                                               
-                                                             
+                                                                                
+                                                              
     path('department/<int:dept_id>/',
          views.department_dashboard,
          name='department_dashboard_id'),
@@ -128,36 +121,21 @@ urlpatterns = [
     path('admin-departments/<int:dept_id>/update/',
          views.admin_update_department,
          name='admin_update_department'),
-    path('admin-departments<int:dept_id>/update/',
-         views.admin_update_department),
     path('admin-departments/<int:dept_id>/delete/',
          views.admin_delete_department,
          name='admin_delete_department'),
-    path('admin-departments<int:dept_id>/delete/',
-         views.admin_delete_department),
     path('admin-departments/<int:dept_id>/reactivate/',
          views.admin_reactivate_department,
          name='admin_reactivate_department'),
-    path('admin-departments<int:dept_id>/reactivate/',
-         views.admin_reactivate_department),
     path('admin-departments/inactive/delete/',
          views.admin_permanently_delete_inactive_department,
          name='admin_permanently_delete_inactive_department'),
     path('admin-departments/<int:dept_id>/add-member/',
          views.admin_add_member,
          name='admin_add_member'),
-    path('admin-departments<int:dept_id>/add-member/',
-         views.admin_add_member),
-    path('admin-departments/<int:dept_id>/members/<int:user_id>/role/',
-         views.admin_update_member_role,
-         name='admin_update_member_role'),
-    path('admin-departments<int:dept_id>/members/<int:user_id>/role/',
-         views.admin_update_member_role),
     path('admin-departments/<int:dept_id>/remove-member/<int:user_id>/',
          views.admin_remove_member,
          name='admin_remove_member'),
-    path('admin-departments<int:dept_id>/remove-member/<int:user_id>/',
-         views.admin_remove_member),
 
                                                                                
     path('notifications/',

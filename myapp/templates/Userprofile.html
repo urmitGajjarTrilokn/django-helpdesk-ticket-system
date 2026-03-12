@@ -74,6 +74,10 @@
     gap: 20px;
     align-items: start;
   }
+  .p-grid > div {
+    display: flex;
+    flex-direction: column;
+  }
   @media (max-width: 900px)  { .p-grid { grid-template-columns: 1fr; } }
   @media (max-width: 540px)  { .p-identity { gap: 16px; } }
 
@@ -152,6 +156,15 @@
   }
   .p-info-sub  { font-size: 10.5px; color: var(--slate-400); font-weight: 600; }
   .p-info-val  { font-weight: 700; color: var(--slate-800); font-size: 12.5px; margin-top: 1px; }
+
+  .p-equal-card {
+    min-height: 262px;
+    display: flex;
+    flex-direction: column;
+  }
+  .p-top-card {
+    min-height: 338px;
+  }
 
   
   .p-stars { display: inline-flex; align-items: center; gap: 2px; }
@@ -265,7 +278,7 @@
   <div>
 
     
-    <div class="hd-card mb-4">
+    <div class="hd-card mb-4 p-equal-card p-top-card">
       <div class="hd-card-header">
         <div class="hd-card-title">
           <i class="fas fa-id-card" style="color:var(--brand);"></i>
@@ -302,13 +315,6 @@
         </span>
       </div>
       <div class="p-row">
-        <span class="p-row-label"><i class="fas fa-road"></i>Address</span>
-        <span class="p-row-val">
-          {% if ProfileData.Address %}{{ ProfileData.Address }}
-          {% else %}<span class="p-empty">Not provided</span>{% endif %}
-        </span>
-      </div>
-      <div class="p-row">
         <span class="p-row-label"><i class="fas fa-city"></i>City &amp; State</span>
         <span class="p-row-val">
           {% if ProfileData.City or ProfileData.State %}
@@ -319,7 +325,7 @@
     </div>
 
     
-    <div class="hd-card mb-4">
+    <div class="hd-card mb-4 p-equal-card">
       <div class="hd-card-header">
         <div class="hd-card-title">
           <i class="fas fa-lock" style="color:var(--brand);"></i>
@@ -368,7 +374,7 @@
   <div>
 
     
-    <div class="hd-card mb-4">
+    <div class="hd-card mb-4 p-equal-card p-top-card">
       <div class="hd-card-header">
         <div class="hd-card-title">
           <i class="fas fa-bolt" style="color:var(--brand);"></i>
@@ -403,7 +409,7 @@
     </div>
 
     
-    <div class="hd-card mb-4">
+    <div class="hd-card mb-4 p-equal-card">
       <div class="hd-card-header">
         <div class="hd-card-title">
           <i class="fas fa-address-book" style="color:var(--brand);"></i>

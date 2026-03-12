@@ -124,14 +124,6 @@
       <div class="hd-card-body">
         <div class="row g-3">
 
-          <div class="col-12">
-            <label class="form-label">Street Address</label>
-            {{ form.Address }}
-            {% if form.Address.errors %}
-              <div class="field-error">{{ form.Address.errors.0 }}</div>
-            {% endif %}
-          </div>
-
           <div class="col-sm-6">
             <label class="form-label">City</label>
             {{ form.City }}

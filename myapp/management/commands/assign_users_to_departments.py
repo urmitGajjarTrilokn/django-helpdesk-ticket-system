@@ -17,13 +17,13 @@ class Command(BaseCommand):
         parser.add_argument(
             '--role',
             type=str,
-            help='Default role for users (MEMBER, LEAD, MANAGER, HEAD)',
+            help='Default role for users (MEMBER only)',
             default='MEMBER'
         )
     
     def handle(self, *args, **options):
         default_dept_code = options['default_department']
-        default_role = options['role']
+        default_role = 'MEMBER'
         
         try:
             default_dept = Department.objects.get(code=default_dept_code)
@@ -50,7 +50,7 @@ class Command(BaseCommand):
                 user=user,
                 department=default_dept,
                 role=default_role,
-                can_assign_tickets=False,
+                can_assign_tickets=True,
                 can_close_tickets=True,
                 can_delete_tickets=False
             )
