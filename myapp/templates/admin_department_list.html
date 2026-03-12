@@ -753,7 +753,6 @@
                   {% csrf_token %}
                   <div class="dept-member-add">
                     <div>{{ item.member_form.user_id }}</div>
-                    <div>{{ item.member_form.role }}</div>
                     <div><button class="btn btn-primary w-100" type="submit">Add</button></div>
                   </div>
                 </form>
@@ -800,18 +799,6 @@
                         <td><span class="role-pill">{{ m.get_role_display }}</span></td>
                         <td class="text-end">
                           <div class="dept-row-actions">
-                            <form method="post" action="/admin-departments/{{ item.department.id }}/members/{{ m.user.id }}/role/">
-                              {% csrf_token %}
-                              <div class="dept-role-edit">
-                                <select name="role" class="form-select form-select-sm" {% if not item.department.is_active %}disabled{% endif %}>
-                                  <option value="MEMBER" {% if m.role == 'MEMBER' %}selected{% endif %}>Member</option>
-                                  <option value="LEAD" {% if m.role == 'LEAD' %}selected{% endif %}>Lead</option>
-                                  <option value="MANAGER" {% if m.role == 'MANAGER' %}selected{% endif %}>Manager</option>
-                                  <option value="HEAD" {% if m.role == 'HEAD' %}selected{% endif %}>Head</option>
-                                </select>
-                                <button class="btn btn-sm btn-outline-primary" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Update</button>
-                              </div>
-                            </form>
                             <form method="post" action="{% url 'admin_remove_member' item.department.id m.user.id %}">
                               {% csrf_token %}
                               <button class="btn btn-sm btn-outline-danger" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Remove</button>

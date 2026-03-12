@@ -224,25 +224,12 @@ class AccountSettingsForm(forms.Form):
 
 
 class DepartmentMemberForm(forms.Form):
-    ROLE_CHOICES = [
-        ('MEMBER', 'Member'),
-        ('LEAD', 'Lead'),
-        ('MANAGER', 'Manager'),
-        ('HEAD', 'Head'),
-    ]
-
     user_id = forms.ModelChoiceField(
         queryset=User.objects.filter(is_active=True, is_superuser=False).order_by('username'),
         label="Select User",
         empty_label="- Choose a user -",
         widget=forms.Select(attrs={"class": "form-select"}),
         to_field_name='id',
-    )
-    role = forms.ChoiceField(
-        choices=ROLE_CHOICES,
-        initial='MEMBER',
-        label="Department Role",
-        widget=forms.Select(attrs={"class": "form-select"}),
     )
 
 
@@ -639,15 +626,6 @@ class CannedResponseForm(forms.ModelForm):
             'content': 'Variables: {{ticket_id}}, {{user_name}}, {{ticket_title}}, {{assigned_to}}',
             'is_public': 'If unchecked, only you can use this response',
         }
-
-
-class CannedResponseSelectForm(forms.Form):
-    canned_response = forms.ModelChoiceField(
-        queryset=CannedResponse.objects.filter(is_active=True),
-        required=False,
-        empty_label="Select a canned response...",
-        widget=forms.Select(attrs={'class': 'form-select', 'id': 'cannedResponseSelect'}),
-    )
 
 
 class TicketRatingForm(forms.ModelForm):

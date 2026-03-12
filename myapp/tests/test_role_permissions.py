@@ -30,8 +30,8 @@ class RolePermissionBehaviorTests(TestCase):
         )
 
         DepartmentMember.objects.create(user=self.member, department=self.department, role="MEMBER", is_active=True)
-        DepartmentMember.objects.create(user=self.lead, department=self.department, role="LEAD", is_active=True)
-        DepartmentMember.objects.create(user=self.manager, department=self.department, role="MANAGER", is_active=True)
+        DepartmentMember.objects.create(user=self.lead, department=self.department, role="MEMBER", is_active=True)
+        DepartmentMember.objects.create(user=self.manager, department=self.department, role="MEMBER", is_active=True)
 
     def _create_open_ticket(self):
         return TicketDetail.objects.create(
@@ -86,7 +86,7 @@ class RolePermissionBehaviorTests(TestCase):
         ticket.refresh_from_db()
         self.assertEqual(ticket.TICKET_STATUS, "Closed")
 
-    def test_lead_can_close_unassigned_department_ticket(self):
+    def test_department_member_can_close_unassigned_department_ticket(self):
         ticket = self._create_open_ticket()
         MyCart.objects.create(user=self.lead, ticket=ticket)
 
@@ -105,9 +105,9 @@ class RolePermissionBehaviorTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(TicketDetail.objects.filter(id=ticket.id).exists())
 
-    def test_manager_can_delete_department_ticket(self):
+    def test_admin_can_delete_department_ticket(self):
         ticket = self._create_open_ticket()
-        self.client.login(username="manager1", password="pass12345")
+        self.client.login(username="admin1", password="pass12345")
 
         response = self.client.post(reverse("deleteticket", kwargs={"pk": ticket.id}))
         self.assertEqual(response.status_code, 302)
@@ -233,7 +233,7 @@ class RolePermissionBehaviorTests(TestCase):
         response = self.client.get(reverse("ticketinfo", kwargs={"pk": ticket.id}))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Reassign by Workload")
+        self.assertContains(response, "Reassign Ticket")
 
     def test_admin_can_reassign_ticket_by_workload_to_previously_rejected_member(self):
         ticket = self._create_open_ticket()
@@ -251,7 +251,7 @@ class RolePermissionBehaviorTests(TestCase):
         )
         for idx in range(3):
             TicketDetail.objects.create(
-                TICKET_TITLE=f"Lead workload {idx}",
+                TICKET_TITLE=f"Member workload {idx}",
                 TICKET_CREATED=self.creator,
                 TICKET_DUE_DATE=timezone.now().date() + timedelta(days=2),
                 TICKET_DESCRIPTION="Load balancing ticket.",
@@ -316,8 +316,8 @@ class RolePermissionBehaviorTests(TestCase):
             color="#14b8a6",
             icon="fas fa-building",
         )
-        DepartmentMember.objects.create(user=self.lead, department=other_department, role="LEAD", is_active=True)
-        DepartmentMember.objects.create(user=self.manager, department=other_department, role="MANAGER", is_active=True)
+        DepartmentMember.objects.create(user=self.lead, department=other_department, role="MEMBER", is_active=True)
+        DepartmentMember.objects.create(user=self.manager, department=other_department, role="MEMBER", is_active=True)
 
         ticket = self._create_open_ticket()
         ticket.assigned_to = self.member

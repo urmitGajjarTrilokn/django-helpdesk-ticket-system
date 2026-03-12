@@ -13,24 +13,9 @@ from .models import (
 
 ROLE_PERMISSION_MATRIX = {
     'MEMBER': {
-        'can_assign_tickets': False,
-        'can_close_tickets': False,
-        'can_delete_tickets': False,
-    },
-    'LEAD': {
         'can_assign_tickets': True,
         'can_close_tickets': True,
         'can_delete_tickets': False,
-    },
-    'MANAGER': {
-        'can_assign_tickets': True,
-        'can_close_tickets': True,
-        'can_delete_tickets': True,
-    },
-    'HEAD': {
-        'can_assign_tickets': True,
-        'can_close_tickets': True,
-        'can_delete_tickets': True,
     },
 }
 
@@ -48,15 +33,6 @@ def user_is_department_member(user, department):
     ).exists()
 
 
-def user_department_role(user, department):
-    try:
-        return DepartmentMember.objects.get(
-            user=user, department=department, is_active=True
-        ).role
-    except DepartmentMember.DoesNotExist:
-        return None
-
-
 def user_has_department_permission(user, department, permission_type):
     try:
         member = DepartmentMember.objects.get(
@@ -72,10 +48,6 @@ def get_user_departments(user):
     if not user.is_authenticated or user.is_superuser:
         return Department.objects.none()
     return get_visible_active_departments(user)
-    
-def is_department_lead_or_higher(user, department):
-    role = user_department_role(user, department)
-    return role in ['LEAD', 'MANAGER', 'HEAD']
 
 def can_user_accept_ticket(user, ticket):
     if user.is_superuser:
@@ -122,19 +94,6 @@ def can_user_close_ticket(user, ticket):
     return False, 'You do not have permission to close this ticket'
 
 
-def filter_tickets_by_department_access(queryset, user):
-    if user.is_superuser:
-        return queryset
-    from django.db.models import Q
-    user_departments = get_user_departments(user)
-    return queryset.filter(
-        Q(TICKET_CREATED=user) |
-        Q(assigned_to=user) |
-        Q(assigned_department__in=user_departments) |
-        Q(assigned_department__isnull=True)
-    ).distinct()
-
-
 def get_department_statistics(department):
     tickets = TicketDetail.objects.filter(assigned_department=department)
     return {
@@ -154,8 +113,6 @@ def get_user_department_context(user):
             'user_departments':       Department.objects.none(),
             'user_department_count':  0,
             'is_department_member':   False,
-            'is_department_lead':     False,
-            'is_department_manager':  False,
             'department_open_tickets':  0,
             'department_count':       0,
             'department_tickets_count': 0,
@@ -164,14 +121,6 @@ def get_user_department_context(user):
     user_depts = get_user_departments(user)
 
     memberships = get_visible_active_memberships(user)
-
-    is_lead = memberships.filter(
-        role__in=['LEAD', 'MANAGER', 'HEAD']
-    ).exists()
-
-    is_manager = memberships.filter(
-        role__in=['MANAGER', 'HEAD']
-    ).exists()
 
     dept_open_tickets  = TicketDetail.objects.filter(
         assigned_department__in=user_depts, TICKET_STATUS='Open'
@@ -185,8 +134,6 @@ def get_user_department_context(user):
         'user_departments':       user_depts,
         'user_department_count':  user_depts.count(),
         'is_department_member':   user_depts.exists(),
-        'is_department_lead':     is_lead,
-        'is_department_manager':  is_manager,
         'department_open_tickets':  dept_open_tickets,
         'department_count':       user_depts.count(),
         'department_tickets_count': dept_total_tickets,
@@ -235,21 +182,6 @@ def ticket_department_access_required(view_func):
             )
             return redirect('base')
         return view_func(request, pk, *args, **kwargs)
-    return wrapper
-
-
-def department_lead_required(view_func):
-    @wraps(view_func)
-    @login_required
-    def wrapper(request, *args, **kwargs):
-        if request.user.is_superuser:
-            return view_func(request, *args, **kwargs)
-        if DepartmentMember.objects.filter(
-            user=request.user, role__in=['LEAD', 'MANAGER', 'HEAD'], is_active=True
-        ).exists():
-            return view_func(request, *args, **kwargs)
-        messages.error(request, 'Access denied. Department leadership role required.')
-        return redirect('base')
     return wrapper
 
 

@@ -62,9 +62,6 @@ class Department(models.Model):
 class DepartmentMember(models.Model):
     ROLE_CHOICES = [
         ('MEMBER',  'Member'),
-        ('LEAD',    'Team Lead'),
-        ('MANAGER', 'Manager'),
-        ('HEAD',    'Department Head'),
     ]
 
     user                = models.ForeignKey(User, on_delete=models.CASCADE,
@@ -72,7 +69,7 @@ class DepartmentMember(models.Model):
     department          = models.ForeignKey(Department, on_delete=models.CASCADE)
     role                = models.CharField(max_length=20, choices=ROLE_CHOICES, default='MEMBER')
     is_active           = models.BooleanField(default=True)
-    can_assign_tickets  = models.BooleanField(default=False)
+    can_assign_tickets  = models.BooleanField(default=True)
     can_close_tickets   = models.BooleanField(default=True)
     can_delete_tickets  = models.BooleanField(default=False)
     joined_at           = models.DateTimeField(auto_now_add=True)
@@ -88,8 +85,15 @@ class DepartmentMember(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.department.name} ({self.get_role_display()})"
 
+    def save(self, *args, **kwargs):
+        self.role = 'MEMBER'
+        self.can_assign_tickets = True
+        self.can_close_tickets = True
+        self.can_delete_tickets = False
+        super().save(*args, **kwargs)
+
     def is_manager_or_above(self):
-        return self.role in ['MANAGER', 'HEAD']
+        return False
 
 class UserProfile(models.Model):
     user  = models.OneToOneField(User, on_delete=models.CASCADE, null=True)

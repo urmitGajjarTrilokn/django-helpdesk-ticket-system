@@ -972,17 +972,12 @@ def TicketInfo(request, pk):
         return _handle_admin_reassign_ticket(request, ticketinfos)
 
     is_department_member = False
-    is_senior_dept_member = False
     if ticketinfos.assigned_department:
         is_department_member = DepartmentMember.objects.filter(
             user=request.user, department=ticketinfos.assigned_department, is_active=True
         ).exists()
-        is_senior_dept_member = DepartmentMember.objects.filter(
-            user=request.user, department=ticketinfos.assigned_department,
-            role__in=['LEAD', 'MANAGER', 'HEAD'], is_active=True
-        ).exists()
 
-    is_agent  = is_admin or is_senior_dept_member
+    is_agent  = is_admin or is_department_member
     _sync_mycart_for_user(request.user)
     can_work_on_ticket = _can_work_on_ticket(request.user, ticketinfos)
     can_close_ticket = _can_user_close_ticket(request.user, ticketinfos)
@@ -2193,66 +2188,6 @@ def account_settings(request):
     })
 
 @admin_required
-def dashboard_pie(request):
-    statuses = ['Open', 'In Progress', 'Reopen', 'Resolved', 'Closed']
-    counts = [TicketDetail.objects.filter(TICKET_STATUS=s).count() for s in statuses]
-    colors = ['#3B82F6', '#F59E0B', '#F97316', '#10B981', '#64748B']
-    total = sum(counts)
-
-    fig, ax = plt.subplots(figsize=(13.2, 7.8), dpi=140)
-    fig.patch.set_facecolor('#F8FAFC')
-    ax.set_facecolor('#F8FAFC')
-
-    if total == 0:
-        ax.text(0.5, 0.5, 'No ticket data available', ha='center', va='center',
-                fontsize=13, color='#64748B', fontweight='semibold')
-        ax.axis('off')
-    else:
-        percentages = [(count / total * 100) if total else 0 for count in counts]
-        positions = range(len(statuses))
-        bars = ax.barh(
-            positions,
-            percentages,
-            color=colors,
-            edgecolor='white',
-            linewidth=1.2,
-            height=0.62,
-        )
-        ax.set_yticks(list(positions), labels=statuses)
-        ax.invert_yaxis()
-        ax.set_xlim(0, max(100, max(percentages) + 12))
-        ax.set_xlabel('Share of Tickets (%)', color='#334155', fontsize=12, fontweight='bold', labelpad=10)
-        ax.tick_params(axis='x', labelsize=11, colors='#475569')
-        ax.tick_params(axis='y', labelsize=12, colors='#0F172A')
-        ax.grid(axis='x', color='#E2E8F0', linewidth=1.0, alpha=0.95)
-        ax.set_axisbelow(True)
-        for spine in ['top', 'right']:
-            ax.spines[spine].set_visible(False)
-        ax.spines['left'].set_color('#CBD5E1')
-        ax.spines['bottom'].set_color('#CBD5E1')
-
-        for bar, count, percentage in zip(bars, counts, percentages):
-            ax.text(
-                min(bar.get_width() + 1.2, ax.get_xlim()[1] - 1),
-                bar.get_y() + bar.get_height() / 2,
-                f'{count} ({percentage:.1f}%)',
-                va='center',
-                ha='left',
-                fontsize=11,
-                color='#0F172A',
-                fontweight='bold'
-            )
-    ax.set_title('Ticket Status Distribution', fontsize=17, color='#0F172A', pad=12, weight='bold')
-
-    buffer = io.BytesIO()
-    fig.tight_layout()
-    fig.savefig(buffer, format='png', bbox_inches='tight', transparent=False)
-    plt.close(fig)
-    buffer.seek(0)
-    return HttpResponse(buffer, content_type='image/png')
-
-
-@admin_required
 def pie_chart(request):
     statuses = ['Open', 'In Progress', 'Reopen', 'Resolved', 'Closed']
     counts = [TicketDetail.objects.filter(TICKET_STATUS=s).count() for s in statuses]
@@ -2354,17 +2289,13 @@ def comment_view(request, pk, action):
         messages.error(request, "You do not have permission to comment on this ticket.")
         return redirect('ticketinfo', pk=pk)
 
-    is_dept_member = is_senior_dept_member = False
+    is_dept_member = False
     if ticket.assigned_department:
         is_dept_member = DepartmentMember.objects.filter(
             user=request.user, department=ticket.assigned_department, is_active=True
         ).exists()
-        is_senior_dept_member = DepartmentMember.objects.filter(
-            user=request.user, department=ticket.assigned_department,
-            role__in=['LEAD', 'MANAGER', 'HEAD'], is_active=True
-        ).exists()
 
-    is_agent = is_admin or is_senior_dept_member
+    is_agent = is_admin or is_dept_member
 
     if request.method == 'POST':
         form = UserCommentForm(request.POST, request.FILES)
@@ -2941,11 +2872,11 @@ def admin_add_member(request, dept_id):
     if request.method == 'POST':
         form = DepartmentMemberForm(request.POST, prefix=f'member-{dept_id}')
         if not form.is_valid():
-            messages.error(request, 'Please select a valid user and role.')
+            messages.error(request, 'Please select a valid user.')
             return redirect('admin_department_list')
 
         user = form.cleaned_data['user_id']
-        role = form.cleaned_data['role']
+        role = 'MEMBER'
         membership, created = DepartmentMember.objects.get_or_create(
             user=user,
             department=department,
@@ -2987,30 +2918,6 @@ def admin_add_member(request, dept_id):
         getattr(messages, level)(request, status_message)
 
     return redirect('admin_department_list')
-
-
-@admin_required
-def admin_update_member_role(request, dept_id, user_id):
-    if request.method != 'POST':
-        return redirect('admin_department_list')
-
-    department = get_object_or_404(Department, id=dept_id, is_active=True)
-    user = get_object_or_404(User, id=user_id, is_superuser=False)
-    membership = get_object_or_404(DepartmentMember, department=department, user=user)
-    role = request.POST.get('role', membership.role)
-    if role not in ROLE_PERMISSION_MATRIX:
-        messages.error(request, 'Invalid department role selected.')
-        return redirect('admin_department_list')
-
-    _apply_department_role(membership, role)
-    membership.save(update_fields=[
-        'role', 'is_active', 'can_close_tickets',
-        'can_assign_tickets', 'can_delete_tickets',
-    ])
-    log_activity(request.user, 'UPDATED', f'Updated {user.username} role in {department.name} to {role}')
-    messages.success(request, f'{user.username} is now {membership.get_role_display()} in {department.name}.')
-    return redirect('admin_department_list')
-
 
 @admin_required
 def admin_remove_member(request, dept_id, user_id):

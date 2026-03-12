@@ -245,6 +245,6 @@ class DashboardRuntimeFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "statusDistributionChart")
-        self.assertContains(response, "statusCountChart")
+        self.assertContains(response, "workflowSnapshotChart")
         self.assertIn("status_labels", response.context)
         self.assertIn("status_counts", response.context)
