@@ -62,10 +62,10 @@ class Department(models.Model):
 class DepartmentMember(models.Model):
     ROLE_CHOICES = [
         ('MEMBER',  'Member'),
-        ('ADMIN',   'Admin'),
-        ('LEAD',    'Admin'),
-        ('MANAGER', 'Admin'),
-        ('HEAD',    'Admin'),
+        ('ADMIN',   'Member'),
+        ('LEAD',    'Member'),
+        ('MANAGER', 'Member'),
+        ('HEAD',    'Member'),
     ]
 
     user                = models.ForeignKey(User, on_delete=models.CASCADE,
@@ -90,13 +90,11 @@ class DepartmentMember(models.Model):
         return f"{self.user.username} - {self.department.name} ({self.display_role})"
 
     def is_manager_or_above(self):
-        return self.role in ['ADMIN', 'LEAD', 'MANAGER', 'HEAD']
+        return False
 
     @property
     def display_role(self):
-        if self.role in ['ADMIN', 'LEAD', 'MANAGER', 'HEAD']:
-            return 'Admin'
-        return self.get_role_display()
+        return 'Member'
 
 class UserProfile(models.Model):
     user  = models.OneToOneField(User, on_delete=models.CASCADE, null=True)

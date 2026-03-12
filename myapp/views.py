@@ -977,10 +977,6 @@ def TicketInfo(request, pk):
         is_department_member = DepartmentMember.objects.filter(
             user=request.user, department=ticketinfos.assigned_department, is_active=True
         ).exists()
-        is_senior_dept_member = DepartmentMember.objects.filter(
-            user=request.user, department=ticketinfos.assigned_department,
-            role__in=['ADMIN', 'LEAD', 'MANAGER', 'HEAD'], is_active=True
-        ).exists()
 
     is_agent  = is_admin or is_senior_dept_member
     _sync_mycart_for_user(request.user)
@@ -2358,10 +2354,6 @@ def comment_view(request, pk, action):
     if ticket.assigned_department:
         is_dept_member = DepartmentMember.objects.filter(
             user=request.user, department=ticket.assigned_department, is_active=True
-        ).exists()
-        is_senior_dept_member = DepartmentMember.objects.filter(
-            user=request.user, department=ticket.assigned_department,
-            role__in=['ADMIN', 'LEAD', 'MANAGER', 'HEAD'], is_active=True
         ).exists()
 
     is_agent = is_admin or is_senior_dept_member

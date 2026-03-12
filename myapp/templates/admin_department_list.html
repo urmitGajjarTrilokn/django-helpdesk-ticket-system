@@ -804,8 +804,7 @@
                               {% csrf_token %}
                               <div class="dept-role-edit">
                                 <select name="role" class="form-select form-select-sm" {% if not item.department.is_active %}disabled{% endif %}>
-                                  <option value="MEMBER" {% if m.role == 'MEMBER' %}selected{% endif %}>Member</option>
-                                  <option value="ADMIN" {% if m.role == 'ADMIN' or m.role == 'LEAD' or m.role == 'MANAGER' or m.role == 'HEAD' %}selected{% endif %}>Admin</option>
+                                  <option value="MEMBER" selected>Member</option>
                                 </select>
                                 <button class="btn btn-sm btn-outline-primary" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Update</button>
                               </div>
