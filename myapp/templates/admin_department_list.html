@@ -797,7 +797,7 @@
                             </div>
                           </div>
                         </td>
-                        <td><span class="role-pill">{{ m.get_role_display }}</span></td>
+                        <td><span class="role-pill">{{ m.display_role }}</span></td>
                         <td class="text-end">
                           <div class="dept-row-actions">
                             <form method="post" action="/admin-departments/{{ item.department.id }}/members/{{ m.user.id }}/role/">
@@ -805,9 +805,7 @@
                               <div class="dept-role-edit">
                                 <select name="role" class="form-select form-select-sm" {% if not item.department.is_active %}disabled{% endif %}>
                                   <option value="MEMBER" {% if m.role == 'MEMBER' %}selected{% endif %}>Member</option>
-                                  <option value="LEAD" {% if m.role == 'LEAD' %}selected{% endif %}>Lead</option>
-                                  <option value="MANAGER" {% if m.role == 'MANAGER' %}selected{% endif %}>Manager</option>
-                                  <option value="HEAD" {% if m.role == 'HEAD' %}selected{% endif %}>Head</option>
+                                  <option value="ADMIN" {% if m.role == 'ADMIN' or m.role == 'LEAD' or m.role == 'MANAGER' or m.role == 'HEAD' %}selected{% endif %}>Admin</option>
                                 </select>
                                 <button class="btn btn-sm btn-outline-primary" type="submit" {% if not item.department.is_active %}disabled{% endif %}>Update</button>
                               </div>

@@ -979,7 +979,7 @@ def TicketInfo(request, pk):
         ).exists()
         is_senior_dept_member = DepartmentMember.objects.filter(
             user=request.user, department=ticketinfos.assigned_department,
-            role__in=['LEAD', 'MANAGER', 'HEAD'], is_active=True
+            role__in=['ADMIN', 'LEAD', 'MANAGER', 'HEAD'], is_active=True
         ).exists()
 
     is_agent  = is_admin or is_senior_dept_member
@@ -2361,7 +2361,7 @@ def comment_view(request, pk, action):
         ).exists()
         is_senior_dept_member = DepartmentMember.objects.filter(
             user=request.user, department=ticket.assigned_department,
-            role__in=['LEAD', 'MANAGER', 'HEAD'], is_active=True
+            role__in=['ADMIN', 'LEAD', 'MANAGER', 'HEAD'], is_active=True
         ).exists()
 
     is_agent = is_admin or is_senior_dept_member

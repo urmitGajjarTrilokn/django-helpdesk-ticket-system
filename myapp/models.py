@@ -62,9 +62,10 @@ class Department(models.Model):
 class DepartmentMember(models.Model):
     ROLE_CHOICES = [
         ('MEMBER',  'Member'),
-        ('LEAD',    'Team Lead'),
-        ('MANAGER', 'Manager'),
-        ('HEAD',    'Department Head'),
+        ('ADMIN',   'Admin'),
+        ('LEAD',    'Admin'),
+        ('MANAGER', 'Admin'),
+        ('HEAD',    'Admin'),
     ]
 
     user                = models.ForeignKey(User, on_delete=models.CASCADE,
@@ -86,10 +87,16 @@ class DepartmentMember(models.Model):
         verbose_name_plural = 'Department Members'
 
     def __str__(self):
-        return f"{self.user.username} - {self.department.name} ({self.get_role_display()})"
+        return f"{self.user.username} - {self.department.name} ({self.display_role})"
 
     def is_manager_or_above(self):
-        return self.role in ['MANAGER', 'HEAD']
+        return self.role in ['ADMIN', 'LEAD', 'MANAGER', 'HEAD']
+
+    @property
+    def display_role(self):
+        if self.role in ['ADMIN', 'LEAD', 'MANAGER', 'HEAD']:
+            return 'Admin'
+        return self.get_role_display()
 
 class UserProfile(models.Model):
     user  = models.OneToOneField(User, on_delete=models.CASCADE, null=True)

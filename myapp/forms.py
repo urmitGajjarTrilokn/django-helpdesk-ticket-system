@@ -226,9 +226,7 @@ class AccountSettingsForm(forms.Form):
 class DepartmentMemberForm(forms.Form):
     ROLE_CHOICES = [
         ('MEMBER', 'Member'),
-        ('LEAD', 'Lead'),
-        ('MANAGER', 'Manager'),
-        ('HEAD', 'Head'),
+        ('ADMIN', 'Admin'),
     ]
 
     user_id = forms.ModelChoiceField(

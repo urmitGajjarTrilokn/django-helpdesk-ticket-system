@@ -17,6 +17,11 @@ ROLE_PERMISSION_MATRIX = {
         'can_close_tickets': False,
         'can_delete_tickets': False,
     },
+    'ADMIN': {
+        'can_assign_tickets': True,
+        'can_close_tickets': True,
+        'can_delete_tickets': True,
+    },
     'LEAD': {
         'can_assign_tickets': True,
         'can_close_tickets': True,
@@ -75,7 +80,7 @@ def get_user_departments(user):
     
 def is_department_lead_or_higher(user, department):
     role = user_department_role(user, department)
-    return role in ['LEAD', 'MANAGER', 'HEAD']
+    return role in ['ADMIN', 'LEAD', 'MANAGER', 'HEAD']
 
 def can_user_accept_ticket(user, ticket):
     if user.is_superuser:
@@ -166,11 +171,11 @@ def get_user_department_context(user):
     memberships = get_visible_active_memberships(user)
 
     is_lead = memberships.filter(
-        role__in=['LEAD', 'MANAGER', 'HEAD']
+        role__in=['ADMIN', 'LEAD', 'MANAGER', 'HEAD']
     ).exists()
 
     is_manager = memberships.filter(
-        role__in=['MANAGER', 'HEAD']
+        role__in=['ADMIN', 'MANAGER', 'HEAD']
     ).exists()
 
     dept_open_tickets  = TicketDetail.objects.filter(
@@ -245,7 +250,7 @@ def department_lead_required(view_func):
         if request.user.is_superuser:
             return view_func(request, *args, **kwargs)
         if DepartmentMember.objects.filter(
-            user=request.user, role__in=['LEAD', 'MANAGER', 'HEAD'], is_active=True
+            user=request.user, role__in=['ADMIN', 'LEAD', 'MANAGER', 'HEAD'], is_active=True
         ).exists():
             return view_func(request, *args, **kwargs)
         messages.error(request, 'Access denied. Department leadership role required.')
