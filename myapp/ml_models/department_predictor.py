@@ -47,10 +47,10 @@ def predict_department(title, description):
 
     text = f"{title} {description}".lower()
 
-    if any(word in text for word in ["invoice", "billing", "payment", "refund"]):
+    if any(word in text for word in ["salary", "payroll", "payment", "invoice", "billing"]):
         return "Finance"
 
-    if any(word in text for word in ["leave", "vacation", "salary", "payroll", "hr"]):
+    if any(word in text for word in ["leave", "vacation", "hr policy", "benefits"]):
         return "HR"
 
     if any(word in text for word in ["vpn", "server", "login", "network", "password", "database"]):
