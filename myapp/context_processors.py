@@ -77,7 +77,7 @@ def ticket_count(request):
 
     if not is_admin:
         notifications_qs = notifications_qs.filter(
-            ticket__assigned_department_id__in=department_ids
+            Q(ticket__isnull=True) | Q(ticket__assigned_department_id__in=department_ids)
         )
 
     unread_notifications = notifications_qs.filter(is_read=False).count()

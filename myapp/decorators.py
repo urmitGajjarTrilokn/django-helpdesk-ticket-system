@@ -17,6 +17,21 @@ ROLE_PERMISSION_MATRIX = {
         'can_close_tickets': False,
         'can_delete_tickets': False,
     },
+    'SENIOR_MEMBER': {
+        'can_assign_tickets': False,
+        'can_close_tickets': True,
+        'can_delete_tickets': False,
+    },
+    'LEAD': {
+        'can_assign_tickets': True,
+        'can_close_tickets': True,
+        'can_delete_tickets': False,
+    },
+    'MANAGER': {
+        'can_assign_tickets': True,
+        'can_close_tickets': True,
+        'can_delete_tickets': True,
+    },
 }
 
 
