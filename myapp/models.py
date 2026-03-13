@@ -89,11 +89,17 @@ class DepartmentMember(models.Model):
         return f"{self.user.username} - {self.department.name} ({self.display_role})"
 
     def is_manager_or_above(self):
-        return False
+        return self.role in ('LEAD', 'MANAGER')
 
     @property
     def display_role(self):
-        return 'Member'
+        role_labels = {
+            'MEMBER':        'Member',
+            'SENIOR_MEMBER': 'Senior Member',
+            'LEAD':          'Team Lead',
+            'MANAGER':       'Manager',
+        }
+        return role_labels.get(self.role, self.role.replace('_', ' ').title())
 
 class UserProfile(models.Model):
     user  = models.OneToOneField(User, on_delete=models.CASCADE, null=True)

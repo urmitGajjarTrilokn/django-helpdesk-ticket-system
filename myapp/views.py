@@ -56,7 +56,7 @@ from .forms import (
     LoginForm, RegisterForm, UserProfileForm, TicketDetailForm, TicketCreateForm,
     UserCommentForm, TicketUpdateForm, TicketFilterForm, CategoryForm,
     AccountSettingsForm, UsernameEmailPasswordResetForm, AdminTicketRoutingForm,
-    DepartmentMemberForm, DepartmentAdminForm,
+    DepartmentMemberForm, DepartmentAdminForm, TicketRatingForm,
 )
 
 
@@ -1777,6 +1777,9 @@ def reopenticket(request, pk):
 @login_required
 def resolvedticket(request, pk):
     ticket = get_object_or_404(TicketDetail, id=pk)
+    if ticket.TICKET_STATUS == 'Resolved':
+        messages.info(request, "This ticket is already resolved.")
+        return redirect('ticketinfo', pk=pk)
     is_admin = _is_admin_user(request.user)
     if ticket.TICKET_STATUS == 'Closed' and ticket.TICKET_CREATED_id != request.user.id and not is_admin:
         messages.error(request, "Only the ticket creator can resolve a closed ticket.")
@@ -1930,6 +1933,9 @@ def User_Profile(request):
 @login_required
 def update_profile(request, pk):
     profile = get_object_or_404(UserProfile, id=pk)
+    if profile.user != request.user and not request.user.is_superuser:
+        messages.error(request, "You do not have permission to edit this profile.")
+        return redirect('profile')
     form = UserProfileForm(request.POST or None, request.FILES or None, instance=profile)
     if form.is_valid():
         form.save()
@@ -2780,7 +2786,7 @@ def admin_create_department(request):
     if reactivated_department:
         _restore_department_ticket_assignments(department, changed_by=request.user)
         log_activity(request.user, 'UPDATED', f'Reactivated department: {department.name}')
-        messages.success(request, f'{department.name} department created successfully.')
+        messages.success(request, f'{department.name} department reactivated successfully.')
     else:
         log_activity(request.user, 'CREATED', f'Created department: {department.name}')
         messages.success(request, f'{department.name} department created successfully.')
@@ -3034,6 +3040,10 @@ def admin_update_member_role(request, dept_id, user_id):
 
 @admin_required
 def admin_remove_member(request, dept_id, user_id):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('admin_department_list')
+
     department = get_object_or_404(Department, id=dept_id)
     user       = get_object_or_404(User, id=user_id)
 
@@ -3331,7 +3341,6 @@ def rate_ticket(request, pk):
         messages.info(request, 'You have already rated this ticket.')
         return redirect('ticketinfo', pk=pk)
 
-    from .forms import TicketRatingForm
     if request.method == 'POST':
         form = TicketRatingForm(request.POST)
         if form.is_valid():
@@ -3375,10 +3384,10 @@ def send_overdue_note(request, pk):
         messages.error(request, 'Please enter a note before sending.')
         return redirect('ticketinfo', pk=pk)
 
-    recipients = User.objects.filter(id=ticket.assigned_to_id, is_active=True)
+    recipient = User.objects.filter(id=ticket.assigned_to_id, is_active=True).first()
 
     sent_count = 0
-    for recipient in recipients:
+    if recipient:
         create_notification(
             user=recipient,
             notification_type='TICKET_OVERDUE',
@@ -3390,7 +3399,7 @@ def send_overdue_note(request, pk):
                 'is_admin_note': True,
             },
         )
-        sent_count += 1
+        sent_count = 1
 
     if sent_count:
         TicketHistory.objects.create(
@@ -3495,29 +3504,38 @@ def department_analytics(request, dept_id):
         department=department, is_active=True
     ).select_related('user')
 
-    member_stats = []
-    for member in members:
-        tickets_created  = TicketDetail.objects.filter(
-            TICKET_CREATED=member.user,
-            TICKET_CREATED_ON__range=(start_date, end_date)
-        ).count()
+    member_user_ids = [m.user_id for m in members]
 
-        tickets_resolved = TicketDetail.objects.filter(
-            assigned_to=member.user,
+    created_map = {
+        row['TICKET_CREATED']: row['total']
+        for row in TicketDetail.objects.filter(
+            TICKET_CREATED_id__in=member_user_ids,
+            TICKET_CREATED_ON__range=(start_date, end_date)
+        ).values('TICKET_CREATED').annotate(total=Count('id'))
+    }
+    resolved_map = {
+        row['assigned_to']: row['total']
+        for row in TicketDetail.objects.filter(
+            assigned_to_id__in=member_user_ids,
             TICKET_STATUS__in=['Closed', 'Resolved'],
             TICKET_CLOSED_ON__range=(start_date, end_date)
-        ).count()
-
-        active_tickets = TicketDetail.objects.filter(
-            assigned_to=member.user,
+        ).values('assigned_to').annotate(total=Count('id'))
+    }
+    active_map = {
+        row['assigned_to']: row['total']
+        for row in TicketDetail.objects.filter(
+            assigned_to_id__in=member_user_ids,
             TICKET_STATUS__in=['Open', 'In Progress', 'Reopen']
-        ).count()
+        ).values('assigned_to').annotate(total=Count('id'))
+    }
 
+    member_stats = []
+    for member in members:
         member_stats.append({
-            'member':         member,
-            'tickets_created':  tickets_created,
-            'tickets_resolved': tickets_resolved,
-            'active_tickets':   active_tickets,
+            'member':           member,
+            'tickets_created':  created_map.get(member.user_id, 0),
+            'tickets_resolved': resolved_map.get(member.user_id, 0),
+            'active_tickets':   active_map.get(member.user_id, 0),
         })
 
     return render(request, 'department_dashboard.html', {
