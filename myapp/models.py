@@ -73,7 +73,7 @@ class DepartmentMember(models.Model):
     role                = models.CharField(max_length=20, choices=ROLE_CHOICES, default='MEMBER')
     is_active           = models.BooleanField(default=True)
     can_assign_tickets  = models.BooleanField(default=False)
-    can_close_tickets   = models.BooleanField(default=True)
+    can_close_tickets   = models.BooleanField(default=False)
     can_delete_tickets  = models.BooleanField(default=False)
     joined_at           = models.DateTimeField(auto_now_add=True)
     added_by            = models.ForeignKey(User, on_delete=models.SET_NULL,
@@ -162,7 +162,7 @@ class TicketDetail(models.Model):
                                          on_delete=models.CASCADE, null=True)
     TICKET_CREATED_ON  = models.DateField(auto_now_add=True, null=True)
     TICKET_DUE_DATE    = models.DateField()
-    TICKET_CLOSED_ON   = models.DateField(null=True)
+    TICKET_CLOSED_ON   = models.DateTimeField(null=True)
     TICKET_DESCRIPTION = models.CharField(max_length=300)
     TICKET_HOLDER      = models.CharField(max_length=100)
 
@@ -288,9 +288,12 @@ class TicketDetail(models.Model):
 
 class MyCart(models.Model):
     user        = models.ForeignKey(User, on_delete=models.CASCADE)
-    ticket        = models.ForeignKey(TicketDetail, on_delete=models.CASCADE)
-    ticket_count  = models.IntegerField(default=1)
+    ticket      = models.ForeignKey(TicketDetail, on_delete=models.CASCADE)
+    ticket_count = models.IntegerField(default=1)
     accepted_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        unique_together = ['user', 'ticket']
 
     def __str__(self):
         return f"{self.user.username} - {self.ticket.TICKET_TITLE}"

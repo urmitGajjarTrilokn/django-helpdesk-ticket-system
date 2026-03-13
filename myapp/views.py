@@ -900,7 +900,7 @@ def TicketDetails(request):
 
                     if predicted_department and predicted_department.is_active:
                         ticket.assigned_department = predicted_department
-                        ticket.assignment_type = "AI"
+                        ticket.assignment_type = "AUTO_ML"
                         ticket.assigned_at = timezone.now()
 
                         logger.info(
