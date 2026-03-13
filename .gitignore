@@ -1,26 +1,42 @@
 # Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
 
-# Virtual environment
+**pycache**/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+
 venv/
 .env
+*.env
 
-# OS
-.DS_Store
-Thumbs.db
+# Database
+
+*.sqlite3
+db.sqlite3
+
+# Django
+
+*.log
+local_settings.py
+media/
+staticfiles/
+
+# Celery
+
+celerybeat-schedule*
 
 # IDE
+
 .vscode/
 .idea/
 
-# Celery beat files
-celerybeat-schedule*
-*.log
-logs/
+# OS Files
 
-# Random / temp
-0.12.0
+.DS_Store
+Thumbs.db
+
+# Logs
+
+logs/
+*.log
