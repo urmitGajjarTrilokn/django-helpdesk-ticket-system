@@ -225,7 +225,7 @@
   }
 
   async function usernameExists(username) {
-    const res = await fetch('/api/username-exists/username=' + encodeURIComponent(username), {
+    const res = await fetch('/api/username-exists/?username=' + encodeURIComponent(username), {
       method: 'GET',
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });

@@ -153,10 +153,12 @@ def _can_view_ticket(user, ticket):
     return MyCart.objects.filter(user=user, ticket=ticket).exists()
 
 def _can_work_on_ticket(user, ticket):
-    if user.is_superuser:
+    if _is_admin_user(user):
         return False
-    if ticket.__class__.objects.filter(id=ticket.id).filter(_inactive_department_ticket_q()).exists():
-        return False
+    if ticket.assigned_department_id:
+        dept = ticket.assigned_department
+        if not getattr(dept, 'is_active', True):
+            return False
     if ticket.TICKET_CREATED_id == user.id:
         return True
     if ticket.assigned_to_id == user.id:
@@ -218,10 +220,11 @@ def _auto_assign_single_member_department_ticket(ticket, changed_by=None):
         )
         .select_related('user')
     )
-    if memberships.count() != 1:
+    membership_list = list(memberships[:2])
+    if len(membership_list) != 1:
         return None
 
-    assignee = memberships.first().user
+    assignee = membership_list[0].user
     ticket.assigned_to = assignee
     ticket.TICKET_HOLDER = assignee.username
     if changed_by and not ticket.assigned_by_id:
@@ -629,7 +632,7 @@ def _user_has_inactive_department_membership(user):
 
 
 def _get_dashboard_redirect_url(user):
-    if user.is_superuser:
+    if _is_admin_user(user):
         return reverse('base')
     return reverse('base')
 
@@ -677,7 +680,10 @@ def _notifications_for_user(user):
 
     department_ids = get_visible_active_memberships(user).values_list('department_id', flat=True)
 
-    return base_qs.filter(ticket__assigned_department_id__in=department_ids)
+    # Include system notifications (ticket=None) AND ticket notifications for user's departments
+    return base_qs.filter(
+        Q(ticket__isnull=True) | Q(ticket__assigned_department_id__in=department_ids)
+    )
 
 
 def _redirect_to_safe_next(request, default_name, **kwargs):
@@ -695,10 +701,6 @@ def landing_page(request):
 
 @login_required
 def Basepage(request, dept_id=None):
-    if not request.user.is_authenticated:
-        messages.error(request, "You must log in to view tickets.")
-        return redirect('login')
-
     is_admin_user = _is_admin_user(request.user)
     user_memberships = DepartmentMember.objects.filter(
         user=request.user, is_active=True, department__is_active=True
@@ -992,11 +994,14 @@ def TicketInfo(request, pk):
     is_department_member = False
     is_senior_dept_member = False
     if ticketinfos.assigned_department:
-        is_department_member = DepartmentMember.objects.filter(
+        membership = DepartmentMember.objects.filter(
             user=request.user, department=ticketinfos.assigned_department, is_active=True
-        ).exists()
+        ).first()
+        if membership:
+            is_department_member = True
+            is_senior_dept_member = membership.role in ('SENIOR_MEMBER', 'LEAD', 'MANAGER')
 
-    is_agent  = is_admin or is_senior_dept_member
+    is_agent = is_admin or is_senior_dept_member
     _sync_mycart_for_user(request.user)
     can_work_on_ticket = _can_work_on_ticket(request.user, ticketinfos)
     can_close_ticket = _can_user_close_ticket(request.user, ticketinfos)
@@ -1406,7 +1411,7 @@ def updateticket(request, pk):
             log_activity(request.user, 'UPDATED', f'Updated ticket: {updated_ticket.TICKET_TITLE}', ticket=updated_ticket)
             messages.success(request, 'Ticket updated successfully!')
             if request.GET.get('mine_only') in ['1', 'true', 'True', 'on']:
-                return redirect(f"{reverse('ticketinfo', kwargs={'pk': pk})}mine_only=1")
+                return redirect(f"{reverse('ticketinfo', kwargs={'pk': pk})}?mine_only=1")
             return redirect('ticketinfo', pk=pk)
 
         return render(request, 'TicketDetail.html', {
@@ -1675,6 +1680,8 @@ def CloseTicket(request, pk):
     if not _can_user_close_ticket(request.user, ticket):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('ticketinfo', pk=pk)
+    # Capture old status BEFORE changing it
+    old_status = ticket.TICKET_STATUS
     ticket.assigned_to = request.user
     ticket.TICKET_STATUS   = 'Closed'
     ticket.TICKET_CLOSED   = request.user
@@ -1684,7 +1691,7 @@ def CloseTicket(request, pk):
         ticket=ticket, changed_by=request.user,
         action_type='CLOSED',
         description=f'Ticket closed by {request.user.username}',
-        old_value='In Progress', new_value='Closed',
+        old_value=old_status, new_value='Closed',
     )
     log_activity(request.user, 'CLOSED', f'Closed ticket: {ticket.TICKET_TITLE}', ticket=ticket)
     notify_ticket_closed(ticket, request.user)
@@ -1703,6 +1710,11 @@ def CloseTicket(request, pk):
 def reopenticket(request, pk):
     ticket = get_object_or_404(TicketDetail, id=pk)
     is_admin = _is_admin_user(request.user)
+    
+    if ticket.TICKET_STATUS not in ['Closed', 'Resolved', 'Reopen']:
+        messages.error(request, "This ticket cannot be reopened as it has not been closed.")
+        return redirect('ticketinfo', pk=pk)
+    
     if (
         not is_admin
         and TicketHistory.objects.filter(
@@ -1884,7 +1896,7 @@ def RegisterView(request):
         'UserProfile_form': profile_form,
     })
 
-
+@login_required
 def Change_Password(request):
     if request.method == 'POST':
         fm = PasswordChangeForm(user=request.user, data=request.POST)
@@ -1898,10 +1910,8 @@ def Change_Password(request):
         fm = PasswordChangeForm(user=request.user)
     return render(request, 'Change_Password.html', {'fm': fm})
 
+@login_required
 def User_Profile(request):
-    if not request.user.is_authenticated:
-        messages.error(request, "You must log in to view your profile.")
-        return redirect('login')
     user = request.user
     profile_data = UserProfile.objects.filter(user=user)
     resolved_count = TicketDetail.objects.filter(
@@ -1917,10 +1927,8 @@ def User_Profile(request):
     })
 
 
+@login_required
 def update_profile(request, pk):
-    if not request.user.is_authenticated:
-        messages.error(request, "You must log in.")
-        return redirect('login')
     profile = get_object_or_404(UserProfile, id=pk)
     form = UserProfileForm(request.POST or None, request.FILES or None, instance=profile)
     if form.is_valid():
@@ -2196,6 +2204,7 @@ def account_settings(request):
         'stats': stats,
         'total_users': stats['total_users'],
         'superusers': stats['superusers'],
+        'active_admins': stats['superusers'],
         'dept_count': stats['departments'],
     })
 
@@ -2363,9 +2372,12 @@ def comment_view(request, pk, action):
 
     is_dept_member = is_senior_dept_member = False
     if ticket.assigned_department:
-        is_dept_member = DepartmentMember.objects.filter(
+        membership = DepartmentMember.objects.filter(
             user=request.user, department=ticket.assigned_department, is_active=True
-        ).exists()
+        ).first()
+        if membership:
+            is_dept_member = True
+            is_senior_dept_member = membership.role in ('SENIOR_MEMBER', 'LEAD', 'MANAGER')
 
     is_agent = is_admin or is_senior_dept_member
 
@@ -2861,8 +2873,8 @@ def admin_permanently_delete_inactive_department(request):
     DepartmentMember.objects.filter(department=department).delete()
     department_name = department.name
     department.delete()
-    log_activity(request.user, 'DELETED', f'Permanently deleted inactive department: {department_name}')
-    messages.success(request, f'{department_name} department deleted successfully.')
+    log_activity(request.user, 'DELETED', f'Permanently deleted department: {department_name}')
+    messages.success(request, f'{department_name} department permanently deleted successfully.')
     return redirect('admin_department_list')
 
 
@@ -2977,9 +2989,14 @@ def admin_add_member(request, dept_id):
                 status_message = f'{user.username} added to {department.name} successfully.'
                 level = 'success'
 
+        rejected_ticket_ids = TicketHistory.objects.filter(
+            changed_by=user,
+            action_type='REJECTED',
+        ).values_list('ticket_id', flat=True)
+
         for ticket in TicketDetail.objects.filter(
             assigned_department=department,
-        ).exclude(TICKET_STATUS__in=['Closed', 'Resolved']):
+        ).exclude(TICKET_STATUS__in=['Closed', 'Resolved']).exclude(id__in=rejected_ticket_ids):
             MyCart.objects.get_or_create(user=user, ticket=ticket)
 
         log_activity(
